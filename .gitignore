@@ -1,28 +1,18 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
+# Dependencies
+node_modules/
 
-# Virtual env
-.venv/
-env/
-venv/
+# Next.js
+.next/
+out/
 
-# Editor
-.vscode/
-.idea/
+# Env
+.env.local
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-error.log*
 
 # OS
 .DS_Store
-
-# Local env
-.env
-
-# Local env files
-.env
-.env.local
-.env.txt
-.env.*
-# Tool cache
-.cache/
