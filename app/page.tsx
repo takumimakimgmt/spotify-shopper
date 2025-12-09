@@ -272,7 +272,13 @@ export default function Page() {
                   type="file"
                   accept=".xml"
                   onChange={handleRekordboxChange}
-                  className="text-xs"
+                  className={
+                    "text-xs text-slate-200 cursor-pointer " +
+                    "file:mr-3 file:rounded-md file:border-0 " +
+                    "file:bg-emerald-500 file:px-3 file:py-1 " +
+                    "file:text-xs file:font-semibold file:text-slate-900 " +
+                    "hover:file:bg-emerald-400"
+                  }
                 />
                 <span className="text-xs text-slate-400">
                   指定した XML 内の楽曲と突き合わせて「持ってる /
@@ -353,10 +359,6 @@ export default function Page() {
                 </thead>
                 <tbody>
                   {displayedTracks.map((t) => {
-                    let ownedLabel = '–';
-                    if (t.owned === true) ownedLabel = '●';
-                    else if (t.owned === false) ownedLabel = '○';
-
                     return (
                       <tr
                         key={`${t.spotifyUrl}-${t.index}-${t.isrc ?? ''}`}
@@ -385,7 +387,19 @@ export default function Page() {
                           {t.isrc ?? ''}
                         </td>
                         <td className="px-3 py-1 text-center">
-                          {ownedLabel}
+                          {t.owned === true ? (
+                            <span className="inline-flex items-center justify-center rounded-full border border-emerald-500/70 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+                              Owned
+                            </span>
+                          ) : t.owned === false ? (
+                            <span className="inline-flex items-center justify-center rounded-full border border-rose-500/70 bg-rose-500/10 px-2.5 py-0.5 text-xs font-medium text-rose-300">
+                              Not owned
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center rounded-full border border-slate-500/70 bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-slate-200">
+                              Unknown
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 py-1">
                           <div className="flex flex-wrap gap-2">
