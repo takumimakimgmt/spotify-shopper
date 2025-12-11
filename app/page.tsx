@@ -346,7 +346,8 @@ export default function Page() {
       setActiveTab(merged[0][0]);
     }
 
-    if (hasError && newResults.length === 0) {
+    // Only show generic error if no specific error was set
+    if (hasError && newResults.length === 0 && !errorText) {
       setErrorText('Failed to fetch playlists. Check URLs and try again.');
     }
 
