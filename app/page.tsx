@@ -132,6 +132,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<number>(0);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [appleNotice, setAppleNotice] = useState(false);
 
   // Sort/search state
   const [sortKey, setSortKey] = useState<SortKey>('none');
@@ -203,6 +204,12 @@ export default function Page() {
     const newResults: Array<[string, ResultState]> = [];
     let hasError = false;
 
+    // Check if any URL is Apple Music and show notice immediately
+    const hasApple = urls.some(u => detectSourceFromUrl(u) === 'apple');
+    if (hasApple) {
+      setAppleNotice(true);
+    }
+
     for (const url of urls) {
       try {
         const effectiveSource = detectSourceFromUrl(url) || 'spotify';
@@ -264,7 +271,9 @@ export default function Page() {
                 lower.includes('official editorial') ||
                 lower.includes('owner=spotify') ||
                 lower.includes('region-locked') ||
-                lower.includes('tried markets')
+                lower.includes('tried markets') ||
+                lower.includes('37i9') ||
+                lower.includes('workaround')
               ) {
                 setErrorText(
                   'このSpotifyの公式/編集プレイリストは、地域制限や提供条件により取得できない場合があります。\n' +
@@ -326,6 +335,7 @@ export default function Page() {
     setTimeout(() => setProgress(0), 600);
 
     setLoading(false);
+    setAppleNotice(false);
     if (progressTimer.current) {
       window.clearInterval(progressTimer.current);
       progressTimer.current = null;
@@ -497,6 +507,13 @@ export default function Page() {
           )}
         </section>
 
+        {/* Apple Music notice - show immediately when analyzing */}
+        {appleNotice && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-200 px-3 py-2 text-xs">
+            Apple Music は Spotify より解析に時間がかかります（Webレンダリング + Spotify補完のため）。
+          </div>
+        )}
+
         {/* Progress bar */}
         {loading && (
           <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
@@ -559,11 +576,6 @@ export default function Page() {
                 </div>
 
                 {/* Search & Sort Controls */}
-                {currentResult.playlistUrl?.includes('music.apple.com') && (
-                  <div className="rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-200 px-3 py-2 text-xs">
-                    Apple Music は Spotify より解析に時間がかかります（Webレンダリング + Spotify補完のため）。
-                  </div>
-                )}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
