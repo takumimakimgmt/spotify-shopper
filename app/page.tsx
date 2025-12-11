@@ -527,6 +527,11 @@ export default function Page() {
                 </div>
 
                 {/* Search & Sort Controls */}
+                {currentResult.playlistUrl?.includes('music.apple.com') && (
+                  <div className="rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-200 px-3 py-2 text-xs">
+                    Apple Music は Spotify より解析に時間がかかります（Webレンダリング + Spotify補完のため）。
+                  </div>
+                )}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
