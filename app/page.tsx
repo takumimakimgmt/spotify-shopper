@@ -260,9 +260,18 @@ export default function Page() {
             const usedSource: string | undefined = d?.used_source;
             const errText: string | undefined = d?.error ?? (typeof detail === 'string' ? detail : undefined);
 
+            console.log('[DEBUG] Error response:', { detail, usedSource, errText, effectiveSource });
+
             if (usedSource === 'spotify' || effectiveSource === 'spotify') {
               if (errText) {
                 const lower = errText.toLowerCase();
+                console.log('[DEBUG] Error text contains:', {
+                  personalized: lower.includes('personalized'),
+                  private: lower.includes('private'),
+                  '37i9': lower.includes('37i9'),
+                  workaround: lower.includes('workaround'),
+                });
+
                 if (lower.includes('personalized') || lower.includes('private') || lower.includes('daily mix') || lower.includes('blend')) {
                   setErrorText(
                     'このSpotifyプレイリストはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
