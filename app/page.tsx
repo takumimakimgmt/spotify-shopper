@@ -413,17 +413,18 @@ export default function Page() {
               </label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <input
+                  id="rekordbox-file-input"
                   type="file"
                   accept=".xml"
                   onChange={handleRekordboxChange}
-                  className={
-                    "text-xs text-slate-200 cursor-pointer " +
-                    "file:mr-3 file:rounded-md file:border-0 " +
-                    "file:bg-emerald-500 file:px-3 file:py-1 " +
-                    "file:text-xs file:font-semibold file:text-slate-900 " +
-                    "hover:file:bg-emerald-400"
-                  }
+                  className="hidden"
                 />
+                <label
+                  htmlFor="rekordbox-file-input"
+                  className="inline-flex items-center rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-emerald-400 cursor-pointer"
+                >
+                  Choose File
+                </label>
                 <span className="text-xs text-slate-400">
                   Upload your Rekordbox collection XML to mark Owned / Not owned.
                 </span>
