@@ -22,7 +22,7 @@ type ApiTrack = {
   title: string;
   artist: string;
   album: string;
-  isrc?: string | null;
+  bpm?: number | null;
   spotify_url: string;
   apple_url?: string | null;
   links: StoreLinks;
@@ -40,7 +40,7 @@ type PlaylistRow = {
   title: string;
   artist: string;
   album: string;
-  isrc?: string;
+  bpm?: number;
   spotifyUrl: string;
   appleUrl?: string;
   stores: StoreLinks;
@@ -59,7 +59,7 @@ type RekordboxTrack = {
   title: string;
   artist: string;
   album?: string;
-  isrc?: string | null;
+  bpm?: number | null;
 };
 
 type SortKey = 'none' | 'artist' | 'album' | 'title';
@@ -82,10 +82,10 @@ function normalizeKey(input: string): string {
 function buildTrackKey(
   title: string,
   artist: string,
-  isrc?: string | null
+  bpm?: number | null
 ): string {
   const base = `${normalizeKey(title)}::${normalizeKey(artist)}`;
-  return isrc ? `${base}::${isrc.toUpperCase()}` : base;
+  return bpm ? `${base}::${bpm}` : base;
 }
 
 function parseRekordboxXml(text: string): RekordboxTrack[] {
@@ -105,11 +105,12 @@ function parseRekordboxXml(text: string): RekordboxTrack[] {
     const title = node.getAttribute('Name') ?? '';
     const artist = node.getAttribute('Artist') ?? '';
     const album = node.getAttribute('Album') ?? undefined;
-    const isrc = node.getAttribute('ISRC') ?? undefined;
+    const bpmStr = node.getAttribute('BPM') ?? undefined;
+    const bpm = bpmStr ? parseInt(bpmStr, 10) : undefined;
 
     if (!title || !artist) continue;
 
-    tracks.push({ title, artist, album, isrc });
+    tracks.push({ title, artist, album, bpm });
   }
 
   return tracks;
@@ -255,7 +256,7 @@ export default function Page() {
           title: t.title,
           artist: t.artist,
           album: t.album,
-          isrc: t.isrc ?? undefined,
+          bpm: t.bpm ?? undefined,
           spotifyUrl: t.spotify_url ?? '',
           appleUrl: (t as any).apple_url ?? undefined,
           stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
@@ -347,13 +348,13 @@ export default function Page() {
       return;
     }
 
-    const headers = ['#', 'Title', 'Artist', 'Album', 'ISRC', 'Owned', 'Beatport', 'Bandcamp', 'iTunes'];
+    const headers = ['#', 'Title', 'Artist', 'Album', 'BPM', 'Owned', 'Beatport', 'Bandcamp', 'iTunes'];
     const rows = displayedTracks.map((t) => [
       t.index,
       t.title,
       t.artist,
       t.album,
-      t.isrc || '',
+      t.bpm || '',
       t.owned === true ? 'Yes' : t.owned === false ? 'No' : 'Unknown',
       t.stores.beatport,
       t.stores.bandcamp,
@@ -563,7 +564,7 @@ export default function Page() {
                     const trackUrl = t.spotifyUrl || t.appleUrl || undefined;
                     return (
                       <div
-                        key={`${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
+                        key={`${trackUrl ?? ''}-${t.index}-${t.bpm ?? ''}`}
                         className="rounded-lg border border-slate-800 bg-slate-900/70 p-3 text-xs"
                       >
                         <div className="flex items-center justify-between gap-2">
@@ -639,7 +640,7 @@ export default function Page() {
                         <th className="px-3 py-2 text-left">Title</th>
                         <th className="px-3 py-2 text-left">Artist</th>
                         <th className="px-3 py-2 text-left">Album</th>
-                        <th className="px-3 py-2 text-left">ISRC</th>
+                        <th className="px-3 py-2 text-left">BPM</th>
                         <th className="px-3 py-2 text-center">Owned</th>
                         <th className="px-3 py-2 text-left">Stores</th>
                       </tr>
@@ -649,7 +650,7 @@ export default function Page() {
                         const trackUrl = t.spotifyUrl || t.appleUrl || undefined;
                         return (
                           <tr
-                            key={`${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
+                            key={`${trackUrl ?? ''}-${t.index}-${t.bpm ?? ''}`}
                             className="border-b border-slate-800/70 hover:bg-slate-800/40 even:bg-slate-900/60"
                           >
                             <td className="px-3 py-1 text-slate-400">
@@ -673,7 +674,7 @@ export default function Page() {
                               <div className="line-clamp-2" title={t.album}>{t.album}</div>
                             </td>
                             <td className="px-3 py-1 text-slate-400">
-                              {t.isrc ?? ''}
+                              {t.bpm ?? ''}
                             </td>
                             <td className="px-3 py-1 text-center">
                               {t.owned === true ? (
