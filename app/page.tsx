@@ -246,6 +246,38 @@ export default function Page() {
 
         if (!res.ok) {
           hasError = true;
+          // Try to surface more helpful error messages from backend
+          try {
+            const detail = (body && (body.detail ?? body)) || null;
+            const d = (detail && typeof detail === 'object') ? detail as any : null;
+            const usedSource: string | undefined = d?.used_source;
+            const errText: string | undefined = d?.error ?? (typeof detail === 'string' ? detail : undefined);
+
+            if ((usedSource === 'spotify') && errText) {
+              const lower = errText.toLowerCase();
+              if (lower.includes('personalized') || lower.includes('private')) {
+                setErrorText(
+                  'このSpotifyプレイリストはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
+                  'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。'
+                );
+              } else if (
+                lower.includes('official editorial') ||
+                lower.includes('owner=spotify') ||
+                lower.includes('region-locked') ||
+                lower.includes('tried markets')
+              ) {
+                setErrorText(
+                  'このSpotifyの公式/編集プレイリストは、地域制限や提供条件により取得できない場合があります。\n' +
+                  '対処: サーバー側の環境変数 SPOTIFY_MARKET を JP や US に切り替えて再試行してください（例: SPOTIFY_MARKET="JP,US,GB"）。\n' +
+                  'ワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析すると成功しやすいです。'
+                );
+              } else {
+                setErrorText('Spotifyの取得に失敗しました: ' + errText);
+              }
+            }
+          } catch (_) {
+            // ignore parse issues
+          }
           continue;
         }
 
@@ -566,7 +598,7 @@ export default function Page() {
                 <div className="md:hidden space-y-2">
                   {displayedTracks.map((t) => {
                     // Prioritize apple_url for Apple Music playlists, spotify_url for Spotify
-                    const isApplePlaylist = result.playlistUrl?.includes('music.apple.com');
+                    const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
                     const trackUrl = isApplePlaylist 
                       ? (t.appleUrl || t.spotifyUrl || undefined)
                       : (t.spotifyUrl || t.appleUrl || undefined);
@@ -656,7 +688,7 @@ export default function Page() {
                     <tbody>
                       {displayedTracks.map((t) => {
                         // Prioritize apple_url for Apple Music playlists, spotify_url for Spotify
-                        const isApplePlaylist = result.playlistUrl?.includes('music.apple.com');
+                        const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
                         const trackUrl = isApplePlaylist 
                           ? (t.appleUrl || t.spotifyUrl || undefined)
                           : (t.spotifyUrl || t.appleUrl || undefined);
