@@ -26,6 +26,8 @@ type ApiTrack = {
   spotify_url: string;
   apple_url?: string | null;
   links: StoreLinks;
+  owned?: boolean | null;
+  owned_reason?: string | null;
 };
 
 type ApiPlaylistResponse = {
@@ -44,7 +46,8 @@ type PlaylistRow = {
   spotifyUrl: string;
   appleUrl?: string;
   stores: StoreLinks;
-  owned?: boolean;
+  owned?: boolean | null;
+  ownedReason?: string | null;
 };
 
 type ResultState = {
@@ -113,6 +116,43 @@ function parseRekordboxXml(text: string): RekordboxTrack[] {
   }
 
   return tracks;
+}
+
+// ==== Owned status helper ====
+
+function getOwnedStatusReason(
+  owned: boolean | null | undefined,
+  ownedReason: string | null | undefined
+): { icon: string; label: string; tooltip: string } {
+  if (owned === true) {
+    const reasonLabel =
+      ownedReason === 'isrc'
+        ? 'Matched by ISRC'
+        : ownedReason === 'exact'
+        ? 'Matched by Title + Artist'
+        : ownedReason === 'album'
+        ? 'Matched by Title + Album'
+        : ownedReason === 'fuzzy'
+        ? 'Matched by Fuzzy Title + Artist'
+        : 'Matched';
+    return {
+      icon: '🟢',
+      label: 'YES',
+      tooltip: reasonLabel,
+    };
+  } else if (owned === false) {
+    return {
+      icon: '⚪️',
+      label: 'NO',
+      tooltip: 'Not found in library',
+    };
+  } else {
+    return {
+      icon: '🟡',
+      label: '?',
+      tooltip: 'Maybe (fuzzy match, low confidence)',
+    };
+  }
 }
 
 // ==== Main component ====
@@ -320,6 +360,7 @@ export default function Page() {
           appleUrl: (t as any).apple_url ?? undefined,
           stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
           owned: (t as any).owned ?? undefined,
+          ownedReason: (t as any).owned_reason ?? undefined,
         }));
 
         newResults.push([
@@ -650,19 +691,17 @@ export default function Page() {
                             {t.title}
                           </a>
                           <div>
-                            {t.owned === true ? (
-                              <span className="inline-flex items-center justify-center rounded-full border border-emerald-500/70 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
-                                Owned
-                              </span>
-                            ) : t.owned === false ? (
-                              <span className="inline-flex items-center justify-center rounded-full border border-rose-500/70 bg-rose-500/10 px-2.5 py-0.5 text-xs font-medium text-rose-300">
-                                Not owned
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center justify-center rounded-full border border-slate-500/70 bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-slate-200">
-                                Unknown
-                              </span>
-                            )}
+                            {(() => {
+                              const status = getOwnedStatusReason(t.owned, t.ownedReason);
+                              return (
+                                <span
+                                  className="inline-flex items-center justify-center text-lg cursor-help"
+                                  title={status.tooltip}
+                                >
+                                  {status.icon}
+                                </span>
+                              );
+                            })()}
                           </div>
                         </div>
                         <div className="mt-1 text-slate-300">{t.artist}</div>
@@ -754,19 +793,17 @@ export default function Page() {
                               {t.isrc ?? ''}
                             </td>
                             <td className="px-3 py-1 text-center">
-                              {t.owned === true ? (
-                                <span className="inline-flex items-center justify-center rounded-full border border-emerald-500/70 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
-                                  Owned
-                                </span>
-                              ) : t.owned === false ? (
-                                <span className="inline-flex items-center justify-center rounded-full border border-rose-500/70 bg-rose-500/10 px-2.5 py-0.5 text-xs font-medium text-rose-300">
-                                  Not owned
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center justify-center rounded-full border border-slate-500/70 bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-slate-200">
-                                  Unknown
-                                </span>
-                              )}
+                              {(() => {
+                                const status = getOwnedStatusReason(t.owned, t.ownedReason);
+                                return (
+                                  <span
+                                    className="inline-flex items-center justify-center text-lg cursor-help"
+                                    title={status.tooltip}
+                                  >
+                                    {status.icon}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td className="px-3 py-1">
                               <div className="flex flex-wrap gap-2">
