@@ -52,6 +52,7 @@ type ResultState = {
   total: number;
   playlistUrl: string;
   tracks: PlaylistRow[];
+  analyzedAt: number; // timestamp when analyzed
 };
 
 type RekordboxTrack = {
@@ -120,10 +121,11 @@ export default function Page() {
   // Single/multiple playlist input
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
+  const [rekordboxDate, setRekordboxDate] = useState<string | null>(null);
   const [onlyUnowned, setOnlyUnowned] = useState(false);
 
-  // Multi-playlist results: Map of URL -> ResultState
-  const [multiResults, setMultiResults] = useState<Map<string, ResultState>>(new Map());
+  // Multi-playlist results: ordered array (newest first)
+  const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
 
   // Loading/error state
@@ -161,6 +163,19 @@ export default function Page() {
     return trimmed;
   }
 
+  const handleRekordboxChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setRekordboxFile(file);
+    
+    // Get file's last modified date
+    if (file && file.lastModified) {
+      const date = new Date(file.lastModified);
+      setRekordboxDate(date.toLocaleString());
+    } else {
+      setRekordboxDate(null);
+    }
+  };
+
   const handleAnalyze = async (e: FormEvent) => {
     e.preventDefault();
     setErrorText(null);
@@ -185,7 +200,7 @@ export default function Page() {
       setProgress((p) => Math.min(98, p + Math.random() * 12 + 3));
     }, 300) as unknown as number;
 
-    const newResults = new Map(multiResults);
+    const newResults: Array<[string, ResultState]> = [];
     let hasError = false;
 
     for (const url of urls) {
@@ -247,24 +262,31 @@ export default function Page() {
           owned: (t as any).owned ?? undefined,
         }));
 
-        newResults.set(url, {
-          title: json.playlist_name,
-          total: rows.length,
-          playlistUrl: json.playlist_url,
-          tracks: rows,
-        });
+        newResults.push([
+          url,
+          {
+            title: json.playlist_name,
+            total: rows.length,
+            playlistUrl: json.playlist_url,
+            tracks: rows,
+            analyzedAt: Date.now(),
+          },
+        ]);
       } catch (err) {
         console.error(err);
         hasError = true;
       }
     }
 
-    setMultiResults(newResults);
-    if (newResults.size > 0) {
-      setActiveTab(Array.from(newResults.keys())[0]);
+    if (newResults.length > 0) {
+      // Prepend new results (newest first) and keep existing
+      const merged = [...newResults, ...multiResults];
+      setMultiResults(merged);
+      // Set active tab to first (newest) result
+      setActiveTab(merged[0][0]);
     }
 
-    if (hasError && newResults.size === 0) {
+    if (hasError && newResults.length === 0) {
       setErrorText('Failed to fetch playlists. Check URLs and try again.');
     }
 
@@ -279,7 +301,7 @@ export default function Page() {
   };
 
   // Current active result
-  const currentResult = activeTab ? multiResults.get(activeTab) : null;
+  const currentResult = multiResults.find(([url]) => url === activeTab)?.[1] ?? null;
 
   // Filter & sort tracks
   const displayedTracks = useMemo(() => {
@@ -319,23 +341,8 @@ export default function Page() {
     ? currentResult.tracks.filter((t) => t.owned === false).length
     : 0;
 
-  // Copy Beatport links
-  const handleCopyBeatportLinks = () => {
-    const links = displayedTracks
-      .filter((t) => t.stores.beatport)
-      .map((t) => t.stores.beatport)
-      .join('\n');
-
-    if (links) {
-      navigator.clipboard.writeText(links);
-      alert('Beatport links copied to clipboard!');
-    } else {
-      alert('No Beatport links found.');
-    }
-  };
-
   const handleExportCSV = () => {
-    if (!displayedTracks.length) {
+    if (!displayedTracks.length || !currentResult) {
       alert('No tracks to export.');
       return;
     }
@@ -359,7 +366,11 @@ export default function Page() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `playlist-${Date.now()}.csv`;
+    // Use playlist name in filename
+    const safePlaylistName = currentResult.title
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .substring(0, 50);
+    a.download = `playlist_${safePlaylistName}_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -404,7 +415,7 @@ export default function Page() {
                 <input
                   type="file"
                   accept=".xml"
-                  onChange={(e) => setRekordboxFile(e.target.files?.[0] ?? null)}
+                  onChange={handleRekordboxChange}
                   className={
                     "text-xs text-slate-200 cursor-pointer " +
                     "file:mr-3 file:rounded-md file:border-0 " +
@@ -418,9 +429,10 @@ export default function Page() {
                 </span>
               </div>
               {rekordboxFile && (
-                <p className="text-xs text-emerald-300">
-                  Selected: {rekordboxFile.name}
-                </p>
+                <div className="text-xs text-emerald-300 space-y-0.5">
+                  <p>Selected: {rekordboxFile.name}</p>
+                  {rekordboxDate && <p>Date: {rekordboxDate}</p>}
+                </div>
               )}
             </div>
 
@@ -467,23 +479,23 @@ export default function Page() {
         )}
 
         {/* Results */}
-        {multiResults.size > 0 && (
+        {multiResults.length > 0 && (
           <section className="space-y-4">
             {/* Tabs */}
             <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-800">
-              {Array.from(multiResults.keys()).map((url) => {
-                const r = multiResults.get(url);
+              {multiResults.map(([url, result]) => {
+                const isActive = activeTab === url;
                 return (
                   <button
                     key={url}
                     onClick={() => setActiveTab(url)}
                     className={`px-4 py-2 text-sm whitespace-nowrap rounded-t-lg transition ${
-                      activeTab === url
+                      isActive
                         ? 'bg-emerald-500/20 border-b-2 border-emerald-500 text-emerald-200'
                         : 'bg-slate-800/50 hover:bg-slate-800 text-slate-300'
                     }`}
                   >
-                    {r?.title || 'Playlist'} ({r?.total || 0})
+                    {result.title} ({result.total})
                   </button>
                 );
               })}
@@ -536,12 +548,6 @@ export default function Page() {
 
                 {/* Export Controls */}
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleCopyBeatportLinks}
-                    className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500"
-                  >
-                    Copy Beatport Links
-                  </button>
                   <button
                     onClick={handleExportCSV}
                     className="inline-flex items-center rounded-md bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-500"
