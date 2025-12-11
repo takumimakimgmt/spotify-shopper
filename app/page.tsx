@@ -300,19 +300,33 @@ export default function Page() {
             const usedSource: string | undefined = d?.used_source;
             const errText: string | undefined = d?.error ?? (typeof detail === 'string' ? detail : undefined);
 
-            console.log('[DEBUG] Error response:', { detail, usedSource, errText, effectiveSource });
+            console.log('[DEBUG] Full error response:', { body, detail, d, usedSource, errText, effectiveSource });
 
             if (usedSource === 'spotify' || effectiveSource === 'spotify') {
               if (errText) {
                 const lower = errText.toLowerCase();
-                console.log('[DEBUG] Error text contains:', {
-                  personalized: lower.includes('personalized'),
-                  private: lower.includes('private'),
-                  '37i9': lower.includes('37i9'),
-                  workaround: lower.includes('workaround'),
+                
+                // Check for personalized/private FIRST (higher priority)
+                const isPersonalized = lower.includes('personalized') || lower.includes('private') || lower.includes('daily mix') || lower.includes('blend');
+                
+                // Check for official editorial playlist (37i9 or region-restricted)
+                const isOfficial = 
+                  lower.includes('official editorial') ||
+                  lower.includes('owner=spotify') ||
+                  lower.includes('region-restricted') ||
+                  lower.includes('region-locked') ||
+                  lower.includes('tried markets') ||
+                  lower.includes('37i9') ||
+                  lower.includes('create a new public playlist');
+
+                console.log('[DEBUG] Error classification:', {
+                  isPersonalized,
+                  isOfficial,
+                  lower: lower.substring(0, 200),
                 });
 
-                if (lower.includes('personalized') || lower.includes('private') || lower.includes('daily mix') || lower.includes('blend')) {
+                if (isPersonalized && !isOfficial) {
+                  // Purely personalized/private (no 37i9)
                   setErrorText(
                     '【日本語】\n' +
                     'このSpotifyプレイリストはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
@@ -321,24 +335,24 @@ export default function Page() {
                     'This Spotify playlist is personalized/private and cannot be accessed with client credentials.\n' +
                     'Workaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.'
                   );
-                } else if (
-                  lower.includes('official editorial') ||
-                  lower.includes('owner=spotify') ||
-                  lower.includes('region-restricted') ||
-                  lower.includes('region-locked') ||
-                  lower.includes('tried markets') ||
-                  lower.includes('37i9') ||
-                  lower.includes('workaround') ||
-                  lower.includes('create a new public playlist')
-                ) {
+                } else if (isPersonalized && isOfficial) {
+                  // Both personalized AND official (37i9) - show combined message
                   setErrorText(
                     '【日本語】\n' +
-                    'このSpotifyの公式/編集プレイリストは、地域制限や提供条件により取得できない場合があります。\n' +
-                    '対処: サーバー側の環境変数 SPOTIFY_MARKET を JP や US に切り替えて再試行してください（例: SPOTIFY_MARKET="JP,US,GB"）。\n' +
-                    'ワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析すると成功しやすいです。\n\n' +
+                    'このSpotifyプレイリストは公式編集プレイリスト（37i9で始まるID）またはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
+                    'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。\n\n' +
                     '【English】\n' +
-                    'This Spotify official/editorial playlist cannot be accessed due to regional restrictions or availability conditions.\n' +
-                    'Solution: Try changing the server environment variable SPOTIFY_MARKET to JP or US (e.g., SPOTIFY_MARKET="JP,US,GB").\n' +
+                    'This Spotify playlist is an official editorial playlist (ID starts with 37i9) or personalized/private and cannot be accessed with client credentials.\n' +
+                    'Workaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.'
+                  );
+                } else if (isOfficial) {
+                  // Only official editorial
+                  setErrorText(
+                    '【日本語】\n' +
+                    'このSpotifyの公式/編集プレイリスト（37i9で始まるID）は、地域制限や提供条件により取得できない場合があります。\n' +
+                    'ワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析してください。\n\n' +
+                    '【English】\n' +
+                    'This Spotify official/editorial playlist (ID starts with 37i9) cannot be accessed due to regional restrictions or availability conditions.\n' +
                     'Workaround: Create a new public playlist in Spotify, copy all tracks from the original, and use that URL for analysis.'
                   );
                 } else {
