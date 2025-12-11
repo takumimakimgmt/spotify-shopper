@@ -260,32 +260,42 @@ export default function Page() {
             const usedSource: string | undefined = d?.used_source;
             const errText: string | undefined = d?.error ?? (typeof detail === 'string' ? detail : undefined);
 
-            if ((usedSource === 'spotify') && errText) {
-              const lower = errText.toLowerCase();
-              if (lower.includes('personalized') || lower.includes('private')) {
-                setErrorText(
-                  'このSpotifyプレイリストはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
-                  'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。'
-                );
-              } else if (
-                lower.includes('official editorial') ||
-                lower.includes('owner=spotify') ||
-                lower.includes('region-locked') ||
-                lower.includes('tried markets') ||
-                lower.includes('37i9') ||
-                lower.includes('workaround')
-              ) {
-                setErrorText(
-                  'このSpotifyの公式/編集プレイリストは、地域制限や提供条件により取得できない場合があります。\n' +
-                  '対処: サーバー側の環境変数 SPOTIFY_MARKET を JP や US に切り替えて再試行してください（例: SPOTIFY_MARKET="JP,US,GB"）。\n' +
-                  'ワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析すると成功しやすいです。'
-                );
+            if (usedSource === 'spotify' || effectiveSource === 'spotify') {
+              if (errText) {
+                const lower = errText.toLowerCase();
+                if (lower.includes('personalized') || lower.includes('private') || lower.includes('daily mix') || lower.includes('blend')) {
+                  setErrorText(
+                    'このSpotifyプレイリストはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
+                    'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。'
+                  );
+                } else if (
+                  lower.includes('official editorial') ||
+                  lower.includes('owner=spotify') ||
+                  lower.includes('region-restricted') ||
+                  lower.includes('region-locked') ||
+                  lower.includes('tried markets') ||
+                  lower.includes('37i9') ||
+                  lower.includes('workaround') ||
+                  lower.includes('create a new public playlist')
+                ) {
+                  setErrorText(
+                    'このSpotifyの公式/編集プレイリストは、地域制限や提供条件により取得できない場合があります。\n' +
+                    '対処: サーバー側の環境変数 SPOTIFY_MARKET を JP や US に切り替えて再試行してください（例: SPOTIFY_MARKET="JP,US,GB"）。\n' +
+                    'ワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析すると成功しやすいです。'
+                  );
+                } else {
+                  setErrorText('Spotifyの取得に失敗しました: ' + errText);
+                }
               } else {
-                setErrorText('Spotifyの取得に失敗しました: ' + errText);
+                setErrorText('Spotifyの取得に失敗しました（詳細不明）');
               }
+            } else {
+              // Apple or other source errors
+              setErrorText(errText || 'プレイリストの取得に失敗しました');
             }
           } catch (_) {
             // ignore parse issues
+            setErrorText('プレイリストの取得に失敗しました');
           }
           continue;
         }
