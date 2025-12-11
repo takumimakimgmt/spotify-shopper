@@ -510,7 +510,8 @@ export default function Page() {
         {/* Apple Music notice - show immediately when analyzing */}
         {appleNotice && (
           <div className="rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-200 px-3 py-2 text-xs">
-            Apple Music は Spotify より解析に時間がかかります（Webレンダリング + Spotify補完のため）。
+            <div>Apple Music は Spotify より解析に時間がかかります（Webレンダリング + Spotify補完のため）。</div>
+            <div className="mt-1">Apple Music takes longer to analyze than Spotify (due to web rendering + Spotify enrichment).</div>
           </div>
         )}
 
