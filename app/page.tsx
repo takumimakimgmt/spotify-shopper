@@ -560,7 +560,11 @@ export default function Page() {
                 {/* Mobile: card list */}
                 <div className="md:hidden space-y-2">
                   {displayedTracks.map((t) => {
-                    const trackUrl = t.spotifyUrl || t.appleUrl || undefined;
+                    // Prioritize apple_url for Apple Music playlists, spotify_url for Spotify
+                    const isApplePlaylist = result.playlistUrl?.includes('music.apple.com');
+                    const trackUrl = isApplePlaylist 
+                      ? (t.appleUrl || t.spotifyUrl || undefined)
+                      : (t.spotifyUrl || t.appleUrl || undefined);
                     return (
                       <div
                         key={`${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
@@ -646,7 +650,11 @@ export default function Page() {
                     </thead>
                     <tbody>
                       {displayedTracks.map((t) => {
-                        const trackUrl = t.spotifyUrl || t.appleUrl || undefined;
+                        // Prioritize apple_url for Apple Music playlists, spotify_url for Spotify
+                        const isApplePlaylist = result.playlistUrl?.includes('music.apple.com');
+                        const trackUrl = isApplePlaylist 
+                          ? (t.appleUrl || t.spotifyUrl || undefined)
+                          : (t.spotifyUrl || t.appleUrl || undefined);
                         return (
                           <tr
                             key={`${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
