@@ -293,6 +293,7 @@ export default function Page() {
 
         if (!res.ok) {
           hasError = true;
+          console.log('[DEBUG] Response not OK, status:', res.status);
           // Try to surface more helpful error messages from backend
           try {
             const detail = (body && (body.detail ?? body)) || null;
@@ -300,7 +301,16 @@ export default function Page() {
             const usedSource: string | undefined = d?.used_source;
             const errText: string | undefined = d?.error ?? (typeof detail === 'string' ? detail : undefined);
 
-            console.log('[DEBUG] Full error response:', { body, detail, d, usedSource, errText, effectiveSource });
+            console.log('[DEBUG] Full error response:', { 
+              body, 
+              detail, 
+              d, 
+              usedSource, 
+              errText, 
+              effectiveSource,
+              hasDetail: !!detail,
+              detailType: typeof detail,
+            });
 
             if (usedSource === 'spotify' || effectiveSource === 'spotify') {
               if (errText) {
@@ -327,48 +337,58 @@ export default function Page() {
 
                 if (isPersonalized && !isOfficial) {
                   // Purely personalized/private (no 37i9)
-                  setErrorText(
+                  const msg = 
                     '【日本語】\n' +
                     'このSpotifyプレイリストはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
                     'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。\n\n' +
                     '【English】\n' +
                     'This Spotify playlist is personalized/private and cannot be accessed with client credentials.\n' +
-                    'Workaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.'
-                  );
+                    'Workaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.';
+                  console.log('[DEBUG] Setting error (personalized):', msg.substring(0, 100));
+                  setErrorText(msg);
                 } else if (isPersonalized && isOfficial) {
                   // Both personalized AND official (37i9) - show combined message
-                  setErrorText(
+                  const msg = 
                     '【日本語】\n' +
                     'このSpotifyプレイリストは公式編集プレイリスト（37i9で始まるID）またはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
                     'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。\n\n' +
                     '【English】\n' +
                     'This Spotify playlist is an official editorial playlist (ID starts with 37i9) or personalized/private and cannot be accessed with client credentials.\n' +
-                    'Workaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.'
-                  );
+                    'Workaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.';
+                  console.log('[DEBUG] Setting error (personalized+official):', msg.substring(0, 100));
+                  setErrorText(msg);
                 } else if (isOfficial) {
                   // Only official editorial
-                  setErrorText(
+                  const msg = 
                     '【日本語】\n' +
                     'このSpotifyの公式/編集プレイリスト（37i9で始まるID）は、地域制限や提供条件により取得できない場合があります。\n' +
                     'ワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析してください。\n\n' +
                     '【English】\n' +
                     'This Spotify official/editorial playlist (ID starts with 37i9) cannot be accessed due to regional restrictions or availability conditions.\n' +
-                    'Workaround: Create a new public playlist in Spotify, copy all tracks from the original, and use that URL for analysis.'
-                  );
+                    'Workaround: Create a new public playlist in Spotify, copy all tracks from the original, and use that URL for analysis.';
+                  console.log('[DEBUG] Setting error (official):', msg.substring(0, 100));
+                  setErrorText(msg);
                 } else {
-                  setErrorText('Spotifyの取得に失敗しました / Spotify fetch failed: ' + errText);
+                  const msg = 'Spotifyの取得に失敗しました / Spotify fetch failed: ' + errText;
+                  console.log('[DEBUG] Setting error (generic spotify):', msg);
+                  setErrorText(msg);
                 }
               } else {
+                console.log('[DEBUG] No errText found for Spotify error');
                 setErrorText('Spotifyの取得に失敗しました（詳細不明）');
               }
             } else {
               // Apple or other source errors
-              setErrorText(errText || 'プレイリストの取得に失敗しました');
+              const msg = errText || 'プレイリストの取得に失敗しました';
+              console.log('[DEBUG] Setting error (apple/other):', msg);
+              setErrorText(msg);
             }
           } catch (_) {
             // ignore parse issues
+            console.log('[DEBUG] Error parsing error response, using generic message');
             setErrorText('プレイリストの取得に失敗しました');
           }
+          console.log('[DEBUG] After error handling, errorText state should be set. Continuing to next URL...');
           continue;
         }
 
@@ -412,7 +432,12 @@ export default function Page() {
 
     // Only show generic error if no specific error was set
     if (hasError && newResults.length === 0 && !errorText) {
+      console.log('[DEBUG] Showing generic error message because no specific error was set');
       setErrorText('Failed to fetch playlists. Check URLs and try again.');
+    } else if (hasError && newResults.length === 0 && errorText) {
+      console.log('[DEBUG] hasError=true, newResults.length=0, errorText already set:', errorText.substring(0, 100));
+    } else if (hasError && newResults.length > 0) {
+      console.log('[DEBUG] hasError=true but got some results, newResults.length:', newResults.length);
     }
 
     setProgress(100);
