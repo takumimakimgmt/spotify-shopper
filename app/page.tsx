@@ -314,8 +314,12 @@ export default function Page() {
 
                 if (lower.includes('personalized') || lower.includes('private') || lower.includes('daily mix') || lower.includes('blend')) {
                   setErrorText(
+                    '【日本語】\n' +
                     'このSpotifyプレイリストはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
-                    'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。'
+                    'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。\n\n' +
+                    '【English】\n' +
+                    'This Spotify playlist is personalized/private and cannot be accessed with client credentials.\n' +
+                    'Workaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.'
                   );
                 } else if (
                   lower.includes('official editorial') ||
@@ -328,12 +332,17 @@ export default function Page() {
                   lower.includes('create a new public playlist')
                 ) {
                   setErrorText(
+                    '【日本語】\n' +
                     'このSpotifyの公式/編集プレイリストは、地域制限や提供条件により取得できない場合があります。\n' +
                     '対処: サーバー側の環境変数 SPOTIFY_MARKET を JP や US に切り替えて再試行してください（例: SPOTIFY_MARKET="JP,US,GB"）。\n' +
-                    'ワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析すると成功しやすいです。'
+                    'ワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析すると成功しやすいです。\n\n' +
+                    '【English】\n' +
+                    'This Spotify official/editorial playlist cannot be accessed due to regional restrictions or availability conditions.\n' +
+                    'Solution: Try changing the server environment variable SPOTIFY_MARKET to JP or US (e.g., SPOTIFY_MARKET="JP,US,GB").\n' +
+                    'Workaround: Create a new public playlist in Spotify, copy all tracks from the original, and use that URL for analysis.'
                   );
                 } else {
-                  setErrorText('Spotifyの取得に失敗しました: ' + errText);
+                  setErrorText('Spotifyの取得に失敗しました / Spotify fetch failed: ' + errText);
                 }
               } else {
                 setErrorText('Spotifyの取得に失敗しました（詳細不明）');
