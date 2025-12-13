@@ -1133,12 +1133,16 @@ export default function Page() {
                         <th className="px-2 py-2 text-center w-16">Own</th>
                         <th className="px-3 py-2 text-left">Stores</th>
                         <th className="px-3 py-2 text-center w-40">
-                          <span className="inline-flex items-center gap-1.5 group relative">
+                          <span className="inline-flex items-center gap-1.5 justify-center">
                             Buylist
-                            <span className="text-slate-400 cursor-help" title="どのストアで購入済み/スキップかを記録します。データはブラウザに保存されます。">
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <span className="group/tooltip relative">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-slate-400 cursor-help">
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                               </svg>
+                              <span className="invisible group-hover/tooltip:visible absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 px-3 py-2 text-xs text-slate-200 bg-slate-800 rounded-lg border border-slate-700 shadow-xl z-50 whitespace-normal">
+                                どのストアで購入済み/スキップかを記録します。データはブラウザに保存されます。
+                                <span className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-slate-800 border-l border-t border-slate-700 rotate-45"></span>
+                              </span>
                             </span>
                           </span>
                         </th>
