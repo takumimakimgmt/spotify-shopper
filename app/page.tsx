@@ -1408,8 +1408,15 @@ export default function Page() {
                             const data = await res.json();
                             if (!res.ok) throw new Error(data?.error || 'Share failed');
                             const shareUrl = `${window.location.origin}/?share=${data.share_id}`;
-                            await navigator.clipboard.writeText(shareUrl);
-                            alert('Shareリンクをコピーしました: ' + shareUrl);
+                            
+                            // Try clipboard API, fallback to alert with URL
+                            try {
+                              await navigator.clipboard.writeText(shareUrl);
+                              alert('Shareリンクをコピーしました');
+                            } catch (clipboardErr) {
+                              // Fallback: show URL in alert for manual copy
+                              alert('Shareリンク:\n' + shareUrl);
+                            }
                           } catch (e: any) {
                             alert('Share失敗: ' + (e?.message ?? e));
                           }
