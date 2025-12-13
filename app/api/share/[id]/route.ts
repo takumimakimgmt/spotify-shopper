@@ -7,8 +7,11 @@ function notFound(message: string) {
   return NextResponse.json({ error: message }, { status: 404 });
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   if (!id) return notFound("missing id");
   if (!UPSTASH_URL || !UPSTASH_TOKEN) {
     return NextResponse.json({ error: "Upstash env missing" }, { status: 500 });
