@@ -82,6 +82,18 @@ type ResultState = {
 
 type SortKey = 'none' | 'artist' | 'album' | 'title';
 
+// ==== Owned normalization ====
+
+/**
+ * Normalize owned field: only true/false/null are valid.
+ * Any other value (undefined, etc.) becomes null.
+ */
+function normalizeOwned(value: boolean | null | undefined): boolean | null {
+  if (value === true) return true;
+  if (value === false) return false;
+  return null; // undefined, null, or anything else → null
+}
+
 // ==== Track category helper ====
 
 type TrackCategory = 'checkout' | 'owned';
@@ -89,12 +101,12 @@ type TrackCategory = 'checkout' | 'owned';
 function categorizeTrack(
   track: PlaylistRow
 ): TrackCategory {
-  // Owned: confirmed by Rekordbox
+  // Owned: confirmed by Rekordbox (true only)
   if (track.owned === true) {
     return 'owned';
   }
   
-  // Everything else: To Buy
+  // Everything else (false or null): To Buy
   return 'checkout';
 }
 
@@ -200,6 +212,7 @@ export default function Page() {
 
   // Active category filter (UI facing). Default will snap to checkout when available.
   const [showOwned, setShowOwned] = useState(false);
+  const [shareToast, setShareToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Import form collapse state
   const [formCollapsed, setFormCollapsed] = useState(false);
@@ -259,7 +272,7 @@ export default function Page() {
                 playlist_name: snap.playlist?.name || '(shared playlist)',
                 analyzedAt: Date.now(),
                 hasRekordboxData: snap.tracks?.some(
-                  (t: PlaylistSnapshotV1['tracks'][number]) => t.owned != null
+                  (t: PlaylistSnapshotV1['tracks'][number]) => t.owned === true
                 ) || false,
                 tracks: (snap.tracks || []).map(
                   (t: PlaylistSnapshotV1['tracks'][number], idx: number) => ({
@@ -270,7 +283,7 @@ export default function Page() {
                   isrc: t.isrc || undefined,
                   spotifyUrl: t.links?.spotify || '',
                   appleUrl: t.links?.apple || '',
-                  owned: t.owned ?? null,
+                  owned: normalizeOwned(t.owned),
                   ownedReason: t.owned_reason ?? null,
                   trackKeyPrimary: t.track_key_primary,
                   trackKeyFallback: t.track_key_fallback,
@@ -579,8 +592,8 @@ export default function Page() {
               spotifyUrl: t.spotify_url ?? '',
               appleUrl: t.apple_url ?? undefined,
               stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
-              owned: t.owned ?? undefined,
-              ownedReason: t.owned_reason ?? undefined,
+              owned: t.owned ?? null,
+              ownedReason: t.owned_reason ?? null,
               trackKeyPrimary: t.track_key_primary,
               trackKeyFallback: t.track_key_fallback,
               trackKeyPrimaryType: t.track_key_primary_type,
@@ -702,8 +715,8 @@ export default function Page() {
         spotifyUrl: t.spotify_url ?? '',
         appleUrl: t.apple_url ?? undefined,
         stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
-        owned: t.owned ?? undefined,
-        ownedReason: t.owned_reason ?? undefined,
+        owned: t.owned ?? null,
+        ownedReason: t.owned_reason ?? null,
         trackKeyPrimary: t.track_key_primary,
         trackKeyFallback: t.track_key_fallback,
         trackKeyPrimaryType: t.track_key_primary_type,
@@ -977,8 +990,8 @@ export default function Page() {
           spotifyUrl: t.spotify_url ?? '',
           appleUrl: t.apple_url ?? undefined,
           stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
-          owned: t.owned ?? undefined,
-          ownedReason: t.owned_reason ?? undefined,
+          owned: t.owned ?? null,
+          ownedReason: t.owned_reason ?? null,
           trackKeyPrimary: t.track_key_primary,
           trackKeyFallback: t.track_key_fallback,
           trackKeyPrimaryType: t.track_key_primary_type,
@@ -1152,7 +1165,7 @@ export default function Page() {
   // Category counts
   const checkoutCount = useMemo(() => {
     return currentResult
-      ? currentResult.tracks.filter(t => categorizeTrack(t) === 'checkout').length
+      ? currentResult.tracks.filter(t => t.owned !== true).length
       : 0;
   }, [currentResult]);
 
@@ -1249,7 +1262,7 @@ export default function Page() {
           artist: t.artist,
           album: t.album,
           isrc: t.isrc ?? null,
-          owned: t.owned ?? undefined,
+          owned: t.owned === true ? true : t.owned === false ? false : undefined,
           owned_reason: t.ownedReason ?? null,
           track_key_primary: t.trackKeyPrimary!,
           track_key_fallback: t.trackKeyFallback!,
@@ -1270,18 +1283,25 @@ export default function Page() {
         body: JSON.stringify({ snapshot }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Share failed');
+      if (!res.ok) {
+        const errorDetail = data?.error || `HTTP ${res.status}`;
+        throw new Error(errorDetail);
+      }
       const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/?share=${data.share_id}`;
 
       try {
         await navigator.clipboard.writeText(shareUrl);
-        alert('Shareリンクをコピーしました');
+        setShareToast({ message: 'URL copied to clipboard', type: 'success' });
+        setTimeout(() => setShareToast(null), 3000);
       } catch {
-        alert('Shareリンク:\n' + shareUrl);
+        // Fallback: show URL for manual copy
+        setShareToast({ message: `URL: ${shareUrl} (copy manually)`, type: 'success' });
+        setTimeout(() => setShareToast(null), 5000);
       }
     } catch (e: unknown) {
       const errorMsg = e instanceof Error ? e.message : String(e);
-      alert('Share失敗: ' + errorMsg);
+      setShareToast({ message: `Share failed: ${errorMsg}`, type: 'error' });
+      setTimeout(() => setShareToast(null), 4000);
     }
   };
 
@@ -1298,29 +1318,33 @@ export default function Page() {
           </p>
         </header>
 
+        {/* Share toast */}
+        {shareToast && (
+          <div className={`fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg text-sm ${
+            shareToast.type === 'success'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-red-600 text-white'
+          }`}>
+            {shareToast.message}
+          </div>
+        )}
+
         {/* Form */}
         <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
           {currentResult && formCollapsed ? (
             <div className="flex items-center justify-between text-sm text-slate-200">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Import (edit)</span>
+                <span className="font-semibold">Import</span>
                 <span className="text-xs text-slate-400">URL + XML</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 <span>XML: {currentResult.hasRekordboxData ? 'attached' : 'not attached'}</span>
                 <button
                   type="button"
-                  onClick={handleShare}
-                  className="px-2 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 text-emerald-200"
-                >
-                  Share
-                </button>
-                <button
-                  type="button"
                   onClick={() => setFormCollapsed(false)}
                   className="px-2 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 text-emerald-200"
                 >
-                  Edit
+                  New playlist
                 </button>
               </div>
             </div>
@@ -1400,6 +1424,24 @@ export default function Page() {
             </div>
           )}
         </section>
+
+        {/* Summary Stats - Always visible */}
+        {currentResult && (
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="bg-slate-800/50 rounded px-2 py-1.5 text-center">
+              <div className="font-semibold text-slate-100">{currentResult.total}</div>
+              <div className="text-slate-400">Total</div>
+            </div>
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded px-2 py-1.5 text-center">
+              <div className="font-semibold text-emerald-300">{ownedCount}</div>
+              <div className="text-emerald-600">Owned</div>
+            </div>
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1.5 text-center">
+              <div className="font-semibold text-amber-300">{checkoutCount}</div>
+              <div className="text-amber-600">To Buy</div>
+            </div>
+          </div>
+        )}
 
         {/* Hidden file input for re-analyze */}
         <input
@@ -1544,7 +1586,7 @@ export default function Page() {
                                 artist: t.artist,
                                 album: t.album,
                                 isrc: t.isrc ?? null,
-                                owned: t.owned ?? undefined,
+                                owned: t.owned === true ? true : t.owned === false ? false : undefined,
                                 owned_reason: t.ownedReason ?? null,
                                 track_key_primary: t.trackKeyPrimary!,
                                 track_key_fallback: t.trackKeyFallback!,
@@ -1607,7 +1649,7 @@ export default function Page() {
                                 artist: t.artist,
                                 album: t.album,
                                 isrc: t.isrc ?? null,
-                                owned: t.owned ?? undefined,
+                                owned: t.owned === true ? true : t.owned === false ? false : undefined,
                                 owned_reason: t.ownedReason ?? null,
                                 track_key_primary: t.trackKeyPrimary!,
                                 track_key_fallback: t.trackKeyFallback!,
@@ -1685,7 +1727,7 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* CheckoutHeader: Stepper + Summary + Primary CTA */}
+                {/* CheckoutHeader: Stepper + Primary CTA (Summary moved to global) */}
                 <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-xl p-4 space-y-4">
                   {/* Stepper */}
                   <div className="flex items-center justify-between">
@@ -1718,21 +1760,7 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* Summary Stats */}
-                  <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 text-xs">
-                    <div className="bg-slate-800/50 rounded px-2 py-1.5 text-center">
-                      <div className="font-semibold text-slate-100">{currentResult.total}</div>
-                      <div className="text-slate-400">Total</div>
-                    </div>
-                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded px-2 py-1.5 text-center">
-                      <div className="font-semibold text-emerald-300">{ownedCount}</div>
-                      <div className="text-emerald-600">Owned</div>
-                    </div>
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1.5 text-center">
-                      <div className="font-semibold text-amber-300">{checkoutCount}</div>
-                      <div className="text-amber-600">To Buy</div>
-                    </div>
-                  </div>
+                  {/* Summary removed here; shown globally above Results */}
 
                   {/* Primary CTA */}
                   {checkoutCount > 0 && (
@@ -1828,12 +1856,9 @@ export default function Page() {
                               </a>
                               {(() => {
                                 const category = categorizeTrack(t);
-                                // Only show badge for To Buy, not for Owned
-                                if (category === 'owned') return null;
-                                const badgeClass =
-                                  category === 'checkout'
-                                    ? 'bg-amber-500/20 text-amber-200 border border-amber-500/50'
-                                    : 'bg-slate-500/20 text-slate-200 border border-slate-500/50';
+                                // Show badge only for Owned
+                                if (category !== 'owned') return null;
+                                const badgeClass = 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50';
                                 return (
                                   <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
                                     {categoryLabels[category]}
@@ -1967,12 +1992,9 @@ export default function Page() {
                                       </a>
                                       {(() => {
                                         const category = categorizeTrack(t);
-                                        // Only show badge for To Buy, not for Owned
-                                        if (category === 'owned') return null;
-                                        const badgeClass =
-                                          category === 'checkout'
-                                            ? 'bg-amber-500/20 text-amber-200 border border-amber-500/50'
-                                            : 'bg-slate-500/20 text-slate-200 border border-slate-500/50';
+                                        // Show badge only for Owned
+                                        if (category !== 'owned') return null;
+                                        const badgeClass = 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50';
                                         return (
                                           <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
                                             {categoryLabels[category]}
