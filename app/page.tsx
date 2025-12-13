@@ -173,11 +173,30 @@ export default function Page() {
 
   // Loading/error state
   const [loading, setLoading] = useState(false);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
   const abortRef = React.useRef<AbortController | null>(null);
   const requestIdRef = React.useRef<number>(0);
   const [progress, setProgress] = useState<number>(0);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [appleNotice, setAppleNotice] = useState(false);
+  const isProcessing = loading || isReanalyzing;
+  // Unified processing bar component (single place)
+  function ProcessingBar({ analyzing, reanalyzing, progress }: { analyzing: boolean; reanalyzing: boolean; progress: number }) {
+    if (!analyzing && !reanalyzing) return null;
+    const label = analyzing ? 'Analyzing playlist…' : 'Matching with Rekordbox XML…';
+    const pct = Math.max(progress, 5);
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-slate-300">
+          <span>{label}</span>
+          <span>{Math.round(pct)}%</span>
+        </div>
+        <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-700">
+          <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+    );
+  }
 
   // Sort/search state
   const [sortKey, setSortKey] = useState<SortKey>('none');
@@ -298,7 +317,8 @@ export default function Page() {
     
     if (isBulk) {
       // Bulk re-analyze all playlists
-      setLoading(true);
+      setIsReanalyzing(true);
+      setLoading(false);
       setErrorText(null);
       
       try {
@@ -364,7 +384,7 @@ export default function Page() {
         console.error('[Bulk Re-analyze] Error:', err);
         setErrorText('一括XML照合中にエラーが発生しました');
       } finally {
-        setLoading(false);
+        setIsReanalyzing(false);
         setReAnalyzeUrl(null);
         if (reAnalyzeInputRef.current) {
           reAnalyzeInputRef.current.value = '';
@@ -372,7 +392,8 @@ export default function Page() {
       }
       return;
     }
-    setLoading(true);
+    setIsReanalyzing(true);
+    setLoading(false);
     setErrorText(null);
 
     try {
@@ -447,7 +468,7 @@ export default function Page() {
       console.error('[Re-analyze] Error:', err);
       setErrorText('XML照合中にエラーが発生しました');
     } finally {
-      setLoading(false);
+      setIsReanalyzing(false);
       setReAnalyzeUrl(null);
       // Reset file input
       if (reAnalyzeInputRef.current) {
@@ -882,6 +903,7 @@ export default function Page() {
             </div>
           ) : (
             <form onSubmit={handleAnalyze} className="space-y-4">
+            <ProcessingBar analyzing={loading} reanalyzing={isReanalyzing} progress={progress} />
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 Playlist URLs
@@ -912,9 +934,9 @@ export default function Page() {
                 />
                 <label
                   htmlFor="rekordbox-file-input"
-                  className="inline-flex items-center rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-emerald-400 cursor-pointer"
+                  className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer ${isReanalyzing ? 'bg-slate-700 text-slate-300 pointer-events-none' : 'bg-emerald-500 text-slate-900 hover:bg-emerald-400'}`}
                 >
-                  Choose File
+                  {isReanalyzing ? (<><div className="inline-block h-3 w-3 mr-2 animate-spin rounded-full border-2 border-current border-r-transparent" /> Re-analyzing…</>) : 'Choose File'}
                 </label>
                 <span className="text-xs text-slate-400">
                   Upload your Rekordbox collection XML to mark Owned / Not owned.
@@ -941,22 +963,22 @@ export default function Page() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isProcessing}
                 className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
               >
-                {loading ? (
+                {isProcessing ? (
                   <>
                     <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-r-transparent" />
-                    Analyzing…
+                    {isReanalyzing ? 'Re-analyzing…' : 'Analyzing…'}
                   </>
                 ) : (
                   'Analyze'
                 )}
               </button>
-              {loading && (
+              {isProcessing && (
                 <button
                   type="button"
-                  onClick={() => { try { abortRef.current?.abort(); } catch {}; setLoading(false); setProgress(0); }}
+                  onClick={() => { try { abortRef.current?.abort(); } catch {}; setLoading(false); setIsReanalyzing(false); setProgress(0); }}
                   className="inline-flex items-center justify-center rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600"
                 >
                   Cancel
@@ -964,20 +986,7 @@ export default function Page() {
               )}
             </div>
 
-            {loading && (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Processing</span>
-                  <span>{Math.round(progress)}%</span>
-                </div>
-                <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-700">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-300"
-                    style={{ width: `${Math.max(progress, 5)}%` }}
-                  />
-                </div>
-              </div>
-            )}
+            {/* Duplicate inline progress bar removed; unified via ProcessingBar */}
           </form>
           )}
 
@@ -1005,19 +1014,7 @@ export default function Page() {
           </div>
         )}
 
-        {/* Progress bar */}
-        {loading && (
-          <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div
-              className="h-2 bg-emerald-500 transition-all duration-200"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(progress)}
-              style={{ width: `${Math.round(progress)}%` }}
-            />
-          </div>
-        )}
+        {/* Progress bar removed; unified via ProcessingBar component above */}
 
         {/* Results */}
         {multiResults.length > 0 && (
