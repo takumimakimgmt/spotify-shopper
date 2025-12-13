@@ -1605,7 +1605,7 @@ export default function Page() {
                 </div>
 
                 {/* Desktop: table */}
-                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/70">
+                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/70 relative z-10">
                   <table className="min-w-full text-xs">
                     <thead className="bg-slate-900/90">
                       <tr className="border-b border-slate-800 text-slate-300">
@@ -1640,7 +1640,7 @@ export default function Page() {
                         return (
                           <tr
                             key={`${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
-                            className="border-b border-slate-800/70 hover:bg-slate-800/40 even:bg-slate-900/60"
+                            className="border-b border-slate-800/70 hover:bg-slate-800/40 even:bg-slate-900/60 relative"
                           >
                             <td className="px-3 py-1 text-slate-400">
                               {t.index}
@@ -1713,7 +1713,7 @@ export default function Page() {
                                 )}
                               </div>
                             </td>
-                            <td className="px-3 py-1">
+                            <td className="px-3 py-1 relative z-20">
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => {
