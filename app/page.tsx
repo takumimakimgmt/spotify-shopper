@@ -1099,7 +1099,7 @@ export default function Page() {
                   return (
                     <div
                       key={url}
-                      className={`flex items-center gap-2 px-4 py-2 text-sm whitespace-nowrap rounded-t-lg transition ${
+                      className={`flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap rounded-t-lg transition ${
                         isActive
                           ? 'bg-emerald-500/20 border-b-2 border-emerald-500 text-emerald-200'
                           : 'bg-slate-800/50 hover:bg-slate-800 text-slate-300'
@@ -1107,7 +1107,7 @@ export default function Page() {
                     >
                       <button
                         onClick={() => setActiveTab(url)}
-                        className="flex-1 text-left"
+                        className="text-left min-w-0"
                       >
                         {result.title} ({result.total})
                       </button>
@@ -1116,7 +1116,7 @@ export default function Page() {
                           e.stopPropagation();
                           handleReAnalyzeWithXml(url);
                         }}
-                        className="ml-1 text-xs px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition"
+                        className="text-xs px-1.5 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition flex-shrink-0"
                         title="Re-analyze with Rekordbox XML"
                       >
                         +XML
@@ -1126,7 +1126,7 @@ export default function Page() {
                           e.stopPropagation();
                           handleRemoveTab(url);
                         }}
-                        className="ml-1 text-slate-400 hover:text-red-400 transition"
+                        className="text-slate-400 hover:text-red-400 transition text-lg leading-none flex-shrink-0"
                         title="Remove this playlist"
                       >
                         ×
