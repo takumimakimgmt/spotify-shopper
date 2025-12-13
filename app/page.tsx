@@ -142,6 +142,95 @@ function parseRekordboxXml(text: string): RekordboxTrack[] {
   return tracks;
 }
 
+// ==== Track category helper ====
+
+type TrackCategory = 'checkout' | 'hunt' | 'unknown' | 'owned';
+
+function categorizeTrack(
+  track: PlaylistRow
+): TrackCategory {
+  // Owned: confirmed by Rekordbox
+  if (track.owned === true) {
+    return 'owned';
+  }
+  
+  // Unknown: no match found (owned === null) OR fuzzy match (low confidence)
+  if (track.owned === null || track.owned === undefined) {
+    return 'unknown';
+  }
+  // Also treat fuzzy matches (norm type) as Unknown for transparency
+  if (track.ownedReason === 'fuzzy' || track.trackKeyPrimaryType === 'norm') {
+    return 'unknown';
+  }
+  
+  // owned === false: Not owned. Split into Checkout vs Hunt
+  // Checkout: has STRONG store links (Beatport or iTunes only)
+  // Hunt: Bandcamp-only OR no store links (manual search needed)
+  
+  const hasStrongStore =
+    (track.stores?.beatport && track.stores.beatport.length > 0) ||
+    (track.stores?.itunes && track.stores.itunes.length > 0);
+  
+  // If ISRC present, be more confident; if absent, be more cautious
+  const hasISRC = track.isrc && track.isrc.length > 0;
+  
+  if (hasStrongStore) {
+    // Beatport or iTunes present → always Checkout
+    return 'checkout';
+  }
+  
+  // Only Bandcamp (weak signal) → Hunt (manual search safer)
+  if (track.stores?.bandcamp && track.stores.bandcamp.length > 0) {
+    return 'hunt';
+  }
+  
+  // No store links at all → Hunt
+  return 'hunt';
+}
+
+// ==== Store helpers ====
+
+function getRecommendedStore(track: PlaylistRow): { name: string; url: string } | null {
+  const stores = track.stores;
+  const hasISRC = track.isrc && track.isrc.length > 0;
+  
+  // If ISRC present, iTunes/Beatport are most reliable
+  if (hasISRC) {
+    if (stores.itunes && stores.itunes.length > 0) {
+      return { name: 'iTunes', url: stores.itunes };
+    }
+    if (stores.beatport && stores.beatport.length > 0) {
+      return { name: 'Beatport', url: stores.beatport };
+    }
+  }
+  
+  // If no ISRC or iTunes/Beatport not available: Beatport > Bandcamp > iTunes
+  if (stores.beatport && stores.beatport.length > 0) {
+    return { name: 'Beatport', url: stores.beatport };
+  }
+  if (stores.bandcamp && stores.bandcamp.length > 0) {
+    return { name: 'Bandcamp', url: stores.bandcamp };
+  }
+  if (stores.itunes && stores.itunes.length > 0) {
+    return { name: 'iTunes', url: stores.itunes };
+  }
+  return null;
+}
+
+function getOtherStores(stores: StoreLinks, recommended: { name: string; url: string } | null): Array<{ name: string; url: string }> {
+  const others: Array<{ name: string; url: string }> = [];
+  if (stores.beatport && stores.beatport.length > 0 && recommended?.name !== 'Beatport') {
+    others.push({ name: 'Beatport', url: stores.beatport });
+  }
+  if (stores.bandcamp && stores.bandcamp.length > 0 && recommended?.name !== 'Bandcamp') {
+    others.push({ name: 'Bandcamp', url: stores.bandcamp });
+  }
+  if (stores.itunes && stores.itunes.length > 0 && recommended?.name !== 'iTunes') {
+    others.push({ name: 'iTunes', url: stores.itunes });
+  }
+  return others;
+}
+
 // ==== Owned status helper ====
 
 function getOwnedStatusStyle(
@@ -188,6 +277,16 @@ export default function Page() {
   // Multi-playlist results: ordered array (newest first)
   const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
+
+  // Dropdown state: track which "Other stores" dropdown is open
+  const [openStoreDropdown, setOpenStoreDropdown] = useState<string | null>(null);
+
+  // Purchase modal state
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [selectedStoreTab, setSelectedStoreTab] = useState<'beatport' | 'itunes' | 'bandcamp'>('beatport');
+
+  // Section collapse state
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['checkout']));
 
   // Loading/error state
   const [loading, setLoading] = useState(false);
@@ -1114,6 +1213,31 @@ export default function Page() {
     ? currentResult.tracks.filter((t) => t.owned === false).length
     : 0;
 
+  // Category counts
+  const checkoutCount = useMemo(() => {
+    return currentResult
+      ? currentResult.tracks.filter(t => categorizeTrack(t) === 'checkout').length
+      : 0;
+  }, [currentResult]);
+
+  const huntCount = useMemo(() => {
+    return currentResult
+      ? currentResult.tracks.filter(t => categorizeTrack(t) === 'hunt').length
+      : 0;
+  }, [currentResult]);
+
+  const unknownCount = useMemo(() => {
+    return currentResult
+      ? currentResult.tracks.filter(t => categorizeTrack(t) === 'unknown').length
+      : 0;
+  }, [currentResult]);
+
+  const ownedCount = useMemo(() => {
+    return currentResult
+      ? currentResult.tracks.filter(t => t.owned === true).length
+      : 0;
+  }, [currentResult]);
+
   const handleExportCSV = () => {
     if (!displayedTracks.length || !currentResult) {
       alert('No tracks to export.');
@@ -1523,6 +1647,79 @@ export default function Page() {
                   </div>
                 </div>
 
+                {/* CheckoutHeader: Stepper + Summary + Primary CTA */}
+                <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-xl p-4 space-y-4">
+                  {/* Stepper */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                      {/* Step 1: Import */}
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/30 border border-emerald-500 flex items-center justify-center text-xs font-semibold text-emerald-300">
+                          ✓
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">Import</div>
+                      </div>
+                      <div className="flex-1 h-0.5 bg-slate-800" />
+                      
+                      {/* Step 2: Match */}
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/30 border border-emerald-500 flex items-center justify-center text-xs font-semibold text-emerald-300">
+                          ✓
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">Match</div>
+                      </div>
+                      <div className="flex-1 h-0.5 bg-slate-800" />
+                      
+                      {/* Step 3: Buy (Active) */}
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-amber-500 border border-amber-500 flex items-center justify-center text-xs font-semibold text-slate-900 font-bold">
+                          3
+                        </div>
+                        <div className="text-xs text-amber-300 mt-1">Buy</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary Stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                    <div className="bg-slate-800/50 rounded px-2 py-1.5 text-center">
+                      <div className="font-semibold text-slate-100">{currentResult.total}</div>
+                      <div className="text-slate-400">Total</div>
+                    </div>
+                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded px-2 py-1.5 text-center">
+                      <div className="font-semibold text-emerald-300">{ownedCount}</div>
+                      <div className="text-emerald-600">Owned</div>
+                    </div>
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1.5 text-center">
+                      <div className="font-semibold text-amber-300">{checkoutCount}</div>
+                      <div className="text-amber-600">Checkout</div>
+                    </div>
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded px-2 py-1.5 text-center">
+                      <div className="font-semibold text-blue-300">{huntCount}</div>
+                      <div className="text-blue-600">Hunt</div>
+                    </div>
+                    <div className="bg-slate-500/10 border border-slate-500/30 rounded px-2 py-1.5 text-center">
+                      <div className="font-semibold text-slate-300">{unknownCount}</div>
+                      <div className="text-slate-500">Unknown</div>
+                    </div>
+                  </div>
+
+                  {/* Primary CTA */}
+                  {checkoutCount > 0 && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setPurchaseModalOpen(true);
+                          setSelectedStoreTab('beatport');
+                        }}
+                        className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-900 font-bold text-sm transition shadow-lg"
+                      >
+                        🛒 Buy {checkoutCount} Tracks
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 {/* Search & Sort Controls */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
@@ -1577,36 +1774,38 @@ export default function Page() {
                         <div className="mt-1 text-slate-300">{t.artist}</div>
                         <div className="mt-1 text-slate-400 text-xs">{t.album}</div>
                         <div className="mt-2 flex flex-wrap gap-1">
-                          {t.stores.beatport && (
-                            <a
-                              href={t.stores.beatport}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700"
-                            >
-                              <span className="text-[10px]">Beatport</span>
-                            </a>
-                          )}
-                          {t.stores.bandcamp && (
-                            <a
-                              href={t.stores.bandcamp}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700"
-                            >
-                              <span className="text-[10px]">Bandcamp</span>
-                            </a>
-                          )}
-                          {t.stores.itunes && (
-                            <a
-                              href={t.stores.itunes}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700"
-                            >
-                              <span className="text-[10px]">iTunes</span>
-                            </a>
-                          )}
+                          {(() => {
+                            const recommended = getRecommendedStore(t);
+                            const others = getOtherStores(t.stores, recommended);
+                            
+                            if (!recommended) return null;
+                            
+                            return (
+                              <>
+                                <a
+                                  href={recommended.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 rounded-full border border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 transition"
+                                  title={`Open on ${recommended.name} (recommended)`}
+                                >
+                                  <span className="text-[10px] font-medium text-emerald-300">🔗</span>
+                                  <span className="text-[10px] text-emerald-300">{recommended.name}</span>
+                                </a>
+                                {others.map((store) => (
+                                  <a
+                                    key={store.name}
+                                    href={store.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700"
+                                  >
+                                    <span className="text-[10px]">{store.name}</span>
+                                  </a>
+                                ))}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     );
@@ -1625,16 +1824,19 @@ export default function Page() {
                         <th className="px-2 py-2 text-left w-24">ISRC</th>
                         <th className="px-3 py-2 text-left w-32">Stores</th>
                         <th className="px-3 py-2 text-center w-32">
-                          <div className="inline-flex items-center gap-2 justify-center">
-                            <span>Buylist</span>
-                            <div className="group relative">
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-slate-400 cursor-help">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                              </svg>
-                              <div className="absolute z-50 hidden group-hover:block bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 whitespace-nowrap -left-16 -bottom-12">
-                                購入済み/スキップを記録
+                          <div className="inline-flex flex-col items-center gap-1 justify-center">
+                            <div className="inline-flex items-center gap-2">
+                              <span>Status</span>
+                              <div className="group relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-slate-400 cursor-help">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                </svg>
+                                <div className="absolute z-50 hidden group-hover:block bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 whitespace-nowrap -left-20 -bottom-12">
+                                  Device-saved progress. Used in CSV export.
+                                </div>
                               </div>
                             </div>
+                            <span className="text-[9px] text-slate-500 font-normal italic">Saved on device</span>
                           </div>
                         </th>
                       </tr>
@@ -1683,44 +1885,68 @@ export default function Page() {
                               {t.isrc ?? ''}
                             </td>
                             <td className="px-3 py-1">
-                              <div className="flex flex-wrap gap-2">
-                                {t.stores.beatport && (
-                                  <a
-                                    href={t.stores.beatport}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700"
-                                  >
-                                    <span className="text-[10px]">
-                                      Beatport
-                                    </span>
-                                  </a>
-                                )}
-                                {t.stores.bandcamp && (
-                                  <a
-                                    href={t.stores.bandcamp}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700"
-                                  >
-                                    <span className="text-[10px]">
-                                      Bandcamp
-                                    </span>
-                                  </a>
-                                )}
-                                {t.stores.itunes && (
-                                  <a
-                                    href={t.stores.itunes}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700"
-                                  >
-                                    <span className="text-[10px]">
-                                      iTunes
-                                    </span>
-                                  </a>
-                                )}
-                              </div>
+                              {(() => {
+                                const recommended = getRecommendedStore(t);
+                                const others = getOtherStores(t.stores, recommended);
+                                
+                                if (!recommended) return null;
+                                
+                                return (
+                                  <div className="flex items-center gap-1">
+                                    {/* Primary store button */}
+                                    <a
+                                      href={recommended.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex items-center gap-1 rounded-full border border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-0.5 transition"
+                                      title={`Open on ${recommended.name} (recommended)`}
+                                    >
+                                      <span className="text-[10px] font-medium text-emerald-300">🔗</span>
+                                      <span className="text-[10px] text-emerald-300">{recommended.name}</span>
+                                    </a>
+                                    
+                                    {/* Dropdown for other stores */}
+                                    {others.length > 0 && (
+                                      <div className="relative">
+                                        {(() => {
+                                          const dropdownId = `${t.index}-stores`;
+                                          const isOpen = openStoreDropdown === dropdownId;
+                                          return (
+                                            <>
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setOpenStoreDropdown(isOpen ? null : dropdownId);
+                                                }}
+                                                className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700 transition text-[10px] text-slate-300"
+                                                title="Other stores"
+                                              >
+                                                +{others.length}
+                                              </button>
+                                              {isOpen && (
+                                                <div className="absolute right-0 mt-1 bg-slate-800 border border-slate-600 rounded-lg shadow-lg z-50 min-w-40">
+                                                  {others.map((store) => (
+                                                    <a
+                                                      key={store.name}
+                                                      href={store.url}
+                                                      target="_blank"
+                                                      rel="noreferrer"
+                                                      className="block px-3 py-2 text-xs text-slate-200 hover:bg-slate-700 first:rounded-t-lg last:rounded-b-lg transition"
+                                                      onClick={() => setOpenStoreDropdown(null)}
+                                                    >
+                                                      {store.name}
+                                                    </a>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </>
+                                          );
+                                        })()}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="px-3 py-1 relative z-20">
                               <div className="flex items-center gap-2">
@@ -1737,9 +1963,9 @@ export default function Page() {
                                       ? 'bg-green-600 text-white'
                                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                                   }`}
-                                  title="Mark as bought"
+                                  title="Mark as bought to track progress"
                                 >
-                                  {t.purchaseState === 'bought' ? '✓' : 'Bought'}
+                                  {t.purchaseState === 'bought' ? '✓' : 'Mark Bought'}
                                 </button>
                                 <button
                                   onClick={() => {
@@ -1771,6 +1997,154 @@ export default function Page() {
           </section>
         )}
       </div>
+
+      {/* Purchase Modal */}
+      {purchaseModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setPurchaseModalOpen(false)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-emerald-200">🛒 Buy {checkoutCount} Checkout Tracks</h2>
+              <button
+                onClick={() => setPurchaseModalOpen(false)}
+                className="text-slate-400 hover:text-slate-200 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Store Tabs */}
+            <div className="flex gap-2 mb-4 border-b border-slate-800 pb-3">
+              {['beatport', 'itunes', 'bandcamp'].map((store) => {
+                const storeLabel = store.charAt(0).toUpperCase() + store.slice(1);
+                const tracksInStore = currentResult?.tracks.filter((t) => {
+                  if (categorizeTrack(t) !== 'checkout') return false;
+                  if (store === 'beatport') return t.stores?.beatport?.length > 0;
+                  if (store === 'itunes') return t.stores?.itunes?.length > 0;
+                  if (store === 'bandcamp') return t.stores?.bandcamp?.length > 0;
+                  return false;
+                }).length ?? 0;
+
+                return (
+                  <button
+                    key={store}
+                    onClick={() => setSelectedStoreTab(store as 'beatport' | 'itunes' | 'bandcamp')}
+                    disabled={tracksInStore === 0}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      selectedStoreTab === store
+                        ? 'bg-emerald-500 text-slate-900'
+                        : tracksInStore === 0
+                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    {storeLabel} ({tracksInStore})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* "Open all in store" button */}
+            {(() => {
+              const storeKey = selectedStoreTab as keyof StoreLinks;
+              const tracksInStore = currentResult?.tracks.filter((t) => {
+                if (categorizeTrack(t) !== 'checkout') return false;
+                const storeUrl = storeKey === 'beatport' ? t.stores?.beatport : 
+                                 storeKey === 'itunes' ? t.stores?.itunes :
+                                 t.stores?.bandcamp;
+                return storeUrl && storeUrl.length > 0;
+              }) ?? [];
+
+              const storeUrls = Array.from(
+                new Set(
+                  tracksInStore
+                    .map((t) => {
+                      const storeUrl = storeKey === 'beatport' ? t.stores?.beatport : 
+                                       storeKey === 'itunes' ? t.stores?.itunes :
+                                       t.stores?.bandcamp;
+                      return storeUrl;
+                    })
+                    .filter(Boolean)
+                )
+              );
+
+              return (
+                <div className="mb-4 p-3 bg-slate-800/50 rounded-lg">
+                  <button
+                    onClick={() => {
+                      storeUrls.forEach((url) => {
+                        window.open(url, '_blank');
+                      });
+                    }}
+                    disabled={tracksInStore.length === 0}
+                    className="w-full px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold rounded-lg transition"
+                  >
+                    Open {Math.min(tracksInStore.length, 10)} in {selectedStoreTab}
+                    {tracksInStore.length > 10 && ` (showing 10 of ${tracksInStore.length})`}
+                  </button>
+                  <p className="text-xs text-slate-400 mt-2">
+                    {tracksInStore.length === 0
+                      ? 'No tracks available in this store'
+                      : `${tracksInStore.length} track${tracksInStore.length > 1 ? 's' : ''} available`}
+                  </p>
+                </div>
+              );
+            })()}
+
+            {/* Track list for this store */}
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {(() => {
+                const storeKey = selectedStoreTab as keyof StoreLinks;
+                const tracksInStore = currentResult?.tracks.filter((t) => {
+                  if (categorizeTrack(t) !== 'checkout') return false;
+                  const storeUrl = storeKey === 'beatport' ? t.stores?.beatport : 
+                                   storeKey === 'itunes' ? t.stores?.itunes :
+                                   t.stores?.bandcamp;
+                  return storeUrl && storeUrl.length > 0;
+                }) ?? [];
+
+                return tracksInStore.map((t) => {
+                  const storeUrl = storeKey === 'beatport' ? t.stores?.beatport : 
+                                   storeKey === 'itunes' ? t.stores?.itunes :
+                                   t.stores?.bandcamp;
+                  return (
+                    <div
+                      key={`${t.index}-${selectedStoreTab}`}
+                      className="flex items-center justify-between gap-3 p-2 bg-slate-800/30 rounded text-xs"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-100 truncate">{t.title}</div>
+                        <div className="text-slate-400 truncate">{t.artist}</div>
+                      </div>
+                      {storeUrl && (
+                        <a
+                          href={storeUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-semibold whitespace-nowrap transition"
+                        >
+                          Open
+                        </a>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div className="mt-4 pt-4 border-t border-slate-700 text-xs text-slate-400">
+              <p>💡 Use Status column to mark tracks as "Bought" once purchased</p>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
