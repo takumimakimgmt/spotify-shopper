@@ -76,6 +76,7 @@ type ResultState = {
   playlistUrl: string;
   tracks: PlaylistRow[];
   analyzedAt: number; // timestamp when analyzed
+  hasRekordboxData?: boolean; // true if analyzed with Rekordbox XML
 };
 
 type RekordboxTrack = {
@@ -462,7 +463,132 @@ export default function Page() {
 
   const handleReAnalyzeFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !reAnalyzeUrl) return;
+    if (!file) return;
+
+    // Check if this is a bulk re-analyze
+    const isBulk = reAnalyzeUrl === '__BULK__';
+    
+    if (isBulk) {
+      // Bulk re-analyze all playlists
+      setLoading(true);
+      setErrorText(null);
+      
+      try {
+        const updatedResults: Array<[string, ResultState]> = [];
+        
+        for (const [url, result] of multiResults) {
+          try {
+            const detectedSource = detectSourceFromUrl(url);
+            const formData = new FormData();
+            formData.append('url', url);
+            formData.append('source', detectedSource);
+            formData.append('file', file);
+
+            const resp = await fetch(
+              `${BACKEND_URL}/api/playlist-with-rekordbox-upload`,
+              {
+                method: 'POST',
+                body: formData,
+              }
+            );
+
+            if (!resp.ok) {
+              console.error(`[Bulk Re-analyze] Failed for ${url}`);
+              updatedResults.push([url, result]); // Keep original
+              continue;
+            }
+
+            const json = (await resp.json()) as ApiPlaylistResponse;
+            const rows: PlaylistRow[] = json.tracks.map((t, idx) => ({
+              index: idx + 1,
+              title: t.title,
+              artist: t.artist,
+              album: t.album,
+              isrc: t.isrc ?? undefined,
+              spotifyUrl: t.spotify_url ?? '',
+              appleUrl: (t as any).apple_url ?? undefined,
+              stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
+              owned: (t as any).owned ?? undefined,
+              ownedReason: (t as any).owned_reason ?? undefined,
+              trackKeyPrimary: t.track_key_primary,
+              trackKeyFallback: t.track_key_fallback,
+              trackKeyPrimaryType: t.track_key_primary_type,
+              purchaseState: undefined,
+              storeSelected: undefined,
+            }));
+
+            // Merge Buylist state
+            try {
+              await initDB();
+              const snapshot = await getBuylist(json.playlist_id);
+
+              if (snapshot && snapshot.tracks.length > 0) {
+                const stateMap = new Map<string, TrackState>();
+                for (const ts of snapshot.tracks) {
+                  stateMap.set(ts.trackKeyPrimary, ts);
+                }
+
+                for (const row of rows) {
+                  if (!row.trackKeyPrimary) continue;
+                  let state = stateMap.get(row.trackKeyPrimary);
+                  if (!state && row.trackKeyFallback && row.trackKeyFallback !== row.trackKeyPrimary) {
+                    state = stateMap.get(row.trackKeyFallback);
+                  }
+                  if (state) {
+                    row.purchaseState = state.purchaseState;
+                    row.storeSelected = state.storeSelected;
+                  } else {
+                    row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
+                    row.storeSelected = 'beatport';
+                  }
+                }
+              } else {
+                for (const row of rows) {
+                  row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
+                  row.storeSelected = 'beatport';
+                }
+              }
+            } catch (err) {
+              console.error('[Buylist] Failed to merge state:', err);
+              for (const row of rows) {
+                row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
+                row.storeSelected = 'beatport';
+              }
+            }
+
+            updatedResults.push([
+              url,
+              {
+                ...result,
+                tracks: rows,
+                analyzedAt: Date.now(),
+                hasRekordboxData: true,
+              },
+            ]);
+          } catch (err) {
+            console.error(`[Bulk Re-analyze] Error for ${url}:`, err);
+            updatedResults.push([url, result]); // Keep original
+          }
+        }
+
+        setMultiResults(updatedResults);
+        setErrorText(null);
+      } catch (err) {
+        console.error('[Bulk Re-analyze] Error:', err);
+        setErrorText('一括XML照合中にエラーが発生しました');
+      } finally {
+        setLoading(false);
+        setReAnalyzeFile(null);
+        setReAnalyzeUrl(null);
+        if (reAnalyzeInputRef.current) {
+          reAnalyzeInputRef.current.value = '';
+        }
+      }
+      return;
+    }
+
+    // Single playlist re-analyze
+    if (!reAnalyzeUrl) return;
 
     setReAnalyzeFile(file);
     setLoading(true);
@@ -567,6 +693,7 @@ export default function Page() {
                   ...result,
                   tracks: rows,
                   analyzedAt: Date.now(),
+                  hasRekordboxData: true,
                 },
               ]
             : [url, result]
@@ -839,6 +966,7 @@ export default function Page() {
             playlistUrl: json.playlist_url,
             tracks: rows,
             analyzedAt: Date.now(),
+            hasRekordboxData: !!rekordboxFile,
           },
         ]);
       } catch (err) {
@@ -1107,9 +1235,14 @@ export default function Page() {
                     >
                       <button
                         onClick={() => setActiveTab(url)}
-                        className="text-left min-w-0"
+                        className="text-left min-w-0 flex items-center gap-1.5"
                       >
-                        {result.title} ({result.total})
+                        <span>{result.title} ({result.total})</span>
+                        {result.hasRekordboxData && (
+                          <span className="text-[10px] px-1 py-0.5 bg-emerald-600/30 text-emerald-300 rounded" title="Analyzed with Rekordbox XML">
+                            XML✓
+                          </span>
+                        )}
                       </button>
                       <button
                         onClick={(e) => {
@@ -1117,9 +1250,9 @@ export default function Page() {
                           handleReAnalyzeWithXml(url);
                         }}
                         className="text-xs px-1.5 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition flex-shrink-0"
-                        title="Re-analyze with Rekordbox XML"
+                        title={result.hasRekordboxData ? "Re-analyze with different Rekordbox XML" : "Analyze with Rekordbox XML"}
                       >
-                        +XML
+                        {result.hasRekordboxData ? '↻XML' : '+XML'}
                       </button>
                       <button
                         onClick={(e) => {
@@ -1135,16 +1268,31 @@ export default function Page() {
                   );
                 })}
               </div>
-              <button
-                onClick={() => {
-                  setMultiResults([]);
-                  setActiveTab(null);
-                }}
-                className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition whitespace-nowrap"
-                title="Clear all playlists"
-              >
-                Clear All
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    // Trigger bulk re-analyze: use first tab's re-analyze with XML
+                    if (multiResults.length > 0) {
+                      reAnalyzeInputRef.current?.click();
+                      setReAnalyzeUrl('__BULK__');
+                    }
+                  }}
+                  className="px-3 py-1 text-xs bg-blue-700 hover:bg-blue-600 text-white rounded transition whitespace-nowrap"
+                  title="Re-analyze all playlists with Rekordbox XML"
+                >
+                  Bulk +XML
+                </button>
+                <button
+                  onClick={() => {
+                    setMultiResults([]);
+                    setActiveTab(null);
+                  }}
+                  className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition whitespace-nowrap"
+                  title="Clear all playlists"
+                >
+                  Clear All
+                </button>
+              </div>
             </div>
 
             {currentResult && (
@@ -1211,7 +1359,7 @@ export default function Page() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleExportCSV}
-                    className="inline-flex items-center rounded-md bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-500"
+                    className="inline-flex items-center rounded-md bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600"
                   >
                     Export as CSV
                   </button>
