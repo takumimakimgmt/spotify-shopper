@@ -218,6 +218,66 @@ export default function Page() {
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
+        const sp = new URLSearchParams(window.location.search);
+        const shareId = sp.get('share');
+        
+        // If share ID is present, load ONLY the shared playlist
+        if (shareId) {
+          (async () => {
+            try {
+              const res = await fetch(`/api/share/${shareId}`);
+              if (!res.ok) {
+                const data = await res.json();
+                console.warn('Share restore failed:', data?.error);
+                return;
+              }
+              const data = await res.json();
+              const snap = data?.snapshot;
+              if (!snap || snap?.schema !== 'playlist_snapshot') {
+                console.warn('Invalid snapshot schema');
+                return;
+              }
+              const result: ResultState = {
+                title: snap.playlist?.name || '(shared playlist)',
+                total: snap.playlist?.track_count || (snap.tracks?.length ?? 0),
+                playlistUrl: snap.playlist?.url || '',
+                playlist_id: snap.playlist?.id || '',
+                playlist_name: snap.playlist?.name || '(shared playlist)',
+                analyzedAt: Date.now(),
+                hasRekordboxData: snap.tracks?.some((t: any) => t.owned != null) || false,
+                tracks: (snap.tracks || []).map((t: any, idx: number) => ({
+                  index: idx + 1,
+                  title: t.title,
+                  artist: t.artist,
+                  album: t.album || '',
+                  isrc: t.isrc || undefined,
+                  spotifyUrl: t.links?.spotify || '',
+                  appleUrl: t.links?.apple || '',
+                  owned: t.owned ?? null,
+                  ownedReason: t.owned_reason ?? null,
+                  trackKeyPrimary: t.track_key_primary,
+                  trackKeyFallback: t.track_key_fallback,
+                  trackKeyPrimaryType: t.track_key_primary_type,
+                  trackKeyVersion: t.track_key_version,
+                  links: {
+                    beatport: t.links?.beatport || '',
+                    bandcamp: t.links?.bandcamp || '',
+                    itunes: t.links?.itunes || '',
+                  },
+                })),
+              };
+              const urlKey = snap.playlist?.url || `shared:${shareId}`;
+              // Replace all results with ONLY the shared playlist
+              setMultiResults([[urlKey, result]]);
+              setActiveTab(urlKey);
+            } catch (err) {
+              console.error('[Share] Failed to fetch shared playlist:', err);
+            }
+          })();
+          return; // Don't load localStorage if share ID is present
+        }
+        
+        // Otherwise, load from localStorage
         const savedResults = localStorage.getItem('spotify-shopper-results');
         const savedTab = localStorage.getItem('spotify-shopper-active-tab');
         
@@ -231,57 +291,6 @@ export default function Page() {
         }
       } catch (err) {
         console.error('[Storage] Failed to restore results:', err);
-      }
-      // Share復元: /?share=ID があれば Vercel API からスナップショット取得して表示
-      try {
-        const sp = new URLSearchParams(window.location.search);
-        const shareId = sp.get('share');
-        if (shareId) {
-          (async () => {
-            const res = await fetch(`/api/share/${shareId}`);
-            const data = await res.json();
-            if (!res.ok) {
-              console.warn('Share restore failed:', data?.error);
-              return;
-            }
-            const snap = data?.snapshot;
-            if (!snap || snap?.schema !== 'playlist_snapshot') return;
-            const result: ResultState = {
-              title: snap.playlist?.name || '(shared playlist)',
-              total: snap.playlist?.track_count || (snap.tracks?.length ?? 0),
-              playlistUrl: snap.playlist?.url || '',
-              playlist_id: snap.playlist?.id || '',
-              playlist_name: snap.playlist?.name || '(shared playlist)',
-              analyzedAt: Date.now(),
-              hasRekordboxData: snap.tracks?.some((t: any) => t.owned != null) || false,
-              tracks: (snap.tracks || []).map((t: any, idx: number) => ({
-                index: idx + 1,
-                title: t.title,
-                artist: t.artist,
-                album: t.album || '',
-                isrc: t.isrc || undefined,
-                spotifyUrl: t.links?.spotify || '',
-                appleUrl: t.links?.apple || '',
-                owned: t.owned ?? null,
-                ownedReason: t.owned_reason ?? null,
-                trackKeyPrimary: t.track_key_primary,
-                trackKeyFallback: t.track_key_fallback,
-                trackKeyPrimaryType: t.track_key_primary_type,
-                trackKeyVersion: t.track_key_version,
-                links: {
-                  beatport: t.links?.beatport || '',
-                  bandcamp: t.links?.bandcamp || '',
-                  itunes: t.links?.itunes || '',
-                },
-              })),
-            };
-            const urlKey = snap.playlist?.url || `shared:${shareId}`;
-            setMultiResults([[urlKey, result]]);
-            setActiveTab(urlKey);
-          })();
-        }
-      } catch (e) {
-        // ignore
       }
     }
   }, []); // Run once on mount
