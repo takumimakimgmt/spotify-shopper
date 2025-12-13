@@ -185,33 +185,8 @@ export default function Page() {
   const [onlyUnowned, setOnlyUnowned] = useState(false);
 
   // Multi-playlist results: ordered array (newest first)
-  const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>(() => {
-    // Restore from localStorage on mount
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('spotify-shopper-results');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          return parsed;
-        }
-      } catch (err) {
-        console.error('[Storage] Failed to restore results:', err);
-      }
-    }
-    return [];
-  });
-  const [activeTab, setActiveTab] = useState<string | null>(() => {
-    // Restore active tab from localStorage
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('spotify-shopper-active-tab');
-        return saved || null;
-      } catch (err) {
-        console.error('[Storage] Failed to restore active tab:', err);
-      }
-    }
-    return null;
-  });
+  const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>([]);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
 
   // Loading/error state
   const [loading, setLoading] = useState(false);
@@ -232,6 +207,27 @@ export default function Page() {
   } | null>(null);
 
   const progressTimer = React.useRef<number | null>(null);
+
+  // Restore results from localStorage on mount (client-side only)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedResults = localStorage.getItem('spotify-shopper-results');
+        const savedTab = localStorage.getItem('spotify-shopper-active-tab');
+        
+        if (savedResults) {
+          const parsed = JSON.parse(savedResults);
+          setMultiResults(parsed);
+        }
+        
+        if (savedTab) {
+          setActiveTab(savedTab);
+        }
+      } catch (err) {
+        console.error('[Storage] Failed to restore results:', err);
+      }
+    }
+  }, []); // Run once on mount
 
   // Save results to localStorage whenever they change
   React.useEffect(() => {
