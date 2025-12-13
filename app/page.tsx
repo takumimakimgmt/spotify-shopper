@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, {
   useState,
@@ -85,7 +84,7 @@ type SortKey = 'none' | 'artist' | 'album' | 'title';
 
 // ==== Track category helper ====
 
-type TrackCategory = 'checkout' | 'hunt' | 'unknown' | 'owned';
+type TrackCategory = 'checkout' | 'owned';
 
 function categorizeTrack(
   track: PlaylistRow
@@ -95,35 +94,8 @@ function categorizeTrack(
     return 'owned';
   }
   
-  // Unknown: no match found (owned === null) OR fuzzy match (low confidence)
-  if (track.owned === null || track.owned === undefined) {
-    return 'unknown';
-  }
-  // Also treat fuzzy matches (norm type) as Unknown for transparency
-  if (track.ownedReason === 'fuzzy' || track.trackKeyPrimaryType === 'norm') {
-    return 'unknown';
-  }
-  
-  // owned === false: Not owned. Split into Checkout vs Hunt
-  // Checkout: has STRONG store links (Beatport or iTunes only)
-  // Hunt: Bandcamp-only OR no store links (manual search needed)
-
-  const hasStrongStore =
-    (track.stores?.beatport && track.stores.beatport.length > 0) ||
-    (track.stores?.itunes && track.stores.itunes.length > 0);
-
-  if (hasStrongStore) {
-    // Beatport or iTunes present → always Checkout
-    return 'checkout';
-  }
-  
-  // Only Bandcamp (weak signal) → Hunt (manual search safer)
-  if (track.stores?.bandcamp && track.stores.bandcamp.length > 0) {
-    return 'hunt';
-  }
-  
-  // No store links at all → Hunt
-  return 'hunt';
+  // Everything else: To Buy
+  return 'checkout';
 }
 
 // ==== Store helpers ====
@@ -227,7 +199,7 @@ export default function Page() {
   const [markAllMessage, setMarkAllMessage] = useState<string | null>(null);
 
   // Active category filter (UI facing). Default will snap to checkout when available.
-  const [activeCategory, setActiveCategory] = useState<TrackCategory>('checkout');
+  const [showOwned, setShowOwned] = useState(false);
 
   // Import form collapse state
   const [formCollapsed, setFormCollapsed] = useState(false);
@@ -286,8 +258,11 @@ export default function Page() {
                 playlist_id: snap.playlist?.id || '',
                 playlist_name: snap.playlist?.name || '(shared playlist)',
                 analyzedAt: Date.now(),
-                hasRekordboxData: snap.tracks?.some((t: any) => t.owned != null) || false,
-                tracks: (snap.tracks || []).map((t: any, idx: number) => ({
+                hasRekordboxData: snap.tracks?.some(
+                  (t: PlaylistSnapshotV1['tracks'][number]) => t.owned != null
+                ) || false,
+                tracks: (snap.tracks || []).map(
+                  (t: PlaylistSnapshotV1['tracks'][number], idx: number) => ({
                   index: idx + 1,
                   title: t.title,
                   artist: t.artist,
@@ -602,10 +577,10 @@ export default function Page() {
               album: t.album,
               isrc: t.isrc ?? undefined,
               spotifyUrl: t.spotify_url ?? '',
-              appleUrl: (t as any).apple_url ?? undefined,
+              appleUrl: t.apple_url ?? undefined,
               stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
-              owned: (t as any).owned ?? undefined,
-              ownedReason: (t as any).owned_reason ?? undefined,
+              owned: t.owned ?? undefined,
+              ownedReason: t.owned_reason ?? undefined,
               trackKeyPrimary: t.track_key_primary,
               trackKeyFallback: t.track_key_fallback,
               trackKeyPrimaryType: t.track_key_primary_type,
@@ -725,10 +700,10 @@ export default function Page() {
         album: t.album,
         isrc: t.isrc ?? undefined,
         spotifyUrl: t.spotify_url ?? '',
-        appleUrl: (t as any).apple_url ?? undefined,
+        appleUrl: t.apple_url ?? undefined,
         stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
-        owned: (t as any).owned ?? undefined,
-        ownedReason: (t as any).owned_reason ?? undefined,
+        owned: t.owned ?? undefined,
+        ownedReason: t.owned_reason ?? undefined,
         trackKeyPrimary: t.track_key_primary,
         trackKeyFallback: t.track_key_fallback,
         trackKeyPrimaryType: t.track_key_primary_type,
@@ -874,7 +849,7 @@ export default function Page() {
           res = await fetch(`${BACKEND_URL}/api/playlist?${params.toString()}`);
         }
 
-        let body: any = null;
+        let body: Record<string, unknown> | null = null;
         try {
           const rawText = await res.text();
           body = rawText ? JSON.parse(rawText) : null;
@@ -888,9 +863,18 @@ export default function Page() {
           // Try to surface more helpful error messages from backend
           try {
             const detail = (body && (body.detail ?? body)) || null;
-            const d = (detail && typeof detail === 'object') ? detail as any : null;
-            const usedSource: string | undefined = d?.used_source;
-            const errText: string | undefined = d?.error ?? (typeof detail === 'string' ? detail : undefined);
+            const d =
+              detail && typeof detail === 'object'
+                ? (detail as Record<string, unknown>)
+                : null;
+            const usedSource: string | undefined =
+              typeof d?.used_source === 'string' ? d.used_source : undefined;
+            const errText: string | undefined =
+              typeof d?.error === 'string'
+                ? d.error
+                : typeof detail === 'string'
+                  ? detail
+                  : undefined;
 
             console.log('[DEBUG] Full error response:', { 
               body, 
@@ -991,10 +975,10 @@ export default function Page() {
           album: t.album,
           isrc: t.isrc ?? undefined,
           spotifyUrl: t.spotify_url ?? '',
-          appleUrl: (t as any).apple_url ?? undefined,
+          appleUrl: t.apple_url ?? undefined,
           stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
-          owned: (t as any).owned ?? undefined,
-          ownedReason: (t as any).owned_reason ?? undefined,
+          owned: t.owned ?? undefined,
+          ownedReason: t.owned_reason ?? undefined,
           trackKeyPrimary: t.track_key_primary,
           trackKeyFallback: t.track_key_fallback,
           trackKeyPrimaryType: t.track_key_primary_type,
@@ -1146,10 +1130,14 @@ export default function Page() {
     }
 
     // Category filter
-    filtered = filtered.filter((t) => categorizeTrack(t) === activeCategory);
+    if (showOwned) {
+      filtered = filtered.filter((t) => categorizeTrack(t) === 'owned');
+    } else {
+      filtered = filtered.filter((t) => categorizeTrack(t) === 'checkout');
+    }
 
     return filtered;
-  }, [currentResult, onlyUnowned, searchQuery, sortKey, activeCategory]);
+  }, [currentResult, onlyUnowned, searchQuery, sortKey, showOwned]);
 
   const unownedCount = currentResult
     ? currentResult.tracks.filter((t) => t.owned === false).length
@@ -1158,8 +1146,6 @@ export default function Page() {
   // Category labels for UI
   const categoryLabels: Record<TrackCategory, string> = {
     checkout: 'To Buy',
-    hunt: 'Search',
-    unknown: 'Needs Review',
     owned: 'Owned',
   };
 
@@ -1170,46 +1156,18 @@ export default function Page() {
       : 0;
   }, [currentResult]);
 
-  const huntCount = useMemo(() => {
-    return currentResult
-      ? currentResult.tracks.filter(t => categorizeTrack(t) === 'hunt').length
-      : 0;
-  }, [currentResult]);
-
-  const unknownCount = useMemo(() => {
-    return currentResult
-      ? currentResult.tracks.filter(t => categorizeTrack(t) === 'unknown').length
-      : 0;
-  }, [currentResult]);
-
   const ownedCount = useMemo(() => {
     return currentResult
       ? currentResult.tracks.filter(t => t.owned === true).length
       : 0;
   }, [currentResult]);
 
-  // Snap default view to To Buy when results arrive
+  // Snap default view when results arrive
   useEffect(() => {
     if (!currentResult) return;
-    if (checkoutCount > 0) {
-      setActiveCategory('checkout');
-    } else if (huntCount > 0) {
-      setActiveCategory('hunt');
-    } else if (unknownCount > 0) {
-      setActiveCategory('unknown');
-    } else {
-      setActiveCategory('owned');
-    }
+    setShowOwned(false);
     setFormCollapsed(true);
-  }, [currentResult, checkoutCount, huntCount, unknownCount]);
-
-  const handleCategoryJump = (category: TrackCategory) => {
-    setActiveCategory(category);
-    const anchor = document.getElementById('results-top');
-    if (anchor) {
-      anchor.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  }, [currentResult]);
 
   const handleExportCSV = () => {
     if (!displayedTracks.length || !currentResult) {
@@ -1321,8 +1279,9 @@ export default function Page() {
       } catch {
         alert('Shareリンク:\n' + shareUrl);
       }
-    } catch (e: any) {
-      alert('Share失敗: ' + (e?.message ?? e));
+    } catch (e: unknown) {
+      const errorMsg = e instanceof Error ? e.message : String(e);
+      alert('Share失敗: ' + errorMsg);
     }
   };
 
@@ -1617,8 +1576,9 @@ export default function Page() {
                               // Fallback: show URL in alert for manual copy
                               alert('Shareリンク:\n' + shareUrl);
                             }
-                          } catch (e: any) {
-                            alert('Share失敗: ' + (e?.message ?? e));
+                          } catch (e: unknown) {
+                            const errorMsg = e instanceof Error ? e.message : String(e);
+                            alert('Share失敗: ' + errorMsg);
                           }
                         }}
                         className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium hover:bg-slate-600"
@@ -1682,27 +1642,34 @@ export default function Page() {
                               const idx = next.findIndex(r => r[1].playlist_id === currentResult.playlist_id);
                               if (idx >= 0) {
                                 const nt = next[idx][1];
-                                const byKey: Record<string, any> = {};
+                                const byKey: Record<string, Record<string, unknown>> = {};
                                 for (const t of updated.tracks || []) {
                                   const key = t.track_key_primary || t.track_key_fallback;
                                   if (key) byKey[key] = t;
                                 }
-                                nt.tracks = nt.tracks.map((t: any) => {
-                                  const key = t.trackKeyPrimary || t.track_key_primary || t.track_key_fallback || t.trackKeyFallback;
-                                  const u = byKey[key];
+                                nt.tracks = nt.tracks.map((t: PlaylistRow) => {
+                                  const key =
+                                    t.trackKeyPrimary ||
+                                    t.trackKeyFallback;
+                                  const u = byKey[key || ''];
                                   if (u) {
-                                    t.owned = u.owned;
-                                    t.ownedReason = u.owned_reason;
+                                    t.owned =
+                                      typeof u.owned === 'boolean' ? u.owned : null;
+                                    t.ownedReason =
+                                      typeof u.owned_reason === 'string'
+                                        ? u.owned_reason
+                                        : null;
                                   }
                                   return t;
                                 });
                                 next[idx][1] = { ...nt, hasRekordboxData: true };
                               }
-                              return next as any;
+                              return next;
                             });
                             alert('XML適用しました');
-                          } catch (e: any) {
-                            alert('XML適用失敗: ' + (e?.message ?? e));
+                          } catch (e: unknown) {
+                            const errorMsg = e instanceof Error ? e.message : String(e);
+                            alert('XML適用失敗: ' + errorMsg);
                           } finally {
                             ev.target.value = '';
                           }
@@ -1752,7 +1719,7 @@ export default function Page() {
                   </div>
 
                   {/* Summary Stats */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                  <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 text-xs">
                     <div className="bg-slate-800/50 rounded px-2 py-1.5 text-center">
                       <div className="font-semibold text-slate-100">{currentResult.total}</div>
                       <div className="text-slate-400">Total</div>
@@ -1764,14 +1731,6 @@ export default function Page() {
                     <div className="bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1.5 text-center">
                       <div className="font-semibold text-amber-300">{checkoutCount}</div>
                       <div className="text-amber-600">To Buy</div>
-                    </div>
-                    <div className="bg-blue-500/10 border border-blue-500/30 rounded px-2 py-1.5 text-center">
-                      <div className="font-semibold text-blue-300">{huntCount}</div>
-                      <div className="text-blue-600">Search</div>
-                    </div>
-                    <div className="bg-slate-500/10 border border-slate-500/30 rounded px-2 py-1.5 text-center">
-                      <div className="font-semibold text-slate-300">{unknownCount}</div>
-                      <div className="text-slate-500">Needs Review</div>
                     </div>
                   </div>
 
@@ -1794,22 +1753,15 @@ export default function Page() {
                     After buying, return and click &quot;Mark Bought&quot; to save progress on this device.
                   </p>
 
-                  {/* Quick section links */}
-                  <div className="flex gap-1 flex-wrap text-[10px]">
-                    <button onClick={() => handleCategoryJump('checkout')} className={`px-2 py-1 rounded border ${activeCategory === 'checkout' ? 'bg-amber-500/30 border-amber-500 text-amber-200' : 'bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20'}`}>
+                  {/* Quick section toggle */}
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowOwned(false)} className={`flex-1 px-3 py-1 rounded border text-xs transition ${!showOwned ? 'bg-amber-500/30 border-amber-500 text-amber-200' : 'bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20'}`}>
                       To Buy ({checkoutCount})
                     </button>
-                    <button onClick={() => handleCategoryJump('hunt')} className={`px-2 py-1 rounded border ${activeCategory === 'hunt' ? 'bg-blue-500/30 border-blue-500 text-blue-200' : 'bg-blue-500/10 border-blue-500/40 text-blue-300 hover:bg-blue-500/20'}`}>
-                      Search ({huntCount})
-                    </button>
-                    <button onClick={() => handleCategoryJump('unknown')} className={`px-2 py-1 rounded border ${activeCategory === 'unknown' ? 'bg-slate-500/30 border-slate-500 text-slate-200' : 'bg-slate-500/10 border-slate-500/40 text-slate-300 hover:bg-slate-500/20'}`}>
-                      Needs Review ({unknownCount})
-                    </button>
-                    <button onClick={() => handleCategoryJump('owned')} className={`px-2 py-1 rounded border ${activeCategory === 'owned' ? 'bg-emerald-500/30 border-emerald-500 text-emerald-100' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20'}`}>
+                    <button onClick={() => setShowOwned(true)} className={`flex-1 px-3 py-1 rounded border text-xs transition ${showOwned ? 'bg-emerald-500/30 border-emerald-500 text-emerald-100' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20'}`}>
                       Owned ({ownedCount})
                     </button>
                   </div>
-                  <p className="text-[11px] text-slate-400">Start with To Buy, then move through Search and Needs Review.</p>
 
                   {/* Post-attach XML entry point */}
                   <div className="flex flex-wrap gap-2 text-[11px] text-slate-300">
@@ -1817,9 +1769,8 @@ export default function Page() {
                       onClick={() => reAnalyzeInputRef.current?.click()}
                       className="px-3 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 transition"
                     >
-                      Match with Rekordbox XML
+                      Attach XML to mark Owned
                     </button>
-                    <span className="text-slate-500">No URL re-entry needed</span>
                   </div>
                 </div>
 
@@ -1877,14 +1828,12 @@ export default function Page() {
                               </a>
                               {(() => {
                                 const category = categorizeTrack(t);
+                                // Only show badge for To Buy, not for Owned
+                                if (category === 'owned') return null;
                                 const badgeClass =
                                   category === 'checkout'
                                     ? 'bg-amber-500/20 text-amber-200 border border-amber-500/50'
-                                    : category === 'hunt'
-                                    ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50'
-                                    : category === 'unknown'
-                                    ? 'bg-slate-500/20 text-slate-200 border border-slate-500/50'
-                                    : 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50';
+                                    : 'bg-slate-500/20 text-slate-200 border border-slate-500/50';
                                 return (
                                   <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
                                     {categoryLabels[category]}
@@ -1969,8 +1918,6 @@ export default function Page() {
                       {(() => {
                         const sections: Array<{ id: TrackCategory; label: string; color: string; items: PlaylistRow[]; icon: string }> = [
                           { id: 'checkout', label: categoryLabels.checkout, color: 'text-amber-300', icon: '🛒', items: displayedTracks.filter((t) => categorizeTrack(t) === 'checkout') },
-                          { id: 'hunt', label: categoryLabels.hunt, color: 'text-blue-300', icon: '🔍', items: displayedTracks.filter((t) => categorizeTrack(t) === 'hunt') },
-                          { id: 'unknown', label: categoryLabels.unknown, color: 'text-slate-300', icon: '❔', items: displayedTracks.filter((t) => categorizeTrack(t) === 'unknown') },
                           { id: 'owned', label: categoryLabels.owned, color: 'text-emerald-300', icon: '✅', items: displayedTracks.filter((t) => categorizeTrack(t) === 'owned') },
                         ];
 
@@ -2020,14 +1967,12 @@ export default function Page() {
                                       </a>
                                       {(() => {
                                         const category = categorizeTrack(t);
+                                        // Only show badge for To Buy, not for Owned
+                                        if (category === 'owned') return null;
                                         const badgeClass =
                                           category === 'checkout'
                                             ? 'bg-amber-500/20 text-amber-200 border border-amber-500/50'
-                                            : category === 'hunt'
-                                            ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50'
-                                            : category === 'unknown'
-                                            ? 'bg-slate-500/20 text-slate-200 border border-slate-500/50'
-                                            : 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50';
+                                            : 'bg-slate-500/20 text-slate-200 border border-slate-500/50';
                                         return (
                                           <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
                                             {categoryLabels[category]}
@@ -2387,50 +2332,6 @@ export default function Page() {
                 });
               })()}
             </div>
-
-            {/* Maybe (Bandcamp-only) section - shown in modal only */}
-            {(() => {
-              const bandcampOnlyTracks = currentResult?.tracks.filter((t) => {
-                if (categorizeTrack(t) !== 'hunt') return false;
-                // Show only Bandcamp-only tracks
-                return (t.stores?.bandcamp && t.stores.bandcamp.length > 0) && 
-                       (!t.stores?.beatport || t.stores.beatport.length === 0) &&
-                       (!t.stores?.itunes || t.stores.itunes.length === 0);
-              }) ?? [];
-
-              if (bandcampOnlyTracks.length === 0) return null;
-
-              return (
-                <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                  <div className="text-sm font-semibold text-blue-300 mb-2">
-                    💙 Maybe: {bandcampOnlyTracks.length} on Bandcamp
-                  </div>
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {bandcampOnlyTracks.map((t) => (
-                      <div key={`${t.index}-maybe`} className="flex items-center justify-between gap-2 p-2 bg-slate-800/30 rounded text-xs">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-slate-100 truncate">{t.title}</div>
-                          <div className="text-slate-400 truncate text-[10px]">{t.artist}</div>
-                        </div>
-                        {t.stores?.bandcamp && (
-                          <a
-                            href={t.stores.bandcamp}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-[10px] font-semibold whitespace-nowrap transition"
-                          >
-                            Try
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-blue-400 mt-2">
-                    These tracks are Bandcamp-only (less reliable). Try if store above doesn&apos;t have it.
-                  </p>
-                </div>
-              );
-            })()}
 
             {/* Footer */}
             <div className="mt-4 pt-4 border-t border-slate-700 text-xs text-slate-400">
