@@ -251,7 +251,7 @@ export default function Page() {
               title: snap.playlist?.name || '(shared playlist)',
               total: snap.playlist?.track_count || (snap.tracks?.length ?? 0),
               playlistUrl: snap.playlist?.url || '',
-              analyzedAt: new Date().toISOString(),
+              analyzedAt: Date.now(),
               hasRekordboxData: snap.tracks?.some((t: any) => t.owned != null) || false,
               tracks: (snap.tracks || []).map((t: any, idx: number) => ({
                 index: idx + 1,
