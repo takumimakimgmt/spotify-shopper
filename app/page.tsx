@@ -1858,153 +1858,175 @@ export default function Page() {
                       </tr>
                     </thead>
                     <tbody>
-                      {displayedTracks.map((t) => {
-                        // Prioritize apple_url for Apple Music playlists, spotify_url for Spotify
-                        const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
-                        const trackUrl = isApplePlaylist 
-                          ? (t.appleUrl || t.spotifyUrl || undefined)
-                          : (t.spotifyUrl || t.appleUrl || undefined);
-                        return (
-                          <tr
-                            key={`${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
-                            className="border-b border-slate-800/70 hover:bg-slate-800/40 even:bg-slate-900/60 relative"
-                          >
-                            <td className="px-3 py-1 text-slate-400">
-                              {t.index}
-                            </td>
-                            <td className={`px-3 py-1 text-sm font-medium text-emerald-100 ${(() => {
-                              const style = getOwnedStatusStyle(t.owned, t.ownedReason);
-                              return style.borderClass;
-                            })()}`}
-                              title={(() => {
-                                const style = getOwnedStatusStyle(t.owned, t.ownedReason);
-                                return style.tooltip;
-                              })()}
-                            >
-                              <a
-                                href={trackUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="truncate hover:underline block"
-                                title={t.title}
-                              >
-                                {t.title}
-                              </a>
-                            </td>
-                            <td className="px-3 py-1 text-sm text-slate-300">
-                              <div className="truncate" title={t.artist}>{t.artist}</div>
-                            </td>
-                            <td className="px-3 py-1 text-xs text-slate-300">
-                              <div className="line-clamp-2" title={t.album}>{t.album}</div>
-                            </td>
-                            <td className="px-2 py-1 text-xs text-slate-400 truncate">
-                              {t.isrc ?? ''}
-                            </td>
-                            <td className="px-3 py-1">
-                              {(() => {
-                                const recommended = getRecommendedStore(t);
-                                const others = getOtherStores(t.stores, recommended);
-                                
-                                if (!recommended) return null;
-                                
-                                return (
-                                  <div className="flex items-center gap-1">
-                                    {/* Primary store button */}
+                      {(() => {
+                        const sections: Array<{ id: TrackCategory; label: string; color: string; items: PlaylistRow[]; icon: string }> = [
+                          { id: 'checkout', label: 'Checkout', color: 'text-amber-300', icon: '🛒', items: displayedTracks.filter((t) => categorizeTrack(t) === 'checkout') },
+                          { id: 'hunt', label: 'Hunt', color: 'text-blue-300', icon: '🔍', items: displayedTracks.filter((t) => categorizeTrack(t) === 'hunt') },
+                          { id: 'unknown', label: 'Unknown', color: 'text-slate-300', icon: '❔', items: displayedTracks.filter((t) => categorizeTrack(t) === 'unknown') },
+                          { id: 'owned', label: 'Owned', color: 'text-emerald-300', icon: '✅', items: displayedTracks.filter((t) => categorizeTrack(t) === 'owned') },
+                        ];
+
+                        return sections.flatMap((section) => {
+                          if (section.items.length === 0) return [];
+                          return [
+                            (
+                              <tr key={`section-${section.id}`} id={`section-${section.id}`} className="bg-slate-900/70">
+                                <td colSpan={7} className={`px-3 py-2 text-left text-[11px] font-semibold ${section.color}`}>
+                                  {section.icon} {section.label} ({section.items.length})
+                                </td>
+                              </tr>
+                            ),
+                            ...section.items.map((t) => {
+                              // Prioritize apple_url for Apple Music playlists, spotify_url for Spotify
+                              const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
+                              const trackUrl = isApplePlaylist
+                                ? (t.appleUrl || t.spotifyUrl || undefined)
+                                : (t.spotifyUrl || t.appleUrl || undefined);
+                              return (
+                                <tr
+                                  key={`${section.id}-${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
+                                  className="border-b border-slate-800/70 hover:bg-slate-800/40 even:bg-slate-900/60 relative"
+                                >
+                                  <td className="px-3 py-1 text-slate-400">
+                                    {t.index}
+                                  </td>
+                                  <td
+                                    className={`px-3 py-1 text-sm font-medium text-emerald-100 ${(() => {
+                                      const style = getOwnedStatusStyle(t.owned, t.ownedReason);
+                                      return style.borderClass;
+                                    })()}`}
+                                    title={(() => {
+                                      const style = getOwnedStatusStyle(t.owned, t.ownedReason);
+                                      return style.tooltip;
+                                    })()}
+                                  >
                                     <a
-                                      href={recommended.url}
+                                      href={trackUrl}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="inline-flex items-center gap-1 rounded-full border border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-0.5 transition"
-                                      title={`Open on ${recommended.name} (recommended)`}
+                                      className="truncate hover:underline block"
+                                      title={t.title}
                                     >
-                                      <span className="text-[10px] font-medium text-emerald-300">🔗</span>
-                                      <span className="text-[10px] text-emerald-300">{recommended.name}</span>
+                                      {t.title}
                                     </a>
-                                    
-                                    {/* Dropdown for other stores */}
-                                    {others.length > 0 && (
-                                      <div className="relative">
-                                        {(() => {
-                                          const dropdownId = `${t.index}-stores`;
-                                          const isOpen = openStoreDropdown === dropdownId;
-                                          return (
-                                            <>
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setOpenStoreDropdown(isOpen ? null : dropdownId);
-                                                }}
-                                                className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700 transition text-[10px] text-slate-300"
-                                                title="Other stores"
-                                              >
-                                                +{others.length}
-                                              </button>
-                                              {isOpen && (
-                                                <div className="absolute right-0 mt-1 bg-slate-800 border border-slate-600 rounded-lg shadow-lg z-50 min-w-40">
-                                                  {others.map((store) => (
-                                                    <a
-                                                      key={store.name}
-                                                      href={store.url}
-                                                      target="_blank"
-                                                      rel="noreferrer"
-                                                      className="block px-3 py-2 text-xs text-slate-200 hover:bg-slate-700 first:rounded-t-lg last:rounded-b-lg transition"
-                                                      onClick={() => setOpenStoreDropdown(null)}
+                                  </td>
+                                  <td className="px-3 py-1 text-sm text-slate-300">
+                                    <div className="truncate" title={t.artist}>{t.artist}</div>
+                                  </td>
+                                  <td className="px-3 py-1 text-xs text-slate-300">
+                                    <div className="line-clamp-2" title={t.album}>{t.album}</div>
+                                  </td>
+                                  <td className="px-2 py-1 text-xs text-slate-400 truncate">
+                                    {t.isrc ?? ''}
+                                  </td>
+                                  <td className="px-3 py-1">
+                                    {(() => {
+                                      const recommended = getRecommendedStore(t);
+                                      const others = getOtherStores(t.stores, recommended);
+
+                                      if (!recommended) return null;
+
+                                      return (
+                                        <div className="flex items-center gap-1">
+                                          {/* Primary store button */}
+                                          <a
+                                            href={recommended.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1 rounded-full border border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-0.5 transition"
+                                            title={`Open on ${recommended.name} (recommended)`}
+                                          >
+                                            <span className="text-[10px] font-medium text-emerald-300">🔗</span>
+                                            <span className="text-[10px] text-emerald-300">{recommended.name}</span>
+                                          </a>
+
+                                          {/* Dropdown for other stores */}
+                                          {others.length > 0 && (
+                                            <div className="relative">
+                                              {(() => {
+                                                const dropdownId = `${section.id}-${t.index}-stores`;
+                                                const isOpen = openStoreDropdown === dropdownId;
+                                                return (
+                                                  <>
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setOpenStoreDropdown(isOpen ? null : dropdownId);
+                                                      }}
+                                                      className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700 transition text-[10px] text-slate-300"
+                                                      title="Other stores"
                                                     >
-                                                      {store.name}
-                                                    </a>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </>
+                                                      +{others.length}
+                                                    </button>
+                                                    {isOpen && (
+                                                      <div className="absolute right-0 mt-1 bg-slate-800 border border-slate-600 rounded-lg shadow-lg z-50 min-w-40">
+                                                        {others.map((store) => (
+                                                          <a
+                                                            key={store.name}
+                                                            href={store.url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="block px-3 py-2 text-xs text-slate-200 hover:bg-slate-700 first:rounded-t-lg last:rounded-b-lg transition"
+                                                            onClick={() => setOpenStoreDropdown(null)}
+                                                          >
+                                                            {store.name}
+                                                          </a>
+                                                        ))}
+                                                      </div>
+                                                    )}
+                                                  </>
+                                                );
+                                              })()}
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
+                                  </td>
+                                  <td className="px-3 py-1 relative z-20">
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => {
+                                          handlePurchaseStateChange(
+                                            activeTab || '',
+                                            t,
+                                            t.purchaseState === 'bought' ? 'need' : 'bought'
                                           );
-                                        })()}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                            </td>
-                            <td className="px-3 py-1 relative z-20">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => {
-                                    handlePurchaseStateChange(
-                                      activeTab || '',
-                                      t,
-                                      t.purchaseState === 'bought' ? 'need' : 'bought'
-                                    );
-                                  }}
-                                  className={`px-3 py-1 rounded text-xs font-medium transition ${
-                                    t.purchaseState === 'bought'
-                                      ? 'bg-green-600 text-white'
-                                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                                  }`}
-                                  title="Mark as bought to track progress"
-                                >
-                                  {t.purchaseState === 'bought' ? '✓' : 'Mark Bought'}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    handlePurchaseStateChange(
-                                      activeTab || '',
-                                      t,
-                                      t.purchaseState === 'skipped' ? 'need' : 'skipped'
-                                    );
-                                  }}
-                                  className={`px-3 py-1 rounded text-xs font-medium transition ${
-                                    t.purchaseState === 'skipped'
-                                      ? 'bg-yellow-600 text-white'
-                                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                                  }`}
-                                  title="Skip this track"
-                                >
-                                  {t.purchaseState === 'skipped' ? '✓' : 'Skip'}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                                        }}
+                                        className={`px-3 py-1 rounded text-xs font-medium transition ${
+                                          t.purchaseState === 'bought'
+                                            ? 'bg-green-600 text-white'
+                                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                        }`}
+                                        title="Mark as bought to track progress"
+                                      >
+                                        {t.purchaseState === 'bought' ? '✓' : 'Mark Bought'}
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          handlePurchaseStateChange(
+                                            activeTab || '',
+                                            t,
+                                            t.purchaseState === 'skipped' ? 'need' : 'skipped'
+                                          );
+                                        }}
+                                        className={`px-3 py-1 rounded text-xs font-medium transition ${
+                                          t.purchaseState === 'skipped'
+                                            ? 'bg-yellow-600 text-white'
+                                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                        }`}
+                                        title="Skip this track"
+                                      >
+                                        {t.purchaseState === 'skipped' ? '✓' : 'Skip'}
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            }),
+                          ];
+                        }).filter(Boolean);
+                      })()}
                     </tbody>
                   </table>
                 </div>
