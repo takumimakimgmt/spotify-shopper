@@ -1464,7 +1464,13 @@ export default function Page() {
                             const form = new FormData();
                             form.append('snapshot', JSON.stringify(snapshot));
                             form.append('file', file);
-                            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || ''}/api/match-snapshot-with-xml`, {
+                            
+                            // Ensure backend URL is configured
+                            if (!BACKEND_URL || BACKEND_URL === 'http://127.0.0.1:8000') {
+                              throw new Error('Backend URL が設定されていません。NEXT_PUBLIC_BACKEND_URL 環境変数を確認してください。');
+                            }
+                            
+                            const res = await fetch(`${BACKEND_URL}/api/match-snapshot-with-xml`, {
                               method: 'POST',
                               body: form,
                             });
