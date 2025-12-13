@@ -1272,25 +1272,6 @@ export default function Page() {
 
             {currentResult && (
               <div className="space-y-4">
-                {/* Bulk Re-analyze button */}
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => {
-                      if (multiResults.length > 0) {
-                        reAnalyzeInputRef.current?.click();
-                        setReAnalyzeUrl('__BULK__');
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition"
-                    title="Re-analyze all playlists with Rekordbox XML file"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                      <path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clipRule="evenodd" />
-                    </svg>
-                    Re-analyze All with XML
-                  </button>
-                </div>
-
                 {/* Undo Toast */}
                 {lastAction && (
                   <div className="fixed bottom-4 right-4 z-50 bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 shadow-lg flex items-center gap-3 animate-fade-in">
@@ -1351,6 +1332,21 @@ export default function Page() {
 
                 {/* Export Controls */}
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (multiResults.length > 0) {
+                        reAnalyzeInputRef.current?.click();
+                        setReAnalyzeUrl('__BULK__');
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600"
+                    title="Re-analyze all playlists with Rekordbox XML file"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clipRule="evenodd" />
+                    </svg>
+                    Re-analyze with XML
+                  </button>
                   <button
                     onClick={handleExportCSV}
                     className="inline-flex items-center rounded-md bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600"
@@ -1453,7 +1449,7 @@ export default function Page() {
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-slate-400 cursor-help">
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                               </svg>
-                              <span className="invisible group-hover/tooltip:visible absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 px-4 py-2.5 text-xs leading-relaxed text-slate-200 bg-slate-800 rounded-lg border border-slate-700 shadow-xl z-50">
+                              <span className="invisible group-hover/tooltip:visible absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 px-4 py-2.5 text-xs leading-relaxed text-slate-200 bg-slate-800 rounded-lg border border-slate-700 shadow-xl z-[100]">
                                 どのストアで購入済み/スキップかを記録します。<br />データはブラウザに保存されます。
                                 <span className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-slate-800 border-l border-t border-slate-700 rotate-45"></span>
                               </span>
