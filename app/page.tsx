@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, {
   useState,
@@ -225,9 +226,6 @@ export default function Page() {
   const [selectedStoreTab, setSelectedStoreTab] = useState<'beatport' | 'itunes' | 'bandcamp'>('beatport');
   const [markAllMessage, setMarkAllMessage] = useState<string | null>(null);
 
-  // Section collapse state
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['checkout']));
-
   // Active category filter (UI facing). Default will snap to checkout when available.
   const [activeCategory, setActiveCategory] = useState<TrackCategory>('checkout');
 
@@ -253,7 +251,6 @@ export default function Page() {
   } | null>(null);
 
   // Re-analyze with XML state
-  const [reAnalyzeFile, setReAnalyzeFile] = useState<File | null>(null);
   const [reAnalyzeUrl, setReAnalyzeUrl] = useState<string | null>(null);
   const reAnalyzeInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -375,7 +372,7 @@ export default function Page() {
       if (lower.includes('open.spotify.com')) return 'spotify';
       const m = s.match(/([A-Za-z0-9]{22})/);
       if (m) return 'spotify';
-    } catch (e) {
+    } catch {
       // ignore
     }
     return 'spotify';
@@ -560,12 +557,6 @@ export default function Page() {
     });
   };
 
-  const handleReAnalyzeWithXml = (url: string) => {
-    setReAnalyzeUrl(url);
-    // Trigger file input
-    reAnalyzeInputRef.current?.click();
-  };
-
   const handleReAnalyzeFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -683,7 +674,6 @@ export default function Page() {
         setErrorText('一括XML照合中にエラーが発生しました');
       } finally {
         setLoading(false);
-        setReAnalyzeFile(null);
         setReAnalyzeUrl(null);
         if (reAnalyzeInputRef.current) {
           reAnalyzeInputRef.current.value = '';
@@ -691,7 +681,6 @@ export default function Page() {
       }
       return;
     }
-    setReAnalyzeFile(file);
     setLoading(true);
     setErrorText(null);
 
@@ -811,7 +800,6 @@ export default function Page() {
       setErrorText('XML照合中にエラーが発生しました');
     } finally {
       setLoading(false);
-      setReAnalyzeFile(null);
       setReAnalyzeUrl(null);
       // Reset file input
       if (reAnalyzeInputRef.current) {
@@ -890,7 +878,7 @@ export default function Page() {
         try {
           const rawText = await res.text();
           body = rawText ? JSON.parse(rawText) : null;
-        } catch (e) {
+        } catch {
           // ignore
         }
 
@@ -986,7 +974,7 @@ export default function Page() {
               console.log('[DEBUG] Setting error (apple/other):', msg);
               setErrorText(msg);
             }
-          } catch (_) {
+          } catch {
             // ignore parse issues
             console.log('[DEBUG] Error parsing error response, using generic message');
             setErrorText('プレイリストの取得に失敗しました');
@@ -1330,7 +1318,7 @@ export default function Page() {
       try {
         await navigator.clipboard.writeText(shareUrl);
         alert('Shareリンクをコピーしました');
-      } catch (clipboardErr) {
+      } catch {
         alert('Shareリンク:\n' + shareUrl);
       }
     } catch (e: any) {
@@ -1625,7 +1613,7 @@ export default function Page() {
                             try {
                               await navigator.clipboard.writeText(shareUrl);
                               alert('Shareリンクをコピーしました');
-                            } catch (clipboardErr) {
+                            } catch {
                               // Fallback: show URL in alert for manual copy
                               alert('Shareリンク:\n' + shareUrl);
                             }
@@ -1803,7 +1791,7 @@ export default function Page() {
                   )}
 
                   <p className="text-[11px] text-slate-400">
-                    After buying, return and click "Mark Bought" to save progress on this device.
+                    After buying, return and click &quot;Mark Bought&quot; to save progress on this device.
                   </p>
 
                   {/* Quick section links */}
@@ -2438,7 +2426,7 @@ export default function Page() {
                     ))}
                   </div>
                   <p className="text-xs text-blue-400 mt-2">
-                    These tracks are Bandcamp-only (less reliable). Try if store above doesn't have it.
+                    These tracks are Bandcamp-only (less reliable). Try if store above doesn&apos;t have it.
                   </p>
                 </div>
               );
@@ -2446,7 +2434,7 @@ export default function Page() {
 
             {/* Footer */}
             <div className="mt-4 pt-4 border-t border-slate-700 text-xs text-slate-400">
-              <p>💡 After buying, return and click "Mark Bought" to save progress on this device.</p>
+              <p>💡 After buying, return and click &quot;Mark Bought&quot; to save progress on this device.</p>
             </div>
           </div>
         </div>
