@@ -206,6 +206,11 @@ export default function Page() {
     timestamp: number;
   } | null>(null);
 
+  // Re-analyze with XML state
+  const [reAnalyzeFile, setReAnalyzeFile] = useState<File | null>(null);
+  const [reAnalyzeUrl, setReAnalyzeUrl] = useState<string | null>(null);
+  const reAnalyzeInputRef = React.useRef<HTMLInputElement | null>(null);
+
   const progressTimer = React.useRef<number | null>(null);
 
   // Restore results from localStorage on mount (client-side only)
@@ -447,6 +452,140 @@ export default function Page() {
       
       return filtered;
     });
+  };
+
+  const handleReAnalyzeWithXml = (url: string) => {
+    setReAnalyzeUrl(url);
+    // Trigger file input
+    reAnalyzeInputRef.current?.click();
+  };
+
+  const handleReAnalyzeFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !reAnalyzeUrl) return;
+
+    setReAnalyzeFile(file);
+    setLoading(true);
+    setErrorText(null);
+
+    try {
+      // Find existing result
+      const existingResult = multiResults.find(([url]) => url === reAnalyzeUrl)?.[1];
+      if (!existingResult) {
+        setErrorText('プレイリストが見つかりません');
+        return;
+      }
+
+      const detectedSource = detectSourceFromUrl(reAnalyzeUrl);
+
+      const formData = new FormData();
+      formData.append('url', reAnalyzeUrl);
+      formData.append('source', detectedSource);
+      formData.append('file', file);
+
+      const resp = await fetch(
+        `${BACKEND_URL}/api/playlist-with-rekordbox-upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        setErrorText('XML照合に失敗しました: ' + errText);
+        return;
+      }
+
+      const json = (await resp.json()) as ApiPlaylistResponse;
+      const rows: PlaylistRow[] = json.tracks.map((t, idx) => ({
+        index: idx + 1,
+        title: t.title,
+        artist: t.artist,
+        album: t.album,
+        isrc: t.isrc ?? undefined,
+        spotifyUrl: t.spotify_url ?? '',
+        appleUrl: (t as any).apple_url ?? undefined,
+        stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
+        owned: (t as any).owned ?? undefined,
+        ownedReason: (t as any).owned_reason ?? undefined,
+        trackKeyPrimary: t.track_key_primary,
+        trackKeyFallback: t.track_key_fallback,
+        trackKeyPrimaryType: t.track_key_primary_type,
+        purchaseState: undefined,
+        storeSelected: undefined,
+      }));
+
+      // Merge Buylist state from IndexedDB
+      try {
+        await initDB();
+        const snapshot = await getBuylist(json.playlist_id);
+
+        if (snapshot && snapshot.tracks.length > 0) {
+          const stateMap = new Map<string, TrackState>();
+          for (const ts of snapshot.tracks) {
+            stateMap.set(ts.trackKeyPrimary, ts);
+          }
+
+          for (const row of rows) {
+            if (!row.trackKeyPrimary) continue;
+
+            let state = stateMap.get(row.trackKeyPrimary);
+            if (!state && row.trackKeyFallback && row.trackKeyFallback !== row.trackKeyPrimary) {
+              state = stateMap.get(row.trackKeyFallback);
+            }
+
+            if (state) {
+              row.purchaseState = state.purchaseState;
+              row.storeSelected = state.storeSelected;
+            } else {
+              row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
+              row.storeSelected = 'beatport';
+            }
+          }
+        } else {
+          for (const row of rows) {
+            row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
+            row.storeSelected = 'beatport';
+          }
+        }
+      } catch (err) {
+        console.error('[Buylist] Failed to merge state:', err);
+        for (const row of rows) {
+          row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
+          row.storeSelected = 'beatport';
+        }
+      }
+
+      // Update the specific result
+      setMultiResults((prev) =>
+        prev.map(([url, result]) =>
+          url === reAnalyzeUrl
+            ? [
+                url,
+                {
+                  ...result,
+                  tracks: rows,
+                  analyzedAt: Date.now(),
+                },
+              ]
+            : [url, result]
+        )
+      );
+
+      setErrorText(null);
+    } catch (err) {
+      console.error('[Re-analyze] Error:', err);
+      setErrorText('XML照合中にエラーが発生しました');
+    } finally {
+      setLoading(false);
+      setReAnalyzeFile(null);
+      setReAnalyzeUrl(null);
+      // Reset file input
+      if (reAnalyzeInputRef.current) {
+        reAnalyzeInputRef.current.value = '';
+      }
+    }
   };
 
   const handleAnalyze = async (e: FormEvent) => {
@@ -904,6 +1043,15 @@ export default function Page() {
           )}
         </section>
 
+        {/* Hidden file input for re-analyze */}
+        <input
+          ref={reAnalyzeInputRef}
+          type="file"
+          accept=".xml"
+          onChange={handleReAnalyzeFileChange}
+          className="hidden"
+        />
+
         {/* Apple Music notice - show immediately when analyzing */}
         {appleNotice && (
           <div className="rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-200 px-3 py-2 text-xs">
@@ -925,6 +1073,15 @@ export default function Page() {
             />
           </div>
         )}
+
+        {/* Hidden file input for re-analyze */}
+        <input
+          ref={reAnalyzeInputRef}
+          type="file"
+          accept=".xml"
+          onChange={handleReAnalyzeFileChange}
+          className="hidden"
+        />
 
         {/* Results */}
         {multiResults.length > 0 && (
@@ -952,9 +1109,19 @@ export default function Page() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleReAnalyzeWithXml(url);
+                        }}
+                        className="ml-1 text-xs px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition"
+                        title="Re-analyze with Rekordbox XML"
+                      >
+                        +XML
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleRemoveTab(url);
                         }}
-                        className="ml-2 text-slate-400 hover:text-red-400 transition"
+                        className="ml-1 text-slate-400 hover:text-red-400 transition"
                         title="Remove this playlist"
                       >
                         ×
