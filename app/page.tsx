@@ -8,12 +8,6 @@ import React, {
   useMemo,
 } from 'react';
 import type { PlaylistSnapshotV1 } from '../lib/types';
-import {
-  initDB,
-  getBuylist,
-  saveBuylist,
-  type TrackState,
-} from '@/lib/buylistStore';
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:8000';
@@ -60,12 +54,9 @@ type PlaylistRow = {
   stores: StoreLinks;
   owned?: boolean | null;
   ownedReason?: string | null;
-  // Buylist state
   trackKeyPrimary?: string;
   trackKeyFallback?: string;
   trackKeyPrimaryType?: 'isrc' | 'norm';
-  purchaseState?: 'need' | 'bought' | 'skipped' | 'ambiguous';
-  storeSelected?: 'beatport' | 'itunes' | 'bandcamp';
 };
 
 type ResultState = {
@@ -80,18 +71,6 @@ type ResultState = {
 };
 
 type SortKey = 'none' | 'artist' | 'album' | 'title';
-
-// ==== Owned normalization ====
-
-/**
- * Normalize owned field: only true/false/null are valid.
- * Any other value (undefined, etc.) becomes null.
- */
-function normalizeOwned(value: boolean | null | undefined): boolean | null {
-  if (value === true) return true;
-  if (value === false) return false;
-  return null; // undefined, null, or anything else → null
-}
 
 // ==== Track category helper ====
 
@@ -139,19 +118,6 @@ function getOtherStores(stores: StoreLinks, recommended: { name: string; url: st
     others.push({ name: 'iTunes', url: stores.itunes });
   }
   return others;
-}
-
-function getPreferredStoreTab(result: ResultState | null): 'beatport' | 'bandcamp' | 'itunes' {
-  const priorities: Array<'beatport' | 'bandcamp' | 'itunes'> = ['beatport', 'bandcamp', 'itunes'];
-  for (const store of priorities) {
-    const hasTracks = result?.tracks.some((t) => {
-      if (categorizeTrack(t) !== 'checkout') return false;
-      const url = store === 'beatport' ? t.stores?.beatport : store === 'bandcamp' ? t.stores?.bandcamp : t.stores?.itunes;
-      return url && url.length > 0;
-    });
-    if (hasTracks) return store;
-  }
-  return 'beatport';
 }
 
 // ==== Owned status helper ====
@@ -204,11 +170,8 @@ export default function Page() {
   // Dropdown state: track which "Other stores" dropdown is open
   const [openStoreDropdown, setOpenStoreDropdown] = useState<string | null>(null);
 
-  // Purchase modal state removed per UX request
-
   // Active category filter (UI facing). Default will snap to checkout when available.
   const [showOwned, setShowOwned] = useState(false);
-  const [shareToast, setShareToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Import form collapse state
   const [formCollapsed, setFormCollapsed] = useState(false);
@@ -233,69 +196,7 @@ export default function Page() {
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const sp = new URLSearchParams(window.location.search);
-        const shareId = sp.get('share');
-        
-        // If share ID is present, load ONLY the shared playlist
-        if (shareId) {
-          (async () => {
-            try {
-              const res = await fetch(`/api/share/${shareId}`);
-              if (!res.ok) {
-                const data = await res.json();
-                console.warn('Share restore failed:', data?.error);
-                return;
-              }
-              const data = await res.json();
-              const snap = data?.snapshot;
-              if (!snap || snap?.schema !== 'playlist_snapshot') {
-                console.warn('Invalid snapshot schema');
-                return;
-              }
-              const result: ResultState = {
-                title: snap.playlist?.name || '(shared playlist)',
-                total: snap.playlist?.track_count || (snap.tracks?.length ?? 0),
-                playlistUrl: snap.playlist?.url || '',
-                playlist_id: snap.playlist?.id || '',
-                playlist_name: snap.playlist?.name || '(shared playlist)',
-                analyzedAt: Date.now(),
-                hasRekordboxData: snap.tracks?.some(
-                  (t: PlaylistSnapshotV1['tracks'][number]) => t.owned === true
-                ) || false,
-                tracks: (snap.tracks || []).map(
-                  (t: PlaylistSnapshotV1['tracks'][number], idx: number) => ({
-                  index: idx + 1,
-                  title: t.title,
-                  artist: t.artist,
-                  album: t.album || '',
-                  isrc: t.isrc || undefined,
-                  spotifyUrl: t.links?.spotify || '',
-                  appleUrl: t.links?.apple || '',
-                  owned: normalizeOwned(t.owned),
-                  ownedReason: t.owned_reason ?? null,
-                  trackKeyPrimary: t.track_key_primary,
-                  trackKeyFallback: t.track_key_fallback,
-                  trackKeyPrimaryType: t.track_key_primary_type,
-                  trackKeyVersion: t.track_key_version,
-                  links: {
-                    beatport: t.links?.beatport || '',
-                    bandcamp: t.links?.bandcamp || '',
-                    itunes: t.links?.itunes || '',
-                  },
-                })),
-              };
-              const urlKey = snap.playlist?.url || `shared:${shareId}`;
-              // Replace all results with ONLY the shared playlist
-              setMultiResults([[urlKey, result]]);
-              setActiveTab(urlKey);
-            } catch (err) {
-              console.error('[Share] Failed to fetch shared playlist:', err);
-            }
-          })();
-          return; // Don't load localStorage if share ID is present
-        }
-        
-        // Otherwise, load from localStorage
+        // Load from localStorage
         const savedResults = localStorage.getItem('spotify-shopper-results');
         const savedTab = localStorage.getItem('spotify-shopper-active-tab');
         
@@ -443,48 +344,7 @@ export default function Page() {
               trackKeyPrimary: t.track_key_primary,
               trackKeyFallback: t.track_key_fallback,
               trackKeyPrimaryType: t.track_key_primary_type,
-              purchaseState: undefined,
-              storeSelected: undefined,
             }));
-
-            // Merge Buylist state
-            try {
-              await initDB();
-              const snapshot = await getBuylist(json.playlist_id);
-
-              if (snapshot && snapshot.tracks.length > 0) {
-                const stateMap = new Map<string, TrackState>();
-                for (const ts of snapshot.tracks) {
-                  stateMap.set(ts.trackKeyPrimary, ts);
-                }
-
-                for (const row of rows) {
-                  if (!row.trackKeyPrimary) continue;
-                  let state = stateMap.get(row.trackKeyPrimary);
-                  if (!state && row.trackKeyFallback && row.trackKeyFallback !== row.trackKeyPrimary) {
-                    state = stateMap.get(row.trackKeyFallback);
-                  }
-                  if (state) {
-                    row.purchaseState = state.purchaseState;
-                    row.storeSelected = state.storeSelected;
-                  } else {
-                    row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
-                    row.storeSelected = 'beatport';
-                  }
-                }
-              } else {
-                for (const row of rows) {
-                  row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
-                  row.storeSelected = 'beatport';
-                }
-              }
-            } catch (err) {
-              console.error('[Buylist] Failed to merge state:', err);
-              for (const row of rows) {
-                row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
-                row.storeSelected = 'beatport';
-              }
-            }
 
             updatedResults.push([
               url,
@@ -566,50 +426,7 @@ export default function Page() {
         trackKeyPrimary: t.track_key_primary,
         trackKeyFallback: t.track_key_fallback,
         trackKeyPrimaryType: t.track_key_primary_type,
-        purchaseState: undefined,
-        storeSelected: undefined,
       }));
-
-      // Merge Buylist state from IndexedDB
-      try {
-        await initDB();
-        const snapshot = await getBuylist(json.playlist_id);
-
-        if (snapshot && snapshot.tracks.length > 0) {
-          const stateMap = new Map<string, TrackState>();
-          for (const ts of snapshot.tracks) {
-            stateMap.set(ts.trackKeyPrimary, ts);
-          }
-
-          for (const row of rows) {
-            if (!row.trackKeyPrimary) continue;
-
-            let state = stateMap.get(row.trackKeyPrimary);
-            if (!state && row.trackKeyFallback && row.trackKeyFallback !== row.trackKeyPrimary) {
-              state = stateMap.get(row.trackKeyFallback);
-            }
-
-            if (state) {
-              row.purchaseState = state.purchaseState;
-              row.storeSelected = state.storeSelected;
-            } else {
-              row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
-              row.storeSelected = 'beatport';
-            }
-          }
-        } else {
-          for (const row of rows) {
-            row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
-            row.storeSelected = 'beatport';
-          }
-        }
-      } catch (err) {
-        console.error('[Buylist] Failed to merge state:', err);
-        for (const row of rows) {
-          row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
-          row.storeSelected = 'beatport';
-        }
-      }
 
       // Update the specific result
       setMultiResults((prev) =>
@@ -841,58 +658,7 @@ export default function Page() {
           trackKeyPrimary: t.track_key_primary,
           trackKeyFallback: t.track_key_fallback,
           trackKeyPrimaryType: t.track_key_primary_type,
-          purchaseState: undefined, // Will be merged from IndexedDB
-          storeSelected: undefined, // Will be merged from IndexedDB
         }));
-
-        // Step 1: Merge Buylist state from IndexedDB
-        try {
-          await initDB();
-          const snapshot = await getBuylist(json.playlist_id);
-          
-          if (snapshot && snapshot.tracks.length > 0) {
-            // Build lookup map: track_key_primary → TrackState
-            const stateMap = new Map<string, TrackState>();
-            for (const ts of snapshot.tracks) {
-              stateMap.set(ts.trackKeyPrimary, ts);
-            }
-            
-            // Merge state into rows
-            for (const row of rows) {
-              if (!row.trackKeyPrimary) continue;
-              
-              // Try primary key first
-              let state = stateMap.get(row.trackKeyPrimary);
-              
-              // Fallback to fallback key (migration case)
-              if (!state && row.trackKeyFallback && row.trackKeyFallback !== row.trackKeyPrimary) {
-                state = stateMap.get(row.trackKeyFallback);
-              }
-              
-              if (state) {
-                row.purchaseState = state.purchaseState;
-                row.storeSelected = state.storeSelected;
-              } else {
-                // Initialize based on track_key_primary_type
-                row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
-                row.storeSelected = 'beatport'; // default
-              }
-            }
-          } else {
-            // No saved state: initialize all tracks
-            for (const row of rows) {
-              row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
-              row.storeSelected = 'beatport';
-            }
-          }
-        } catch (err) {
-          console.error('[Buylist] Failed to merge state from IndexedDB:', err);
-          // Fallback: initialize all as default
-          for (const row of rows) {
-            row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
-            row.storeSelected = 'beatport';
-          }
-        }
 
         newResults.push([
           url,
@@ -1057,68 +823,6 @@ export default function Page() {
     URL.revokeObjectURL(url);
   };
 
-  const handleShare = async () => {
-    if (!currentResult || displayedTracks.length === 0) return;
-    try {
-      const snapshot: PlaylistSnapshotV1 = {
-        schema: 'playlist_snapshot',
-        version: 1,
-        created_at: new Date().toISOString(),
-        playlist: {
-          source: currentResult.playlistUrl?.includes('music.apple.com') ? 'apple' : 'spotify',
-          url: currentResult.playlistUrl || '',
-          id: currentResult.playlist_id,
-          name: currentResult.playlist_name,
-          track_count: currentResult.total,
-        },
-        tracks: displayedTracks.map((t) => ({
-          title: t.title,
-          artist: t.artist,
-          album: t.album,
-          isrc: t.isrc ?? null,
-          owned: t.owned === true ? true : t.owned === false ? false : undefined,
-          owned_reason: t.ownedReason ?? null,
-          track_key_primary: t.trackKeyPrimary!,
-          track_key_fallback: t.trackKeyFallback!,
-          track_key_version: 'v1',
-          track_key_primary_type: (t.trackKeyPrimaryType as 'isrc' | 'norm') || 'norm',
-          links: {
-            beatport: t.stores?.beatport,
-            bandcamp: t.stores?.bandcamp,
-            itunes: t.stores?.itunes,
-            spotify: t.spotifyUrl,
-            apple: t.appleUrl,
-          },
-        })),
-      };
-      const res = await fetch('/api/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ snapshot }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        const errorDetail = data?.error || `HTTP ${res.status}`;
-        throw new Error(errorDetail);
-      }
-      const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/?share=${data.share_id}`;
-
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        setShareToast({ message: 'URL copied to clipboard', type: 'success' });
-        setTimeout(() => setShareToast(null), 3000);
-      } catch {
-        // Fallback: show URL for manual copy
-        setShareToast({ message: `URL: ${shareUrl} (copy manually)`, type: 'success' });
-        setTimeout(() => setShareToast(null), 5000);
-      }
-    } catch (e: unknown) {
-      const errorMsg = e instanceof Error ? e.message : String(e);
-      setShareToast({ message: `Share failed: ${errorMsg}`, type: 'error' });
-      setTimeout(() => setShareToast(null), 4000);
-    }
-  };
-
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
@@ -1131,17 +835,6 @@ export default function Page() {
             to mark tracks as Owned / Not owned. The app also generates Beatport, Bandcamp and iTunes search links.
           </p>
         </header>
-
-        {/* Share toast */}
-        {shareToast && (
-          <div className={`fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg text-sm ${
-            shareToast.type === 'success'
-              ? 'bg-emerald-600 text-white'
-              : 'bg-red-600 text-white'
-          }`}>
-            {shareToast.message}
-          </div>
-        )}
 
         {/* Form */}
         <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
@@ -1238,24 +931,6 @@ export default function Page() {
             </div>
           )}
         </section>
-
-        {/* Summary Stats - Always visible */}
-        {currentResult && (
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <div className="bg-slate-800/50 rounded px-2 py-1.5 text-center">
-              <div className="font-semibold text-slate-100">{currentResult.total}</div>
-              <div className="text-slate-400">Total</div>
-            </div>
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded px-2 py-1.5 text-center">
-              <div className="font-semibold text-emerald-300">{ownedCount}</div>
-              <div className="text-emerald-600">Owned</div>
-            </div>
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1.5 text-center">
-              <div className="font-semibold text-amber-300">{checkoutCount}</div>
-              <div className="text-amber-600">To Buy</div>
-            </div>
-          </div>
-        )}
 
         {/* Hidden file input for re-analyze */}
         <input
@@ -1366,66 +1041,6 @@ export default function Page() {
                       <div>Unowned: {unownedCount}</div>
                     </div>
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-2 sm:flex-wrap">
-                      <button
-                        onClick={async () => {
-                          try {
-                            const snapshot: PlaylistSnapshotV1 = {
-                              schema: 'playlist_snapshot',
-                              version: 1,
-                              created_at: new Date().toISOString(),
-                              playlist: {
-                                source: currentResult.playlistUrl?.includes('music.apple.com') ? 'apple' : 'spotify',
-                                url: currentResult.playlistUrl || '',
-                                id: currentResult.playlist_id,
-                                name: currentResult.playlist_name,
-                                track_count: currentResult.total,
-                              },
-                              tracks: displayedTracks.map((t) => ({
-                                title: t.title,
-                                artist: t.artist,
-                                album: t.album,
-                                isrc: t.isrc ?? null,
-                                owned: t.owned === true ? true : t.owned === false ? false : undefined,
-                                owned_reason: t.ownedReason ?? null,
-                                track_key_primary: t.trackKeyPrimary!,
-                                track_key_fallback: t.trackKeyFallback!,
-                                track_key_version: 'v1',
-                                track_key_primary_type: (t.trackKeyPrimaryType as 'isrc' | 'norm') || 'norm',
-                                links: {
-                                  beatport: t.stores?.beatport,
-                                  bandcamp: t.stores?.bandcamp,
-                                  itunes: t.stores?.itunes,
-                                  spotify: t.spotifyUrl,
-                                  apple: t.appleUrl,
-                                },
-                              })),
-                            };
-                            const res = await fetch('/api/share', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ snapshot }),
-                            });
-                            const data = await res.json();
-                            if (!res.ok) throw new Error(data?.error || 'Share failed');
-                            const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/?share=${data.share_id}`;
-                            
-                            // Try clipboard API, fallback to alert with URL
-                            try {
-                              await navigator.clipboard.writeText(shareUrl);
-                              alert('Shareリンクをコピーしました');
-                            } catch {
-                              // Fallback: show URL in alert for manual copy
-                              alert('Shareリンク:\n' + shareUrl);
-                            }
-                          } catch (e: unknown) {
-                            const errorMsg = e instanceof Error ? e.message : String(e);
-                            alert('Share失敗: ' + errorMsg);
-                          }
-                        }}
-                        className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium hover:bg-slate-600"
-                      >
-                        Share
-                      </button>
                       <label className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium cursor-pointer hover:bg-slate-600">
                         Re-analyze with XML
                         <input type="file" accept=".xml" className="hidden" onChange={async (ev) => {
@@ -1526,44 +1141,8 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* CheckoutHeader: Stepper + Primary CTA (Summary moved to global) */}
-                <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-xl p-4 space-y-4">
-                  {/* Stepper */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      {/* Step 1: Import */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/30 border border-emerald-500 flex items-center justify-center text-xs font-semibold text-emerald-300">
-                          ✓
-                        </div>
-                        <div className="text-xs text-slate-400 mt-1">Import</div>
-                      </div>
-                      <div className="flex-1 h-0.5 bg-slate-800" />
-                      
-                      {/* Step 2: Match */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/30 border border-emerald-500 flex items-center justify-center text-xs font-semibold text-emerald-300">
-                          ✓
-                        </div>
-                        <div className="text-xs text-slate-400 mt-1">Match</div>
-                      </div>
-                      <div className="flex-1 h-0.5 bg-slate-800" />
-                      
-                      {/* Step 3: Buy (Active) */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-amber-500 border border-amber-500 flex items-center justify-center text-xs font-semibold text-slate-900 font-bold">
-                          3
-                        </div>
-                        <div className="text-xs text-amber-300 mt-1">Buy</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Summary removed here; shown globally above Results */}
-
-                  {/* Buy CTA removed per UX request */}
-
-                  {/* Quick section toggle */}
+                {/* Category toggle */}
+                <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-xl p-4">
                   <div className="flex gap-2">
                     <button onClick={() => setShowOwned(false)} className={`flex-1 px-3 py-1 rounded border text-xs transition ${!showOwned ? 'bg-amber-500/30 border-amber-500 text-amber-200' : 'bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20'}`}>
                       To Buy ({checkoutCount})
@@ -1572,14 +1151,32 @@ export default function Page() {
                       Owned ({ownedCount})
                     </button>
                   </div>
+                </div>
 
-                  <div className="text-[11px] text-slate-400 flex gap-3">
-                    <span>Total: {currentResult.total}</span>
-                    <span>To Buy: {checkoutCount}</span>
-                    <span>Owned: {ownedCount}</span>
-                  </div>
-
-                  {/* Post-attach XML entry point removed per latest UX request */}
+                {/* Track totals table */}
+                <div className="max-w-md overflow-hidden rounded-lg border border-slate-800 bg-slate-900/70 text-xs">
+                  <table className="w-full">
+                    <thead className="bg-slate-900/90 text-slate-300">
+                      <tr>
+                        <th className="px-3 py-2 text-left">Metric</th>
+                        <th className="px-3 py-2 text-right">Count</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800 text-slate-100">
+                      <tr>
+                        <td className="px-3 py-2">Tracks</td>
+                        <td className="px-3 py-2 text-right">{currentResult.total}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-3 py-2">Owned</td>
+                        <td className="px-3 py-2 text-right">{ownedCount}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-3 py-2">To Buy</td>
+                        <td className="px-3 py-2 text-right">{checkoutCount}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
                 {/* Search & Sort Controls */}
@@ -1634,17 +1231,6 @@ export default function Page() {
                               >
                                 {t.title}
                               </a>
-                              {(() => {
-                                const category = categorizeTrack(t);
-                                // Show badge only for Owned
-                                if (category !== 'owned') return null;
-                                const badgeClass = 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50';
-                                return (
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
-                                    {categoryLabels[category]}
-                                  </span>
-                                );
-                              })()}
                             </div>
                             <div className="text-slate-400 text-[11px] truncate">{t.artist}</div>
                             <div className="text-slate-500 text-[11px] truncate">{t.album}</div>
@@ -1695,12 +1281,12 @@ export default function Page() {
                   <table className="w-full text-xs table-fixed">
                     <thead className="bg-slate-900/90">
                       <tr className="border-b border-slate-800 text-slate-300">
-                        <th className="px-3 py-2 text-left w-10">#</th>
-                        <th className="px-3 py-2 text-left w-1/4">Title</th>
-                        <th className="px-3 py-2 text-left w-1/6">Artist</th>
-                        <th className="px-3 py-2 text-left w-1/6">Album</th>
-                        <th className="px-2 py-2 text-left w-24">ISRC</th>
-                        <th className="px-3 py-2 text-left w-32">Stores</th>
+                        <th className="px-3 py-2 text-left w-14">#</th>
+                        <th className="px-3 py-2 text-left w-[30%]">Title</th>
+                        <th className="px-3 py-2 text-left w-[20%]">Artist</th>
+                        <th className="px-3 py-2 text-left w-[20%]">Album</th>
+                        <th className="px-2 py-2 text-left w-[12%]">ISRC</th>
+                        <th className="px-3 py-2 text-left w-[18%]">Stores</th>
                         {/* Status column removed per UX request */}
                       </tr>
                     </thead>
@@ -1716,7 +1302,7 @@ export default function Page() {
                           return [
                             (
                               <tr key={`section-${section.id}`} className="bg-slate-900/70">
-                                <td colSpan={7} className={`px-3 py-2 text-left text-[11px] font-semibold ${section.color}`}>
+                                <td colSpan={6} className={`px-3 py-2 text-left text-[11px] font-semibold ${section.color}`}>
                                   {section.icon} {section.label} ({section.items.length})
                                 </td>
                               </tr>
@@ -1755,17 +1341,6 @@ export default function Page() {
                                       >
                                         {t.title}
                                       </a>
-                                      {(() => {
-                                        const category = categorizeTrack(t);
-                                        // Show badge only for Owned
-                                        if (category !== 'owned') return null;
-                                        const badgeClass = 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50';
-                                        return (
-                                          <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
-                                            {categoryLabels[category]}
-                                          </span>
-                                        );
-                                      })()}
                                     </div>
                                   </td>
                                   <td className="px-3 py-1 text-sm text-slate-300">
