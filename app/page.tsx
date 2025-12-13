@@ -1734,6 +1734,17 @@ export default function Page() {
                       Owned ({ownedCount})
                     </a>
                   </div>
+
+                  {/* Post-attach XML entry point */}
+                  <div className="flex flex-wrap gap-2 text-[11px] text-slate-300">
+                    <button
+                      onClick={() => reAnalyzeInputRef.current?.click()}
+                      className="px-3 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 transition"
+                    >
+                      Match with Rekordbox XML
+                    </button>
+                    <span className="text-slate-500">No URL re-entry needed</span>
+                  </div>
                 </div>
 
                 {/* Search & Sort Controls */}
