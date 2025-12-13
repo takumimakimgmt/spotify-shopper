@@ -6,6 +6,7 @@ import React, {
   FormEvent,
   useMemo,
 } from 'react';
+import type { PlaylistSnapshotV1 } from '../lib/types';
 import {
   initDB,
   getBuylist,
@@ -1307,6 +1308,137 @@ export default function Page() {
                       <div>Tracks: {currentResult.total}</div>
                       <div>Owned: {currentResult.total - unownedCount}</div>
                       <div>Unowned: {unownedCount}</div>
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        className="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-200 text-xs"
+                        onClick={async () => {
+                          try {
+                            const snapshot: PlaylistSnapshotV1 = {
+                              schema: 'playlist_snapshot',
+                              version: 1,
+                              created_at: new Date().toISOString(),
+                              playlist: {
+                                source: currentResult.playlistUrl?.includes('music.apple.com') ? 'apple' : 'spotify',
+                                url: currentResult.playlistUrl || '',
+                                id: currentResult.playlist_id,
+                                name: currentResult.playlist_name,
+                                track_count: currentResult.total,
+                              },
+                              tracks: displayedTracks.map((t) => ({
+                                title: t.title,
+                                artist: t.artist,
+                                album: t.album,
+                                isrc: t.isrc ?? null,
+                                owned: t.owned ?? undefined,
+                                owned_reason: t.owned_reason ?? null,
+                                track_key_primary: t.track_key_primary!,
+                                track_key_fallback: t.track_key_fallback!,
+                                track_key_version: 'v1',
+                                track_key_primary_type: (t.track_key_primary_type as 'isrc' | 'norm') || 'norm',
+                                links: {
+                                  beatport: t.links?.beatport,
+                                  bandcamp: t.links?.bandcamp,
+                                  itunes: t.links?.itunes,
+                                  spotify: t.spotifyUrl,
+                                  apple: t.appleUrl,
+                                },
+                              })),
+                            };
+                            const res = await fetch('/api/share', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ snapshot }),
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data?.error || 'Share failed');
+                            const shareUrl = `${window.location.origin}/?share=${data.share_id}`;
+                            await navigator.clipboard.writeText(shareUrl);
+                            alert('Shareリンクをコピーしました: ' + shareUrl);
+                          } catch (e: any) {
+                            alert('Share失敗: ' + (e?.message ?? e));
+                          }
+                        }}
+                      >
+                        Share
+                      </button>
+                      <label className="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-200 text-xs cursor-pointer">
+                        Apply Rekordbox XML
+                        <input type="file" accept=".xml" className="hidden" onChange={async (ev) => {
+                          const file = ev.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const snapshot: PlaylistSnapshotV1 = {
+                              schema: 'playlist_snapshot',
+                              version: 1,
+                              created_at: new Date().toISOString(),
+                              playlist: {
+                                source: currentResult.playlistUrl?.includes('music.apple.com') ? 'apple' : 'spotify',
+                                url: currentResult.playlistUrl || '',
+                                id: currentResult.playlist_id,
+                                name: currentResult.playlist_name,
+                                track_count: currentResult.total,
+                              },
+                              tracks: displayedTracks.map((t) => ({
+                                title: t.title,
+                                artist: t.artist,
+                                album: t.album,
+                                isrc: t.isrc ?? null,
+                                owned: t.owned ?? undefined,
+                                owned_reason: t.owned_reason ?? null,
+                                track_key_primary: t.track_key_primary!,
+                                track_key_fallback: t.track_key_fallback!,
+                                track_key_version: 'v1',
+                                track_key_primary_type: (t.track_key_primary_type as 'isrc' | 'norm') || 'norm',
+                                links: {
+                                  beatport: t.links?.beatport,
+                                  bandcamp: t.links?.bandcamp,
+                                  itunes: t.links?.itunes,
+                                  spotify: t.spotifyUrl,
+                                  apple: t.appleUrl,
+                                },
+                              })),
+                            };
+                            const form = new FormData();
+                            form.append('snapshot', JSON.stringify(snapshot));
+                            form.append('file', file);
+                            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || ''}/api/match-snapshot-with-xml`, {
+                              method: 'POST',
+                              body: form,
+                            });
+                            const updated = await res.json();
+                            if (!res.ok) throw new Error(updated?.detail || 'XML適用失敗');
+                            setMultiResults((prev) => {
+                              const next = [...prev];
+                              const idx = next.findIndex(r => r[1].playlist_id === currentResult.playlist_id);
+                              if (idx >= 0) {
+                                const nt = next[idx][1];
+                                const byKey: Record<string, any> = {};
+                                for (const t of updated.tracks || []) {
+                                  const key = t.track_key_primary || t.track_key_fallback;
+                                  if (key) byKey[key] = t;
+                                }
+                                nt.tracks = nt.tracks.map((t: any) => {
+                                  const key = t.track_key_primary || t.track_key_fallback;
+                                  const u = byKey[key];
+                                  if (u) {
+                                    t.owned = u.owned;
+                                    t.owned_reason = u.owned_reason;
+                                  }
+                                  return t;
+                                });
+                                next[idx][1] = { ...nt, hasRekordboxData: true };
+                              }
+                              return next as any;
+                            });
+                            alert('XML適用しました');
+                          } catch (e: any) {
+                            alert('XML適用失敗: ' + (e?.message ?? e));
+                          } finally {
+                            ev.target.value = '';
+                          }
+                        }} />
+                      </label>
                     </div>
                   </div>
                 </div>
