@@ -494,6 +494,7 @@ export default function Page() {
 
     for (const url of urls) {
       try {
+        const t0 = performance.now();
         const effectiveSource = detectSourceFromUrl(url) || 'spotify';
 
         // Validate
@@ -524,6 +525,8 @@ export default function Page() {
           const params = new URLSearchParams({ url, source: effectiveSource });
           res = await fetch(`${BACKEND_URL}/api/playlist?${params.toString()}`);
         }
+        const t1 = performance.now();
+        const networkMs = t1 - t0;
 
         let body: Record<string, unknown> | null = null;
         try {
@@ -532,6 +535,8 @@ export default function Page() {
         } catch {
           // ignore
         }
+        const t2 = performance.now();
+        const jsonMs = t2 - t1;
 
         if (!res.ok) {
           hasError = true;
@@ -644,6 +649,7 @@ export default function Page() {
         }
 
         const json = body as ApiPlaylistResponse;
+        const t3a = performance.now();
         const rows: PlaylistRow[] = json.tracks.map((t, idx) => ({
           index: idx + 1,
           title: t.title,
@@ -673,6 +679,19 @@ export default function Page() {
             hasRekordboxData: !!rekordboxFile,
           },
         ]);
+
+        // Schedule render metric after state updates (use requestAnimationFrame)
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const t3b = performance.now();
+            const renderMs = t3b - t3a;
+            const totalMs = t3b - t0;
+            const payloadBytes = new Blob([JSON.stringify(json)]).size;
+            console.log(
+              `[PERF] url=${url.substring(0, 60)} tracks=${rows.length} network_ms=${networkMs.toFixed(1)} json_ms=${jsonMs.toFixed(1)} render_ms=${renderMs.toFixed(1)} total_ms=${totalMs.toFixed(1)} payload_bytes=${payloadBytes}`
+            );
+          });
+        });
       } catch (err) {
         console.error(err);
         hasError = true;
