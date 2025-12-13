@@ -642,6 +642,10 @@ export default function Page() {
 
     try {
       // Find existing result
+      if (!reAnalyzeUrl) {
+        setErrorText('プレイリストURLが見つかりません');
+        return;
+      }
       const existingResult = multiResults.find(([url]) => url === reAnalyzeUrl)?.[1];
       if (!existingResult) {
         setErrorText('プレイリストが見つかりません');
