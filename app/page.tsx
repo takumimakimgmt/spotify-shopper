@@ -6,6 +6,16 @@ import React, {
   FormEvent,
   useMemo,
 } from 'react';
+import {
+  initDB,
+  getBuylist,
+  saveBuylist,
+  updateTrackState,
+  type BuylistSnapshot,
+  type TrackState,
+  type PurchaseState,
+  type StoreSelected,
+} from '@/lib/buylistStore';
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:8000';
@@ -28,6 +38,10 @@ type ApiTrack = {
   links: StoreLinks;
   owned?: boolean | null;
   owned_reason?: string | null;
+  track_key_primary?: string;
+  track_key_fallback?: string;
+  track_key_primary_type?: 'isrc' | 'norm';
+  track_key_version?: string;
 };
 
 type ApiPlaylistResponse = {
@@ -48,6 +62,12 @@ type PlaylistRow = {
   stores: StoreLinks;
   owned?: boolean | null;
   ownedReason?: string | null;
+  // Buylist state
+  trackKeyPrimary?: string;
+  trackKeyFallback?: string;
+  trackKeyPrimaryType?: 'isrc' | 'norm';
+  purchaseState?: 'need' | 'bought' | 'skipped' | 'ambiguous';
+  storeSelected?: 'beatport' | 'itunes' | 'bandcamp';
 };
 
 type ResultState = {
@@ -178,6 +198,14 @@ export default function Page() {
   const [sortKey, setSortKey] = useState<SortKey>('none');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Undo state (last action only)
+  const [lastAction, setLastAction] = useState<{
+    playlistUrl: string;
+    trackKeyPrimary: string;
+    oldState: PurchaseState;
+    timestamp: number;
+  } | null>(null);
+
   const progressTimer = React.useRef<number | null>(null);
 
   function detectSourceFromUrl(u: string): 'spotify' | 'apple' {
@@ -214,6 +242,148 @@ export default function Page() {
       setRekordboxDate(date.toLocaleString());
     } else {
       setRekordboxDate(null);
+    }
+  };
+
+  // Buylist state management
+  const handlePurchaseStateChange = async (
+    playlistUrl: string,
+    track: PlaylistRow,
+    newState: PurchaseState
+  ) => {
+    if (!track.trackKeyPrimary || !currentResult) return;
+
+    const oldState = track.purchaseState || 'need';
+
+    try {
+      await initDB();
+      
+      // Get current snapshot or create new one
+      const playlistId = multiResults.find(([url]) => url === playlistUrl)?.[1]?.title || playlistUrl;
+      let snapshot = await getBuylist(playlistId);
+      
+      if (!snapshot) {
+        // Create new snapshot
+        snapshot = {
+          playlistId,
+          playlistUrl,
+          playlistName: currentResult.title,
+          tracks: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+      }
+      
+      // Find or create track state
+      const existingIdx = snapshot.tracks.findIndex(
+        (ts) => ts.trackKeyPrimary === track.trackKeyPrimary
+      );
+      
+      const trackState: TrackState = {
+        trackKeyPrimary: track.trackKeyPrimary,
+        trackKeyFallback: track.trackKeyFallback || track.trackKeyPrimary,
+        trackKeyPrimaryType: track.trackKeyPrimaryType || 'norm',
+        title: track.title,
+        artist: track.artist,
+        purchaseState: newState,
+        storeSelected: track.storeSelected || 'beatport',
+        updatedAt: Date.now(),
+      };
+      
+      if (existingIdx >= 0) {
+        snapshot.tracks[existingIdx] = trackState;
+      } else {
+        snapshot.tracks.push(trackState);
+      }
+      
+      // Save to IndexedDB
+      await saveBuylist(snapshot);
+      
+      // Update UI
+      setMultiResults((prev) => {
+        return prev.map(([url, result]) => {
+          if (url === playlistUrl) {
+            return [
+              url,
+              {
+                ...result,
+                tracks: result.tracks.map((t) =>
+                  t.trackKeyPrimary === track.trackKeyPrimary
+                    ? { ...t, purchaseState: newState }
+                    : t
+                ),
+              },
+            ];
+          }
+          return [url, result];
+        });
+      });
+
+      // Save last action for Undo
+      setLastAction({
+        playlistUrl,
+        trackKeyPrimary: track.trackKeyPrimary,
+        oldState,
+        timestamp: Date.now(),
+      });
+
+      // Clear undo after 2 seconds
+      setTimeout(() => {
+        setLastAction((prev) =>
+          prev && prev.timestamp === trackState.updatedAt ? null : prev
+        );
+      }, 2000);
+    } catch (err) {
+      console.error('[Buylist] Failed to save state:', err);
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!lastAction) return;
+
+    const { playlistUrl, trackKeyPrimary, oldState } = lastAction;
+
+    try {
+      await initDB();
+      
+      const playlistId = multiResults.find(([url]) => url === playlistUrl)?.[1]?.title || playlistUrl;
+      const snapshot = await getBuylist(playlistId);
+      
+      if (!snapshot) return;
+      
+      const existingIdx = snapshot.tracks.findIndex(
+        (ts) => ts.trackKeyPrimary === trackKeyPrimary
+      );
+      
+      if (existingIdx >= 0) {
+        snapshot.tracks[existingIdx].purchaseState = oldState;
+        snapshot.tracks[existingIdx].updatedAt = Date.now();
+        await saveBuylist(snapshot);
+        
+        // Update UI
+        setMultiResults((prev) => {
+          return prev.map(([url, result]) => {
+            if (url === playlistUrl) {
+              return [
+                url,
+                {
+                  ...result,
+                  tracks: result.tracks.map((t) =>
+                    t.trackKeyPrimary === trackKeyPrimary
+                      ? { ...t, purchaseState: oldState }
+                      : t
+                  ),
+                },
+              ];
+            }
+            return [url, result];
+          });
+        });
+      }
+      
+      setLastAction(null);
+    } catch (err) {
+      console.error('[Buylist] Failed to undo:', err);
     }
   };
 
@@ -404,7 +574,61 @@ export default function Page() {
           stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
           owned: (t as any).owned ?? undefined,
           ownedReason: (t as any).owned_reason ?? undefined,
+          trackKeyPrimary: t.track_key_primary,
+          trackKeyFallback: t.track_key_fallback,
+          trackKeyPrimaryType: t.track_key_primary_type,
+          purchaseState: undefined, // Will be merged from IndexedDB
+          storeSelected: undefined, // Will be merged from IndexedDB
         }));
+
+        // Step 1: Merge Buylist state from IndexedDB
+        try {
+          await initDB();
+          const snapshot = await getBuylist(json.playlist_id);
+          
+          if (snapshot && snapshot.tracks.length > 0) {
+            // Build lookup map: track_key_primary → TrackState
+            const stateMap = new Map<string, TrackState>();
+            for (const ts of snapshot.tracks) {
+              stateMap.set(ts.trackKeyPrimary, ts);
+            }
+            
+            // Merge state into rows
+            for (const row of rows) {
+              if (!row.trackKeyPrimary) continue;
+              
+              // Try primary key first
+              let state = stateMap.get(row.trackKeyPrimary);
+              
+              // Fallback to fallback key (migration case)
+              if (!state && row.trackKeyFallback && row.trackKeyFallback !== row.trackKeyPrimary) {
+                state = stateMap.get(row.trackKeyFallback);
+              }
+              
+              if (state) {
+                row.purchaseState = state.purchaseState;
+                row.storeSelected = state.storeSelected;
+              } else {
+                // Initialize based on track_key_primary_type
+                row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
+                row.storeSelected = 'beatport'; // default
+              }
+            }
+          } else {
+            // No saved state: initialize all tracks
+            for (const row of rows) {
+              row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
+              row.storeSelected = 'beatport';
+            }
+          }
+        } catch (err) {
+          console.error('[Buylist] Failed to merge state from IndexedDB:', err);
+          // Fallback: initialize all as default
+          for (const row of rows) {
+            row.purchaseState = row.trackKeyPrimaryType === 'norm' ? 'ambiguous' : 'need';
+            row.storeSelected = 'beatport';
+          }
+        }
 
         newResults.push([
           url,
@@ -663,6 +887,21 @@ export default function Page() {
 
             {currentResult && (
               <div className="space-y-4">
+                {/* Undo Toast */}
+                {lastAction && (
+                  <div className="fixed bottom-4 right-4 z-50 bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 shadow-lg flex items-center gap-3 animate-fade-in">
+                    <span className="text-sm text-slate-300">
+                      Action saved
+                    </span>
+                    <button
+                      onClick={handleUndo}
+                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition"
+                    >
+                      Undo
+                    </button>
+                  </div>
+                )}
+
                 {/* Info & controls */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="space-y-1">
@@ -803,6 +1042,7 @@ export default function Page() {
                         <th className="px-3 py-2 text-left">ISRC</th>
                         <th className="px-3 py-2 text-center">Owned</th>
                         <th className="px-3 py-2 text-left">Stores</th>
+                        <th className="px-3 py-2 text-center">Buylist</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -891,6 +1131,61 @@ export default function Page() {
                                     </span>
                                   </a>
                                 )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-1">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    handlePurchaseStateChange(
+                                      activeTab || '',
+                                      t,
+                                      t.purchaseState === 'bought' ? 'need' : 'bought'
+                                    );
+                                  }}
+                                  className={`px-3 py-1 rounded text-xs font-medium transition ${
+                                    t.purchaseState === 'bought'
+                                      ? 'bg-green-600 text-white'
+                                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                  }`}
+                                  title="Mark as bought"
+                                >
+                                  {t.purchaseState === 'bought' ? '✓ Bought' : 'Bought'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handlePurchaseStateChange(
+                                      activeTab || '',
+                                      t,
+                                      t.purchaseState === 'skipped' ? 'need' : 'skipped'
+                                    );
+                                  }}
+                                  className={`px-3 py-1 rounded text-xs font-medium transition ${
+                                    t.purchaseState === 'skipped'
+                                      ? 'bg-yellow-600 text-white'
+                                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                  }`}
+                                  title="Skip this track"
+                                >
+                                  {t.purchaseState === 'skipped' ? 'Skipped' : 'Skip'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handlePurchaseStateChange(
+                                      activeTab || '',
+                                      t,
+                                      t.purchaseState === 'ambiguous' ? 'need' : 'ambiguous'
+                                    );
+                                  }}
+                                  className={`px-2 py-1 rounded text-xs font-medium transition ${
+                                    t.purchaseState === 'ambiguous'
+                                      ? 'bg-orange-600 text-white'
+                                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                  }`}
+                                  title="Mark as ambiguous"
+                                >
+                                  ?
+                                </button>
                               </div>
                             </td>
                           </tr>
