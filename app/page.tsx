@@ -233,6 +233,55 @@ export default function Page() {
       } catch (err) {
         console.error('[Storage] Failed to restore results:', err);
       }
+      // Share復元: /?share=ID があれば Vercel API からスナップショット取得して表示
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        const shareId = sp.get('share');
+        if (shareId) {
+          (async () => {
+            const res = await fetch(`/api/share/${shareId}`);
+            const data = await res.json();
+            if (!res.ok) {
+              console.warn('Share restore failed:', data?.error);
+              return;
+            }
+            const snap = data?.snapshot;
+            if (!snap || snap?.schema !== 'playlist_snapshot') return;
+            const result: ResultState = {
+              title: snap.playlist?.name || '(shared playlist)',
+              total: snap.playlist?.track_count || (snap.tracks?.length ?? 0),
+              playlistUrl: snap.playlist?.url || '',
+              analyzedAt: new Date().toISOString(),
+              hasRekordboxData: snap.tracks?.some((t: any) => t.owned != null) || false,
+              tracks: (snap.tracks || []).map((t: any, idx: number) => ({
+                index: idx + 1,
+                title: t.title,
+                artist: t.artist,
+                album: t.album || '',
+                isrc: t.isrc || undefined,
+                spotifyUrl: t.links?.spotify || '',
+                appleUrl: t.links?.apple || '',
+                owned: t.owned ?? null,
+                owned_reason: t.owned_reason ?? null,
+                track_key_primary: t.track_key_primary,
+                track_key_fallback: t.track_key_fallback,
+                track_key_primary_type: t.track_key_primary_type,
+                track_key_version: t.track_key_version,
+                links: {
+                  beatport: t.links?.beatport || '',
+                  bandcamp: t.links?.bandcamp || '',
+                  itunes: t.links?.itunes || '',
+                },
+              })),
+            };
+            const urlKey = snap.playlist?.url || `shared:${shareId}`;
+            setMultiResults([[urlKey, result]]);
+            setActiveTab(urlKey);
+          })();
+        }
+      } catch (e) {
+        // ignore
+      }
     }
   }, []); // Run once on mount
 
@@ -587,10 +636,10 @@ export default function Page() {
       }
       return;
     }
-
-    // Single playlist re-analyze
-    if (!reAnalyzeUrl) return;
-
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4">Playlist Shopper</h1>
+          <p className="text-slate-400 text-sm mb-4">
+            Analyze playlists. Match your library. Generate links.
+          </p>
     setReAnalyzeFile(file);
     setLoading(true);
     setErrorText(null);

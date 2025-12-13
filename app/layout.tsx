@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   title: "Playlist Shopper - Spotify & Apple Music",
   description: "Analyze Spotify and Apple Music playlists with Rekordbox integration, ISRC data, and store search links",
 };
+export const metadata = {
+  title: 'Playlist Shopper',
+  description:
+    'Analyze playlists. Match your library. Generate links.',
+};
 
 export default function RootLayout({
   children,
