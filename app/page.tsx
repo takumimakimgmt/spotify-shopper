@@ -636,10 +636,6 @@ export default function Page() {
       }
       return;
     }
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4">Playlist Shopper</h1>
-          <p className="text-slate-400 text-sm mb-4">
-            Analyze playlists. Match your library. Generate links.
-          </p>
     setReAnalyzeFile(file);
     setLoading(true);
     setErrorText(null);
