@@ -1606,16 +1606,16 @@ export default function Page() {
 
                 {/* Desktop: table */}
                 <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/70 relative z-10">
-                  <table className="min-w-full text-xs">
+                  <table className="w-full text-xs table-fixed">
                     <thead className="bg-slate-900/90">
                       <tr className="border-b border-slate-800 text-slate-300">
                         <th className="px-3 py-2 text-left w-10">#</th>
-                        <th className="px-3 py-2 text-left">Title</th>
-                        <th className="px-3 py-2 text-left">Artist</th>
-                        <th className="px-3 py-2 text-left">Album</th>
+                        <th className="px-3 py-2 text-left w-1/4">Title</th>
+                        <th className="px-3 py-2 text-left w-1/6">Artist</th>
+                        <th className="px-3 py-2 text-left w-1/6">Album</th>
                         <th className="px-2 py-2 text-left w-24">ISRC</th>
-                        <th className="px-3 py-2 text-left">Stores</th>
-                        <th className="px-3 py-2 text-center w-40">
+                        <th className="px-3 py-2 text-left w-32">Stores</th>
+                        <th className="px-3 py-2 text-center w-32">
                           <div className="inline-flex items-center gap-2 justify-center">
                             <span>Buylist</span>
                             <div className="group relative">
@@ -1645,7 +1645,7 @@ export default function Page() {
                             <td className="px-3 py-1 text-slate-400">
                               {t.index}
                             </td>
-                            <td className={`max-w-xs px-3 py-1 text-sm font-medium text-emerald-100 ${(() => {
+                            <td className={`px-3 py-1 text-sm font-medium text-emerald-100 ${(() => {
                               const style = getOwnedStatusStyle(t.owned, t.ownedReason);
                               return style.borderClass;
                             })()}`}
@@ -1664,10 +1664,10 @@ export default function Page() {
                                 {t.title}
                               </a>
                             </td>
-                            <td className="max-w-xs px-3 py-1 text-sm text-slate-300">
+                            <td className="px-3 py-1 text-sm text-slate-300">
                               <div className="truncate" title={t.artist}>{t.artist}</div>
                             </td>
-                            <td className="max-w-xs px-3 py-1 text-xs text-slate-300">
+                            <td className="px-3 py-1 text-xs text-slate-300">
                               <div className="line-clamp-2" title={t.album}>{t.album}</div>
                             </td>
                             <td className="px-2 py-1 text-xs text-slate-400 truncate">
