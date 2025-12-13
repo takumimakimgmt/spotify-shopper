@@ -1304,7 +1304,8 @@ export default function Page() {
                       )}
                     </h2>
                     <div className="text-xs text-slate-400 space-y-0.5">
-                      <div>Tracks: {currentResult.total} (Showing {displayedTracks.length})</div>
+                      <div>Tracks: {currentResult.total}</div>
+                      <div>Owned: {currentResult.total - unownedCount}</div>
                       <div>Unowned: {unownedCount}</div>
                     </div>
                   </div>
@@ -1447,10 +1448,17 @@ export default function Page() {
                           <span className="inline-flex items-center gap-1.5 justify-center">
                             Buylist
                             <span 
-                              className="group/tooltip relative cursor-help"
+                              className="cursor-help"
                               onMouseEnter={(e) => {
                                 const tooltip = e.currentTarget.querySelector('[data-tooltip]');
-                                if (tooltip) tooltip.classList.remove('hidden');
+                                if (tooltip) {
+                                  tooltip.classList.remove('hidden');
+                                  // Position tooltip near the icon
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  tooltip.style.position = 'fixed';
+                                  tooltip.style.left = (rect.left - 100) + 'px';
+                                  tooltip.style.top = (rect.bottom + 8) + 'px';
+                                }
                               }}
                               onMouseLeave={(e) => {
                                 const tooltip = e.currentTarget.querySelector('[data-tooltip]');
@@ -1462,7 +1470,7 @@ export default function Page() {
                               </svg>
                               <div 
                                 data-tooltip
-                                className="hidden absolute top-full left-0 mt-2 w-64 px-3 py-2 text-xs leading-relaxed text-slate-200 bg-slate-800 rounded-lg border border-slate-700 shadow-lg z-[9999] whitespace-normal"
+                                className="hidden w-64 px-3 py-2 text-xs leading-relaxed text-slate-200 bg-slate-800 rounded-lg border border-slate-700 shadow-lg z-[9999] whitespace-normal"
                               >
                                 どのストアで購入済み/スキップかを記録します。<br />データはブラウザに保存されます。
                               </div>
