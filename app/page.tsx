@@ -160,20 +160,20 @@ function getOwnedStatusReason(
         ? 'Matched by Fuzzy Title + Artist'
         : 'Matched';
     return {
-      icon: '🟢',
-      label: 'YES',
+      icon: '✅',
+      label: 'Owned',
       tooltip: reasonLabel,
     };
   } else if (owned === false) {
     return {
-      icon: '⚪️',
-      label: 'NO',
+      icon: '⬛',
+      label: 'Not owned',
       tooltip: 'Not found in library',
     };
   } else {
     return {
-      icon: '🟡',
-      label: '?',
+      icon: '🟠',
+      label: 'Maybe',
       tooltip: 'Maybe (fuzzy match, low confidence)',
     };
   }
@@ -266,11 +266,11 @@ export default function Page() {
                 spotifyUrl: t.links?.spotify || '',
                 appleUrl: t.links?.apple || '',
                 owned: t.owned ?? null,
-                owned_reason: t.owned_reason ?? null,
-                track_key_primary: t.track_key_primary,
-                track_key_fallback: t.track_key_fallback,
-                track_key_primary_type: t.track_key_primary_type,
-                track_key_version: t.track_key_version,
+                ownedReason: t.owned_reason ?? null,
+                trackKeyPrimary: t.track_key_primary,
+                trackKeyFallback: t.track_key_fallback,
+                trackKeyPrimaryType: t.track_key_primary_type,
+                trackKeyVersion: t.track_key_version,
                 links: {
                   beatport: t.links?.beatport || '',
                   bandcamp: t.links?.bandcamp || '',
@@ -1487,11 +1487,11 @@ export default function Page() {
                                   if (key) byKey[key] = t;
                                 }
                                 nt.tracks = nt.tracks.map((t: any) => {
-                                  const key = t.track_key_primary || t.track_key_fallback;
+                                  const key = t.trackKeyPrimary || t.track_key_primary || t.track_key_fallback || t.trackKeyFallback;
                                   const u = byKey[key];
                                   if (u) {
                                     t.owned = u.owned;
-                                    t.owned_reason = u.owned_reason;
+                                    t.ownedReason = u.owned_reason;
                                   }
                                   return t;
                                 });
