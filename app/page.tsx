@@ -4,6 +4,7 @@ import React, {
   useState,
   ChangeEvent,
   FormEvent,
+  useEffect,
   useMemo,
 } from 'react';
 import type { PlaylistSnapshotV1 } from '../lib/types';
@@ -11,11 +12,8 @@ import {
   initDB,
   getBuylist,
   saveBuylist,
-  updateTrackState,
-  type BuylistSnapshot,
   type TrackState,
   type PurchaseState,
-  type StoreSelected,
 } from '@/lib/buylistStore';
 
 const BACKEND_URL =
@@ -82,65 +80,7 @@ type ResultState = {
   hasRekordboxData?: boolean; // true if analyzed with Rekordbox XML
 };
 
-type RekordboxTrack = {
-  title: string;
-  artist: string;
-  album?: string;
-  isrc?: string | null;
-};
-
 type SortKey = 'none' | 'artist' | 'album' | 'title';
-
-// ==== Rekordbox XML parsing ====
-
-function normalizeKey(input: string): string {
-  try {
-    const n = input.normalize('NFKC').toLowerCase();
-    return n.replace(/\s+/g, '').replace(/[^\p{L}\p{N}]/gu, '');
-  } catch (e) {
-    return input
-      .toLowerCase()
-      .normalize('NFKC')
-      .replace(/\s+/g, '')
-      .replace(/[^a-z0-9]/g, '');
-  }
-}
-
-function buildTrackKey(
-  title: string,
-  artist: string,
-  isrc?: string | null
-): string {
-  const base = `${normalizeKey(title)}::${normalizeKey(artist)}`;
-  return isrc ? `${base}::${isrc.toUpperCase()}` : base;
-}
-
-function parseRekordboxXml(text: string): RekordboxTrack[] {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(text, 'text/xml');
-
-  if (doc.getElementsByTagName('parsererror').length > 0) {
-    throw new Error(
-      'Failed to parse Rekordbox XML. Please provide a collection.xml file.'
-    );
-  }
-
-  const tracks: RekordboxTrack[] = [];
-  const nodes = Array.from(doc.getElementsByTagName('TRACK'));
-
-  for (const node of nodes) {
-    const title = node.getAttribute('Name') ?? '';
-    const artist = node.getAttribute('Artist') ?? '';
-    const album = node.getAttribute('Album') ?? undefined;
-    const isrc = node.getAttribute('ISRC') ?? undefined;
-
-    if (!title || !artist) continue;
-
-    tracks.push({ title, artist, album, isrc });
-  }
-
-  return tracks;
-}
 
 // ==== Track category helper ====
 
@@ -166,14 +106,11 @@ function categorizeTrack(
   // owned === false: Not owned. Split into Checkout vs Hunt
   // Checkout: has STRONG store links (Beatport or iTunes only)
   // Hunt: Bandcamp-only OR no store links (manual search needed)
-  
+
   const hasStrongStore =
     (track.stores?.beatport && track.stores.beatport.length > 0) ||
     (track.stores?.itunes && track.stores.itunes.length > 0);
-  
-  // If ISRC present, be more confident; if absent, be more cautious
-  const hasISRC = track.isrc && track.isrc.length > 0;
-  
+
   if (hasStrongStore) {
     // Beatport or iTunes present → always Checkout
     return 'checkout';
@@ -192,19 +129,8 @@ function categorizeTrack(
 
 function getRecommendedStore(track: PlaylistRow): { name: string; url: string } | null {
   const stores = track.stores;
-  const hasISRC = track.isrc && track.isrc.length > 0;
-  
-  // If ISRC present, iTunes/Beatport are most reliable
-  if (hasISRC) {
-    if (stores.itunes && stores.itunes.length > 0) {
-      return { name: 'iTunes', url: stores.itunes };
-    }
-    if (stores.beatport && stores.beatport.length > 0) {
-      return { name: 'Beatport', url: stores.beatport };
-    }
-  }
-  
-  // If no ISRC or iTunes/Beatport not available: Beatport > Bandcamp > iTunes
+
+  // Beatport > Bandcamp > iTunes (consistent across UI)
   if (stores.beatport && stores.beatport.length > 0) {
     return { name: 'Beatport', url: stores.beatport };
   }
@@ -229,6 +155,19 @@ function getOtherStores(stores: StoreLinks, recommended: { name: string; url: st
     others.push({ name: 'iTunes', url: stores.itunes });
   }
   return others;
+}
+
+function getPreferredStoreTab(result: ResultState | null): 'beatport' | 'bandcamp' | 'itunes' {
+  const priorities: Array<'beatport' | 'bandcamp' | 'itunes'> = ['beatport', 'bandcamp', 'itunes'];
+  for (const store of priorities) {
+    const hasTracks = result?.tracks.some((t) => {
+      if (categorizeTrack(t) !== 'checkout') return false;
+      const url = store === 'beatport' ? t.stores?.beatport : store === 'bandcamp' ? t.stores?.bandcamp : t.stores?.itunes;
+      return url && url.length > 0;
+    });
+    if (hasTracks) return store;
+  }
+  return 'beatport';
 }
 
 // ==== Owned status helper ====
@@ -284,9 +223,16 @@ export default function Page() {
   // Purchase modal state
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
   const [selectedStoreTab, setSelectedStoreTab] = useState<'beatport' | 'itunes' | 'bandcamp'>('beatport');
+  const [markAllMessage, setMarkAllMessage] = useState<string | null>(null);
 
   // Section collapse state
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['checkout']));
+
+  // Active category filter (UI facing). Default will snap to checkout when available.
+  const [activeCategory, setActiveCategory] = useState<TrackCategory>('checkout');
+
+  // Import form collapse state
+  const [formCollapsed, setFormCollapsed] = useState(false);
 
   // Loading/error state
   const [loading, setLoading] = useState(false);
@@ -1175,6 +1121,11 @@ export default function Page() {
   // Current active result
   const currentResult = multiResults.find(([url]) => url === activeTab)?.[1] ?? null;
 
+  // Auto-select preferred store tab based on available checkout tracks
+  useEffect(() => {
+    setSelectedStoreTab(getPreferredStoreTab(currentResult));
+  }, [currentResult]);
+
   // Filter & sort tracks
   const displayedTracks = useMemo(() => {
     if (!currentResult) return [];
@@ -1206,12 +1157,23 @@ export default function Page() {
       filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
     }
 
+    // Category filter
+    filtered = filtered.filter((t) => categorizeTrack(t) === activeCategory);
+
     return filtered;
-  }, [currentResult, onlyUnowned, searchQuery, sortKey]);
+  }, [currentResult, onlyUnowned, searchQuery, sortKey, activeCategory]);
 
   const unownedCount = currentResult
     ? currentResult.tracks.filter((t) => t.owned === false).length
     : 0;
+
+  // Category labels for UI
+  const categoryLabels: Record<TrackCategory, string> = {
+    checkout: 'To Buy',
+    hunt: 'Search',
+    unknown: 'Needs Review',
+    owned: 'Owned',
+  };
 
   // Category counts
   const checkoutCount = useMemo(() => {
@@ -1237,6 +1199,29 @@ export default function Page() {
       ? currentResult.tracks.filter(t => t.owned === true).length
       : 0;
   }, [currentResult]);
+
+  // Snap default view to To Buy when results arrive
+  useEffect(() => {
+    if (!currentResult) return;
+    if (checkoutCount > 0) {
+      setActiveCategory('checkout');
+    } else if (huntCount > 0) {
+      setActiveCategory('hunt');
+    } else if (unknownCount > 0) {
+      setActiveCategory('unknown');
+    } else {
+      setActiveCategory('owned');
+    }
+    setFormCollapsed(true);
+  }, [currentResult, checkoutCount, huntCount, unknownCount]);
+
+  const handleCategoryJump = (category: TrackCategory) => {
+    setActiveCategory(category);
+    const anchor = document.getElementById('results-top');
+    if (anchor) {
+      anchor.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const handleExportCSV = () => {
     if (!displayedTracks.length || !currentResult) {
@@ -1272,6 +1257,87 @@ export default function Page() {
     URL.revokeObjectURL(url);
   };
 
+  const markAllInStoreAsBought = async (
+    store: 'beatport' | 'itunes' | 'bandcamp',
+    tracksInStore: PlaylistRow[]
+  ) => {
+    if (!currentResult) return;
+    if (!tracksInStore || tracksInStore.length === 0) return;
+
+    const confirmMsg = `Mark ${tracksInStore.length} track${tracksInStore.length === 1 ? '' : 's'} in ${store} tab as Bought?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    let marked = 0;
+    for (const t of tracksInStore) {
+      if (t.purchaseState === 'bought') continue;
+      if (!t.trackKeyPrimary) continue;
+      await handlePurchaseStateChange(activeTab || '', t, 'bought');
+      marked += 1;
+    }
+
+    if (marked > 0) {
+      setMarkAllMessage(`Marked ${marked} as Bought`);
+      setTimeout(() => setMarkAllMessage(null), 2000);
+    } else {
+      setMarkAllMessage('No changes (already Bought)');
+      setTimeout(() => setMarkAllMessage(null), 1500);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!currentResult || displayedTracks.length === 0) return;
+    try {
+      const snapshot: PlaylistSnapshotV1 = {
+        schema: 'playlist_snapshot',
+        version: 1,
+        created_at: new Date().toISOString(),
+        playlist: {
+          source: currentResult.playlistUrl?.includes('music.apple.com') ? 'apple' : 'spotify',
+          url: currentResult.playlistUrl || '',
+          id: currentResult.playlist_id,
+          name: currentResult.playlist_name,
+          track_count: currentResult.total,
+        },
+        tracks: displayedTracks.map((t) => ({
+          title: t.title,
+          artist: t.artist,
+          album: t.album,
+          isrc: t.isrc ?? null,
+          owned: t.owned ?? undefined,
+          owned_reason: t.ownedReason ?? null,
+          track_key_primary: t.trackKeyPrimary!,
+          track_key_fallback: t.trackKeyFallback!,
+          track_key_version: 'v1',
+          track_key_primary_type: (t.trackKeyPrimaryType as 'isrc' | 'norm') || 'norm',
+          links: {
+            beatport: t.stores?.beatport,
+            bandcamp: t.stores?.bandcamp,
+            itunes: t.stores?.itunes,
+            spotify: t.spotifyUrl,
+            apple: t.appleUrl,
+          },
+        })),
+      };
+      const res = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snapshot }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Share failed');
+      const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/?share=${data.share_id}`;
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Shareリンクをコピーしました');
+      } catch (clipboardErr) {
+        alert('Shareリンク:\n' + shareUrl);
+      }
+    } catch (e: any) {
+      alert('Share失敗: ' + (e?.message ?? e));
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
@@ -1286,8 +1352,33 @@ export default function Page() {
         </header>
 
         {/* Form */}
-        <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-6 space-y-4">
-          <form onSubmit={handleAnalyze} className="space-y-4">
+        <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
+          {currentResult && formCollapsed ? (
+            <div className="flex items-center justify-between text-sm text-slate-200">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Import (edit)</span>
+                <span className="text-xs text-slate-400">URL + XML</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span>XML: {currentResult.hasRekordboxData ? 'attached' : 'not attached'}</span>
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="px-2 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 text-emerald-200"
+                >
+                  Share
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormCollapsed(false)}
+                  className="px-2 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 text-emerald-200"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleAnalyze} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 Playlist URLs
@@ -1354,6 +1445,7 @@ export default function Page() {
               </button>
             </div>
           </form>
+          )}
 
           {errorText && (
             <div className="mt-4 rounded-md border border-red-500/60 bg-red-900/30 px-3 py-2 text-xs whitespace-pre-wrap">
@@ -1393,18 +1485,9 @@ export default function Page() {
           </div>
         )}
 
-        {/* Hidden file input for re-analyze */}
-        <input
-          ref={reAnalyzeInputRef}
-          type="file"
-          accept=".xml"
-          onChange={handleReAnalyzeFileChange}
-          className="hidden"
-        />
-
         {/* Results */}
         {multiResults.length > 0 && (
-          <section className="space-y-4">
+          <section className="space-y-4" id="results-top">
             {/* Tabs */}
             <div className="flex items-center gap-3 pb-2 border-b border-slate-800">
               <div className="flex gap-2 overflow-x-auto flex-1">
@@ -1692,15 +1775,15 @@ export default function Page() {
                     </div>
                     <div className="bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1.5 text-center">
                       <div className="font-semibold text-amber-300">{checkoutCount}</div>
-                      <div className="text-amber-600">Checkout</div>
+                      <div className="text-amber-600">To Buy</div>
                     </div>
                     <div className="bg-blue-500/10 border border-blue-500/30 rounded px-2 py-1.5 text-center">
                       <div className="font-semibold text-blue-300">{huntCount}</div>
-                      <div className="text-blue-600">Hunt</div>
+                      <div className="text-blue-600">Search</div>
                     </div>
                     <div className="bg-slate-500/10 border border-slate-500/30 rounded px-2 py-1.5 text-center">
                       <div className="font-semibold text-slate-300">{unknownCount}</div>
-                      <div className="text-slate-500">Unknown</div>
+                      <div className="text-slate-500">Needs Review</div>
                     </div>
                   </div>
 
@@ -1710,7 +1793,7 @@ export default function Page() {
                       <button
                         onClick={() => {
                           setPurchaseModalOpen(true);
-                          setSelectedStoreTab('beatport');
+                          setSelectedStoreTab(getPreferredStoreTab(currentResult));
                         }}
                         className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-900 font-bold text-sm transition shadow-lg"
                       >
@@ -1719,21 +1802,26 @@ export default function Page() {
                     </div>
                   )}
 
+                  <p className="text-[11px] text-slate-400">
+                    After buying, return and click "Mark Bought" to save progress on this device.
+                  </p>
+
                   {/* Quick section links */}
                   <div className="flex gap-1 flex-wrap text-[10px]">
-                    <a href="#section-checkout" className="px-2 py-1 rounded bg-amber-500/20 border border-amber-500/50 text-amber-300 hover:bg-amber-500/30 transition">
-                      Checkout ({checkoutCount})
-                    </a>
-                    <a href="#section-hunt" className="px-2 py-1 rounded bg-blue-500/20 border border-blue-500/50 text-blue-300 hover:bg-blue-500/30 transition">
-                      Hunt ({huntCount})
-                    </a>
-                    <a href="#section-unknown" className="px-2 py-1 rounded bg-slate-500/20 border border-slate-500/50 text-slate-300 hover:bg-slate-500/30 transition">
-                      Unknown ({unknownCount})
-                    </a>
-                    <a href="#section-owned" className="px-2 py-1 rounded bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30 transition">
+                    <button onClick={() => handleCategoryJump('checkout')} className={`px-2 py-1 rounded border ${activeCategory === 'checkout' ? 'bg-amber-500/30 border-amber-500 text-amber-200' : 'bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20'}`}>
+                      To Buy ({checkoutCount})
+                    </button>
+                    <button onClick={() => handleCategoryJump('hunt')} className={`px-2 py-1 rounded border ${activeCategory === 'hunt' ? 'bg-blue-500/30 border-blue-500 text-blue-200' : 'bg-blue-500/10 border-blue-500/40 text-blue-300 hover:bg-blue-500/20'}`}>
+                      Search ({huntCount})
+                    </button>
+                    <button onClick={() => handleCategoryJump('unknown')} className={`px-2 py-1 rounded border ${activeCategory === 'unknown' ? 'bg-slate-500/30 border-slate-500 text-slate-200' : 'bg-slate-500/10 border-slate-500/40 text-slate-300 hover:bg-slate-500/20'}`}>
+                      Needs Review ({unknownCount})
+                    </button>
+                    <button onClick={() => handleCategoryJump('owned')} className={`px-2 py-1 rounded border ${activeCategory === 'owned' ? 'bg-emerald-500/30 border-emerald-500 text-emerald-100' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20'}`}>
                       Owned ({ownedCount})
-                    </a>
+                    </button>
                   </div>
+                  <p className="text-[11px] text-slate-400">Start with To Buy, then move through Search and Needs Review.</p>
 
                   {/* Post-attach XML entry point */}
                   <div className="flex flex-wrap gap-2 text-[11px] text-slate-300">
@@ -1769,7 +1857,7 @@ export default function Page() {
                 </div>
 
                 {/* Mobile: card list */}
-                <div className="md:hidden space-y-2" id="section-checkout">
+                <div className="md:hidden space-y-2">
                   {displayedTracks.map((t) => {
                     // Prioritize apple_url for Apple Music playlists, spotify_url for Spotify
                     const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
@@ -1788,18 +1876,39 @@ export default function Page() {
                           return style.tooltip;
                         })()}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <a
-                            href={trackUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-semibold text-emerald-200 hover:underline"
-                          >
-                            {t.title}
-                          </a>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={trackUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-semibold text-slate-100 truncate hover:underline"
+                              >
+                                {t.title}
+                              </a>
+                              {(() => {
+                                const category = categorizeTrack(t);
+                                const badgeClass =
+                                  category === 'checkout'
+                                    ? 'bg-amber-500/20 text-amber-200 border border-amber-500/50'
+                                    : category === 'hunt'
+                                    ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50'
+                                    : category === 'unknown'
+                                    ? 'bg-slate-500/20 text-slate-200 border border-slate-500/50'
+                                    : 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50';
+                                return (
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
+                                    {categoryLabels[category]}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                            <div className="text-slate-400 text-[11px] truncate">{t.artist}</div>
+                            <div className="text-slate-500 text-[11px] truncate">{t.album}</div>
+                            {t.isrc && <div className="text-slate-500 text-[10px]">ISRC: {t.isrc}</div>}
+                          </div>
                         </div>
-                        <div className="mt-1 text-slate-300">{t.artist}</div>
-                        <div className="mt-1 text-slate-400 text-xs">{t.album}</div>
                         <div className="mt-2 flex flex-wrap gap-1">
                           {(() => {
                             const recommended = getRecommendedStore(t);
@@ -1840,7 +1949,7 @@ export default function Page() {
                 </div>
 
                 {/* Desktop: table */}
-                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/70 relative z-10" id="section-checkout">
+                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/70 relative z-10">
                   <table className="w-full text-xs table-fixed">
                     <thead className="bg-slate-900/90">
                       <tr className="border-b border-slate-800 text-slate-300">
@@ -1871,17 +1980,17 @@ export default function Page() {
                     <tbody>
                       {(() => {
                         const sections: Array<{ id: TrackCategory; label: string; color: string; items: PlaylistRow[]; icon: string }> = [
-                          { id: 'checkout', label: 'Checkout', color: 'text-amber-300', icon: '🛒', items: displayedTracks.filter((t) => categorizeTrack(t) === 'checkout') },
-                          { id: 'hunt', label: 'Hunt', color: 'text-blue-300', icon: '🔍', items: displayedTracks.filter((t) => categorizeTrack(t) === 'hunt') },
-                          { id: 'unknown', label: 'Unknown', color: 'text-slate-300', icon: '❔', items: displayedTracks.filter((t) => categorizeTrack(t) === 'unknown') },
-                          { id: 'owned', label: 'Owned', color: 'text-emerald-300', icon: '✅', items: displayedTracks.filter((t) => categorizeTrack(t) === 'owned') },
+                          { id: 'checkout', label: categoryLabels.checkout, color: 'text-amber-300', icon: '🛒', items: displayedTracks.filter((t) => categorizeTrack(t) === 'checkout') },
+                          { id: 'hunt', label: categoryLabels.hunt, color: 'text-blue-300', icon: '🔍', items: displayedTracks.filter((t) => categorizeTrack(t) === 'hunt') },
+                          { id: 'unknown', label: categoryLabels.unknown, color: 'text-slate-300', icon: '❔', items: displayedTracks.filter((t) => categorizeTrack(t) === 'unknown') },
+                          { id: 'owned', label: categoryLabels.owned, color: 'text-emerald-300', icon: '✅', items: displayedTracks.filter((t) => categorizeTrack(t) === 'owned') },
                         ];
 
                         return sections.flatMap((section) => {
                           if (section.items.length === 0) return [];
                           return [
                             (
-                              <tr key={`section-${section.id}`} id={`section-${section.id}`} className="bg-slate-900/70">
+                              <tr key={`section-${section.id}`} className="bg-slate-900/70">
                                 <td colSpan={7} className={`px-3 py-2 text-left text-[11px] font-semibold ${section.color}`}>
                                   {section.icon} {section.label} ({section.items.length})
                                 </td>
@@ -1911,15 +2020,33 @@ export default function Page() {
                                       return style.tooltip;
                                     })()}
                                   >
-                                    <a
-                                      href={trackUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="truncate hover:underline block"
-                                      title={t.title}
-                                    >
-                                      {t.title}
-                                    </a>
+                                    <div className="flex items-center gap-2">
+                                      <a
+                                        href={trackUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="truncate hover:underline block"
+                                        title={t.title}
+                                      >
+                                        {t.title}
+                                      </a>
+                                      {(() => {
+                                        const category = categorizeTrack(t);
+                                        const badgeClass =
+                                          category === 'checkout'
+                                            ? 'bg-amber-500/20 text-amber-200 border border-amber-500/50'
+                                            : category === 'hunt'
+                                            ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50'
+                                            : category === 'unknown'
+                                            ? 'bg-slate-500/20 text-slate-200 border border-slate-500/50'
+                                            : 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50';
+                                        return (
+                                          <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}>
+                                            {categoryLabels[category]}
+                                          </span>
+                                        );
+                                      })()}
+                                    </div>
                                   </td>
                                   <td className="px-3 py-1 text-sm text-slate-300">
                                     <div className="truncate" title={t.artist}>{t.artist}</div>
@@ -2059,7 +2186,7 @@ export default function Page() {
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-emerald-200">🛒 Buy {checkoutCount} Checkout Tracks</h2>
+              <h2 className="text-lg font-bold text-emerald-200">🛒 Buy {checkoutCount} To Buy Tracks</h2>
               <button
                 onClick={() => setPurchaseModalOpen(false)}
                 className="text-slate-400 hover:text-slate-200 text-2xl leading-none"
@@ -2123,40 +2250,110 @@ export default function Page() {
                 )
               );
 
+              const storeLabel = selectedStoreTab.charAt(0).toUpperCase() + selectedStoreTab.slice(1);
+
+              const copyList = async () => {
+                const lines = tracksInStore.map((t) => {
+                  const url = selectedStoreTab === 'beatport' ? t.stores?.beatport : selectedStoreTab === 'itunes' ? t.stores?.itunes : t.stores?.bandcamp;
+                  return `${t.title} — ${t.artist} | ${url}`;
+                }).join('\n');
+                await navigator.clipboard.writeText(lines);
+                alert(`Copied ${tracksInStore.length} track${tracksInStore.length > 1 ? 's' : ''} as list`);
+              };
+
+              const copyUrls = async () => {
+                const linksText = storeUrls.join('\n');
+                await navigator.clipboard.writeText(linksText);
+                alert(`Copied ${storeUrls.length} URL${storeUrls.length > 1 ? 's' : ''}`);
+              };
+
+              const copyCsv = async () => {
+                const needsQuote = (val: string) => /[",\n]/.test(val);
+                const csvEscape = (val: string) => {
+                  const safe = (val || '').replace(/"/g, '""');
+                  return needsQuote(safe) ? `"${safe}"` : safe;
+                };
+                const rows = tracksInStore.map((t) => {
+                  const url = selectedStoreTab === 'beatport' ? t.stores?.beatport : selectedStoreTab === 'itunes' ? t.stores?.itunes : t.stores?.bandcamp;
+                  return [storeLabel, t.title, t.artist, t.isrc ?? '', url ?? ''].map(csvEscape).join(',');
+                });
+                const csv = ['"store","title","artist","isrc","url"', ...rows].join('\n');
+                await navigator.clipboard.writeText(csv);
+                alert(`Copied ${rows.length} rows as CSV`);
+              };
+
+              const copyBeatportSearches = async () => {
+                if (selectedStoreTab !== 'beatport') return;
+                const lines: string[] = [];
+                lines.push(`# Beatport Search Queries (${tracksInStore.length})`);
+                for (const t of tracksInStore) {
+                  const title = t.title?.trim();
+                  const artist = t.artist?.trim();
+                  if (!title || !artist) continue;
+                  const album = t.album?.trim();
+                  const line = album ? `${artist} - ${title} (${album})` : `${artist} - ${title}`;
+                  lines.push(line);
+                }
+                await navigator.clipboard.writeText(lines.join('\n'));
+                alert(`Copied ${lines.length - 1} Beatport search${lines.length - 1 === 1 ? '' : 'es'}`);
+              };
+
               return (
-                <div className="mb-4 p-3 bg-slate-800/50 rounded-lg space-y-2">
-                  <div className="flex gap-2">
+                <div className="mb-4 p-3 bg-slate-800/50 rounded-lg space-y-3">
+                  <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => {
-                        // Open only first link to avoid popup blocking
                         if (storeUrls.length > 0) {
                           window.open(storeUrls[0], '_blank');
                         }
                       }}
                       disabled={tracksInStore.length === 0}
-                      className="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold rounded-lg transition"
+                      className="flex-1 min-w-[140px] px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold rounded-lg transition"
                     >
-                      Open in {selectedStoreTab}
+                      Open in {storeLabel}
                     </button>
                     <button
-                      onClick={() => {
-                        const linksText = storeUrls.join('\n');
-                        navigator.clipboard.writeText(linksText).then(() => {
-                          alert(`Copied ${storeUrls.length} link${storeUrls.length > 1 ? 's' : ''} to clipboard`);
-                        }).catch(() => {
-                          alert('Failed to copy. Please try again.');
-                        });
-                      }}
+                      onClick={() => markAllInStoreAsBought(selectedStoreTab, tracksInStore).catch(() => alert('Failed to mark. Please try again.'))}
                       disabled={tracksInStore.length === 0}
-                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-semibold rounded-lg transition text-sm"
+                      className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition text-sm"
                     >
-                      Copy links
+                      Mark all in this tab as Bought
                     </button>
+                    <button
+                      onClick={() => copyList().catch(() => alert('Failed to copy. Please try again.'))}
+                      disabled={tracksInStore.length === 0}
+                      className="px-3 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-semibold rounded-lg transition text-sm"
+                    >
+                      Copy list
+                    </button>
+                    <button
+                      onClick={() => copyUrls().catch(() => alert('Failed to copy. Please try again.'))}
+                      disabled={tracksInStore.length === 0}
+                      className="px-3 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-semibold rounded-lg transition text-sm"
+                    >
+                      Copy URLs
+                    </button>
+                    <button
+                      onClick={() => copyCsv().catch(() => alert('Failed to copy. Please try again.'))}
+                      disabled={tracksInStore.length === 0}
+                      className="px-3 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-semibold rounded-lg transition text-sm"
+                    >
+                      Copy CSV
+                    </button>
+                    {selectedStoreTab === 'beatport' && (
+                      <button
+                        onClick={() => copyBeatportSearches().catch(() => alert('Failed to copy. Please try again.'))}
+                        disabled={tracksInStore.length === 0}
+                        className="px-3 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-semibold rounded-lg transition text-sm"
+                      >
+                        Copy Beatport Searches
+                      </button>
+                    )}
                   </div>
                   <p className="text-xs text-slate-400">
                     {tracksInStore.length === 0
                       ? 'No tracks available in this store'
-                      : `${tracksInStore.length} track${tracksInStore.length > 1 ? 's' : ''} available. Click "Open" for first, "Copy links" for all.`}
+                      : 'Copy list is checklist-friendly. Copy URLs gives raw links. Copy CSV for spreadsheets.'}
                   </p>
                 </div>
               );
@@ -2249,9 +2446,15 @@ export default function Page() {
 
             {/* Footer */}
             <div className="mt-4 pt-4 border-t border-slate-700 text-xs text-slate-400">
-              <p>💡 Use Status column to mark tracks as "Bought" once purchased</p>
+              <p>💡 After buying, return and click "Mark Bought" to save progress on this device.</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {markAllMessage && (
+        <div className="fixed bottom-4 right-4 z-50 bg-slate-800 border border-emerald-500/60 text-emerald-100 px-4 py-2 rounded shadow-lg text-sm">
+          {markAllMessage}
         </div>
       )}
     </main>
