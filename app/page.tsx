@@ -855,6 +855,11 @@ export default function Page() {
       setMultiResults(merged);
       // Set active tab to first (newest) result
       setActiveTab(merged[0][0]);
+      
+      // Clear input fields on successful analysis
+      setPlaylistUrlInput('');
+      setRekordboxFile(null);
+      setRekordboxDate(null);
     }
 
     // Only show generic error if no specific error was set
