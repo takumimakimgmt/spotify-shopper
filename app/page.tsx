@@ -778,10 +778,6 @@ export default function Page() {
     return filtered;
   }, [currentResult, onlyUnowned, searchQuery, sortKey, showOwned]);
 
-  const unownedCount = currentResult
-    ? currentResult.tracks.filter((t) => t.owned === false).length
-    : 0;
-
   // Category labels for UI
   const categoryLabels: Record<TrackCategory, string> = {
     checkout: 'To Buy',
@@ -1056,8 +1052,8 @@ export default function Page() {
                     </h2>
                     <div className="text-xs text-slate-400 space-y-0.5">
                       <div>Tracks: {currentResult.total}</div>
-                      <div>Owned: {currentResult.total - unownedCount}</div>
-                      <div>Unowned: {unownedCount}</div>
+                      <div>Owned: {ownedCount}</div>
+                      <div>To Buy: {checkoutCount}</div>
                     </div>
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-2 sm:flex-wrap">
                       <label className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium cursor-pointer hover:bg-slate-600">
@@ -1170,32 +1166,6 @@ export default function Page() {
                       Owned ({ownedCount})
                     </button>
                   </div>
-                </div>
-
-                {/* Track totals table */}
-                <div className="max-w-md overflow-hidden rounded-lg border border-slate-800 bg-slate-900/70 text-xs">
-                  <table className="w-full">
-                    <thead className="bg-slate-900/90 text-slate-300">
-                      <tr>
-                        <th className="px-3 py-2 text-left">Metric</th>
-                        <th className="px-3 py-2 text-right">Count</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800 text-slate-100">
-                      <tr>
-                        <td className="px-3 py-2">Tracks</td>
-                        <td className="px-3 py-2 text-right">{currentResult.total}</td>
-                      </tr>
-                      <tr>
-                        <td className="px-3 py-2">Owned</td>
-                        <td className="px-3 py-2 text-right">{ownedCount}</td>
-                      </tr>
-                      <tr>
-                        <td className="px-3 py-2">To Buy</td>
-                        <td className="px-3 py-2 text-right">{checkoutCount}</td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </div>
 
                 {/* Search & Sort Controls */}
