@@ -1247,16 +1247,6 @@ export default function Page() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleReAnalyzeWithXml(url);
-                        }}
-                        className="text-xs px-1.5 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition flex-shrink-0"
-                        title={result.hasRekordboxData ? "Re-analyze with different Rekordbox XML" : "Analyze with Rekordbox XML"}
-                      >
-                        {result.hasRekordboxData ? '↻XML' : '+XML'}
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
                           handleRemoveTab(url);
                         }}
                         className="text-slate-400 hover:text-red-400 transition text-lg leading-none flex-shrink-0"
