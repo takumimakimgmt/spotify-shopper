@@ -1361,9 +1361,8 @@ export default function Page() {
                       <div>Owned: {currentResult.total - unownedCount}</div>
                       <div>Unowned: {unownedCount}</div>
                     </div>
-                    <div className="mt-2 flex gap-2">
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-2 sm:flex-wrap">
                       <button
-                        className="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-200 text-xs"
                         onClick={async () => {
                           try {
                             const snapshot: PlaylistSnapshotV1 = {
@@ -1404,7 +1403,7 @@ export default function Page() {
                             });
                             const data = await res.json();
                             if (!res.ok) throw new Error(data?.error || 'Share failed');
-                            const shareUrl = `${window.location.origin}/?share=${data.share_id}`;
+                            const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/?share=${data.share_id}`;
                             
                             // Try clipboard API, fallback to alert with URL
                             try {
@@ -1418,11 +1417,12 @@ export default function Page() {
                             alert('Share失敗: ' + (e?.message ?? e));
                           }
                         }}
+                        className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium hover:bg-slate-600"
                       >
                         Share
                       </button>
-                      <label className="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-200 text-xs cursor-pointer">
-                        Apply Rekordbox XML
+                      <label className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium cursor-pointer hover:bg-slate-600">
+                        Re-analyze with XML
                         <input type="file" accept=".xml" className="hidden" onChange={async (ev) => {
                           const file = ev.target.files?.[0];
                           if (!file) return;
@@ -1504,6 +1504,12 @@ export default function Page() {
                           }
                         }} />
                       </label>
+                      <button
+                        onClick={handleExportCSV}
+                        className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium hover:bg-slate-600"
+                      >
+                        Export as CSV
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1527,31 +1533,6 @@ export default function Page() {
                     <option value="artist">Sort: Artist</option>
                     <option value="album">Sort: Album</option>
                   </select>
-                </div>
-
-                {/* Export Controls */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      if (multiResults.length > 0) {
-                        reAnalyzeInputRef.current?.click();
-                        setReAnalyzeUrl('__BULK__');
-                      }
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600"
-                    title="Re-analyze all playlists with Rekordbox XML file"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                      <path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clipRule="evenodd" />
-                    </svg>
-                    Re-analyze with XML
-                  </button>
-                  <button
-                    onClick={handleExportCSV}
-                    className="inline-flex items-center rounded-md bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600"
-                  >
-                    Export as CSV
-                  </button>
                 </div>
 
                 {/* Mobile: card list */}
