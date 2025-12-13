@@ -185,8 +185,33 @@ export default function Page() {
   const [onlyUnowned, setOnlyUnowned] = useState(false);
 
   // Multi-playlist results: ordered array (newest first)
-  const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>([]);
-  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>(() => {
+    // Restore from localStorage on mount
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('spotify-shopper-results');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return parsed;
+        }
+      } catch (err) {
+        console.error('[Storage] Failed to restore results:', err);
+      }
+    }
+    return [];
+  });
+  const [activeTab, setActiveTab] = useState<string | null>(() => {
+    // Restore active tab from localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('spotify-shopper-active-tab');
+        return saved || null;
+      } catch (err) {
+        console.error('[Storage] Failed to restore active tab:', err);
+      }
+    }
+    return null;
+  });
 
   // Loading/error state
   const [loading, setLoading] = useState(false);
@@ -207,6 +232,32 @@ export default function Page() {
   } | null>(null);
 
   const progressTimer = React.useRef<number | null>(null);
+
+  // Save results to localStorage whenever they change
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('spotify-shopper-results', JSON.stringify(multiResults));
+      } catch (err) {
+        console.error('[Storage] Failed to save results:', err);
+      }
+    }
+  }, [multiResults]);
+
+  // Save active tab to localStorage whenever it changes
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (activeTab) {
+          localStorage.setItem('spotify-shopper-active-tab', activeTab);
+        } else {
+          localStorage.removeItem('spotify-shopper-active-tab');
+        }
+      } catch (err) {
+        console.error('[Storage] Failed to save active tab:', err);
+      }
+    }
+  }, [activeTab]);
 
   function detectSourceFromUrl(u: string): 'spotify' | 'apple' {
     const s = (u || '').trim();
