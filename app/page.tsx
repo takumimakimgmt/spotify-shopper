@@ -434,6 +434,21 @@ export default function Page() {
     }
   };
 
+  const handleRemoveTab = (urlToRemove: string) => {
+    setMultiResults((prev) => {
+      const filtered = prev.filter(([url]) => url !== urlToRemove);
+      
+      // If removed tab was active, switch to first remaining tab
+      if (activeTab === urlToRemove && filtered.length > 0) {
+        setActiveTab(filtered[0][0]);
+      } else if (filtered.length === 0) {
+        setActiveTab(null);
+      }
+      
+      return filtered;
+    });
+  };
+
   const handleAnalyze = async (e: FormEvent) => {
     e.preventDefault();
     setErrorText(null);
@@ -915,23 +930,49 @@ export default function Page() {
         {multiResults.length > 0 && (
           <section className="space-y-4">
             {/* Tabs */}
-            <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-800">
-              {multiResults.map(([url, result]) => {
-                const isActive = activeTab === url;
-                return (
-                  <button
-                    key={url}
-                    onClick={() => setActiveTab(url)}
-                    className={`px-4 py-2 text-sm whitespace-nowrap rounded-t-lg transition ${
-                      isActive
-                        ? 'bg-emerald-500/20 border-b-2 border-emerald-500 text-emerald-200'
-                        : 'bg-slate-800/50 hover:bg-slate-800 text-slate-300'
-                    }`}
-                  >
-                    {result.title} ({result.total})
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-3 pb-2 border-b border-slate-800">
+              <div className="flex gap-2 overflow-x-auto flex-1">
+                {multiResults.map(([url, result]) => {
+                  const isActive = activeTab === url;
+                  return (
+                    <div
+                      key={url}
+                      className={`flex items-center gap-2 px-4 py-2 text-sm whitespace-nowrap rounded-t-lg transition ${
+                        isActive
+                          ? 'bg-emerald-500/20 border-b-2 border-emerald-500 text-emerald-200'
+                          : 'bg-slate-800/50 hover:bg-slate-800 text-slate-300'
+                      }`}
+                    >
+                      <button
+                        onClick={() => setActiveTab(url)}
+                        className="flex-1 text-left"
+                      >
+                        {result.title} ({result.total})
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveTab(url);
+                        }}
+                        className="ml-2 text-slate-400 hover:text-red-400 transition"
+                        title="Remove this playlist"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => {
+                  setMultiResults([]);
+                  setActiveTab(null);
+                }}
+                className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition whitespace-nowrap"
+                title="Clear all playlists"
+              >
+                Clear All
+              </button>
             </div>
 
             {currentResult && (
