@@ -1086,10 +1086,10 @@ export default function Page() {
                         <th className="px-3 py-2 text-left">Title</th>
                         <th className="px-3 py-2 text-left">Artist</th>
                         <th className="px-3 py-2 text-left">Album</th>
-                        <th className="px-3 py-2 text-left">ISRC</th>
-                        <th className="px-3 py-2 text-center">Owned</th>
+                        <th className="px-2 py-2 text-left w-24">ISRC</th>
+                        <th className="px-2 py-2 text-center w-16">Own</th>
                         <th className="px-3 py-2 text-left">Stores</th>
-                        <th className="px-3 py-2 text-center">Buylist</th>
+                        <th className="px-3 py-2 text-center w-40">Buylist</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1124,15 +1124,15 @@ export default function Page() {
                             <td className="max-w-xs px-3 py-1 text-xs text-slate-300">
                               <div className="line-clamp-2" title={t.album}>{t.album}</div>
                             </td>
-                            <td className="px-3 py-1 text-slate-400">
+                            <td className="px-2 py-1 text-xs text-slate-400 truncate">
                               {t.isrc ?? ''}
                             </td>
-                            <td className="px-3 py-1 text-center">
+                            <td className="px-2 py-1 text-center">
                               {(() => {
                                 const status = getOwnedStatusReason(t.owned, t.ownedReason);
                                 return (
                                   <span
-                                    className="inline-flex items-center justify-center text-lg cursor-help"
+                                    className="inline-flex items-center justify-center text-base cursor-help"
                                     title={status.tooltip}
                                   >
                                     {status.icon}
@@ -1197,7 +1197,7 @@ export default function Page() {
                                   }`}
                                   title="Mark as bought"
                                 >
-                                  {t.purchaseState === 'bought' ? '✓ Bought' : 'Bought'}
+                                  {t.purchaseState === 'bought' ? '✓' : 'Bought'}
                                 </button>
                                 <button
                                   onClick={() => {
@@ -1214,24 +1214,7 @@ export default function Page() {
                                   }`}
                                   title="Skip this track"
                                 >
-                                  {t.purchaseState === 'skipped' ? 'Skipped' : 'Skip'}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    handlePurchaseStateChange(
-                                      activeTab || '',
-                                      t,
-                                      t.purchaseState === 'ambiguous' ? 'need' : 'ambiguous'
-                                    );
-                                  }}
-                                  className={`px-2 py-1 rounded text-xs font-medium transition ${
-                                    t.purchaseState === 'ambiguous'
-                                      ? 'bg-orange-600 text-white'
-                                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                                  }`}
-                                  title="Mark as ambiguous"
-                                >
-                                  ?
+                                  {t.purchaseState === 'skipped' ? '✓' : 'Skip'}
                                 </button>
                               </div>
                             </td>
