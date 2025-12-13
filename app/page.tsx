@@ -75,6 +75,8 @@ type ResultState = {
   title: string;
   total: number;
   playlistUrl: string;
+  playlist_id?: string; // From API response
+  playlist_name?: string; // From API response
   tracks: PlaylistRow[];
   analyzedAt: number; // timestamp when analyzed
   hasRekordboxData?: boolean; // true if analyzed with Rekordbox XML
@@ -251,6 +253,8 @@ export default function Page() {
               title: snap.playlist?.name || '(shared playlist)',
               total: snap.playlist?.track_count || (snap.tracks?.length ?? 0),
               playlistUrl: snap.playlist?.url || '',
+              playlist_id: snap.playlist?.id || '',
+              playlist_name: snap.playlist?.name || '(shared playlist)',
               analyzedAt: Date.now(),
               hasRekordboxData: snap.tracks?.some((t: any) => t.owned != null) || false,
               tracks: (snap.tracks || []).map((t: any, idx: number) => ({
@@ -1014,6 +1018,8 @@ export default function Page() {
             title: json.playlist_name,
             total: rows.length,
             playlistUrl: json.playlist_url,
+            playlist_id: json.playlist_id,
+            playlist_name: json.playlist_name,
             tracks: rows,
             analyzedAt: Date.now(),
             hasRekordboxData: !!rekordboxFile,
