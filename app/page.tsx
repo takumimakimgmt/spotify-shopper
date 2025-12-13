@@ -1104,7 +1104,7 @@ export default function Page() {
           <form onSubmit={handleAnalyze} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Playlist URLs or IDs (one per line)
+                Playlist URLs
               </label>
               <textarea
                 value={playlistUrlInput}
@@ -1443,13 +1443,13 @@ export default function Page() {
                         <th className="px-2 py-2 text-center w-16">Own</th>
                         <th className="px-3 py-2 text-left">Stores</th>
                         <th className="px-3 py-2 text-center w-40">
-                          <span className="inline-flex items-center gap-1.5 justify-center">
+                          <span className="inline-flex items-center gap-1.5 justify-center relative z-0">
                             Buylist
-                            <span className="group/tooltip relative">
+                            <span className="group/tooltip relative z-[9999]">
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-slate-400 cursor-help">
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                               </svg>
-                              <span className="invisible group-hover/tooltip:visible absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 px-4 py-2.5 text-xs leading-relaxed text-slate-200 bg-slate-800 rounded-lg border border-slate-700 shadow-2xl z-[9999]">
+                              <span className="invisible group-hover/tooltip:visible absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 px-4 py-2.5 text-xs leading-relaxed text-slate-200 bg-slate-800 rounded-lg border border-slate-700 shadow-2xl z-[9999] pointer-events-none">
                                 どのストアで購入済み/スキップかを記録します。<br />データはブラウザに保存されます。
                                 <span className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-slate-800 border-l border-t border-slate-700 rotate-45"></span>
                               </span>
