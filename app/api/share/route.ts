@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     const expires_at = new Date(Date.now() + ttl * 1000).toISOString();
     return NextResponse.json({ share_id: id, expires_at });
-  } catch (e: any) {
-    return badRequest(`failed: ${e?.message ?? e}`, 500);
+  } catch (e: unknown) {
+    return badRequest(`failed: ${e instanceof Error ? e.message : e}`, 500);
   }
 }
