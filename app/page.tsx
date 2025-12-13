@@ -141,17 +141,12 @@ function getOwnedStatusStyle(
       borderClass: 'border-l-4 border-emerald-500',
       tooltip,
     };
-  } else if (owned === false) {
-    return {
-      borderClass: 'border-l-4 border-slate-600',
-      tooltip: '⬛ Not owned: Not found in library',
-    };
-  } else {
-    return {
-      borderClass: 'border-l-4 border-slate-600',
-      tooltip: '? Unknown status',
-    };
   }
+  // All other cases (false, null, undefined) are "To Buy"
+  return {
+    borderClass: 'border-l-4 border-slate-600',
+    tooltip: '⬛ To Buy: Not found in library',
+  };
 }
 
 // ==== Main component ====
@@ -745,7 +740,7 @@ export default function Page() {
 
     // Filter by owned status
     if (onlyUnowned) {
-      filtered = filtered.filter((t) => t.owned === false);
+      filtered = filtered.filter((t) => t.owned !== true);
     }
 
     // Filter by search
@@ -817,7 +812,7 @@ export default function Page() {
       t.artist,
       t.album,
       t.isrc || '',
-      t.owned === true ? 'Yes' : t.owned === false ? 'No' : 'Unknown',
+      t.owned === true ? 'Yes' : 'No',
       t.stores.beatport,
       t.stores.bandcamp,
       t.stores.itunes,
@@ -1078,7 +1073,7 @@ export default function Page() {
                                 artist: t.artist,
                                 album: t.album,
                                 isrc: t.isrc ?? null,
-                                owned: t.owned === true ? true : t.owned === false ? false : undefined,
+                                owned: t.owned === true,
                                 owned_reason: t.ownedReason ?? null,
                                 track_key_primary: t.trackKeyPrimary!,
                                 track_key_fallback: t.trackKeyFallback!,
