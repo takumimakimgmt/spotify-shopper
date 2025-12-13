@@ -1445,37 +1445,17 @@ export default function Page() {
                         <th className="px-2 py-2 text-center w-16">Own</th>
                         <th className="px-3 py-2 text-left">Stores</th>
                         <th className="px-3 py-2 text-center w-40">
-                          <span className="inline-flex items-center gap-1.5 justify-center">
-                            Buylist
-                            <span 
-                              className="cursor-help"
-                              onMouseEnter={(e) => {
-                                const tooltip = e.currentTarget.querySelector('[data-tooltip]');
-                                if (tooltip) {
-                                  tooltip.classList.remove('hidden');
-                                  // Position tooltip near the icon
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  tooltip.style.position = 'fixed';
-                                  tooltip.style.left = (rect.left - 100) + 'px';
-                                  tooltip.style.top = (rect.bottom + 8) + 'px';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                const tooltip = e.currentTarget.querySelector('[data-tooltip]');
-                                if (tooltip) tooltip.classList.add('hidden');
-                              }}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-slate-400">
+                          <div className="inline-flex items-center gap-2 justify-center">
+                            <span>Buylist</span>
+                            <div className="group relative">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-slate-400 cursor-help">
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                               </svg>
-                              <div 
-                                data-tooltip
-                                className="hidden w-64 px-3 py-2 text-xs leading-relaxed text-slate-200 bg-slate-800 rounded-lg border border-slate-700 shadow-lg z-[9999] whitespace-normal"
-                              >
-                                どのストアで購入済み/スキップかを記録します。<br />データはブラウザに保存されます。
+                              <div className="absolute z-50 hidden group-hover:block bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 whitespace-nowrap -left-16 -bottom-12">
+                                購入済み/スキップを記録
                               </div>
-                            </span>
-                          </span>
+                            </div>
+                          </div>
                         </th>
                       </tr>
                     </thead>
