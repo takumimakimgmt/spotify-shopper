@@ -173,6 +173,8 @@ export default function Page() {
 
   // Loading/error state
   const [loading, setLoading] = useState(false);
+  const abortRef = React.useRef<AbortController | null>(null);
+  const requestIdRef = React.useRef<number>(0);
   const [progress, setProgress] = useState<number>(0);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [appleNotice, setAppleNotice] = useState(false);
@@ -469,6 +471,14 @@ export default function Page() {
       return;
     }
 
+    // Abort previous analyze if running
+    if (abortRef.current) {
+      try { abortRef.current.abort(); } catch {}
+    }
+    abortRef.current = new AbortController();
+    const localRequestId = requestIdRef.current + 1;
+    requestIdRef.current = localRequestId;
+
     setLoading(true);
     setProgress(2);
     if (progressTimer.current) {
@@ -515,10 +525,11 @@ export default function Page() {
           res = await fetch(`${BACKEND_URL}/api/playlist-with-rekordbox-upload`, {
             method: 'POST',
             body: form,
+            signal: abortRef.current.signal,
           });
         } else {
           const params = new URLSearchParams({ url, source: effectiveSource });
-          res = await fetch(`${BACKEND_URL}/api/playlist?${params.toString()}`);
+          res = await fetch(`${BACKEND_URL}/api/playlist?${params.toString()}` , { signal: abortRef.current.signal });
         }
         const t1 = performance.now();
         const networkMs = t1 - t0;
@@ -643,6 +654,10 @@ export default function Page() {
           continue;
         }
 
+        // Guard: if a newer request started, discard this response
+        if (localRequestId !== requestIdRef.current) {
+          continue;
+        }
         const json = body as ApiPlaylistResponse;
         const t3a = performance.now();
         const rows: PlaylistRow[] = json.tracks.map((t, idx) => ({
@@ -938,6 +953,15 @@ export default function Page() {
                   'Analyze'
                 )}
               </button>
+              {loading && (
+                <button
+                  type="button"
+                  onClick={() => { try { abortRef.current?.abort(); } catch {}; setLoading(false); setProgress(0); }}
+                  className="inline-flex items-center justify-center rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
 
             {loading && (
