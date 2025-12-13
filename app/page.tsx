@@ -694,8 +694,10 @@ export default function Page() {
     }
 
     if (newResults.length > 0) {
-      // Prepend new results (newest first) and keep existing
-      const merged = [...newResults, ...multiResults];
+      // Replace existing tabs with same URL, or prepend new ones
+      const existingUrls = new Set(newResults.map(([url]) => url));
+      const filteredExisting = multiResults.filter(([url]) => !existingUrls.has(url));
+      const merged = [...newResults, ...filteredExisting];
       setMultiResults(merged);
       // Set active tab to first (newest) result
       setActiveTab(merged[0][0]);
