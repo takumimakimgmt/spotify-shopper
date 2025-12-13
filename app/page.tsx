@@ -1718,6 +1718,22 @@ export default function Page() {
                       </button>
                     </div>
                   )}
+
+                  {/* Quick section links */}
+                  <div className="flex gap-1 flex-wrap text-[10px]">
+                    <a href="#section-checkout" className="px-2 py-1 rounded bg-amber-500/20 border border-amber-500/50 text-amber-300 hover:bg-amber-500/30 transition">
+                      Checkout ({checkoutCount})
+                    </a>
+                    <a href="#section-hunt" className="px-2 py-1 rounded bg-blue-500/20 border border-blue-500/50 text-blue-300 hover:bg-blue-500/30 transition">
+                      Hunt ({huntCount})
+                    </a>
+                    <a href="#section-unknown" className="px-2 py-1 rounded bg-slate-500/20 border border-slate-500/50 text-slate-300 hover:bg-slate-500/30 transition">
+                      Unknown ({unknownCount})
+                    </a>
+                    <a href="#section-owned" className="px-2 py-1 rounded bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30 transition">
+                      Owned ({ownedCount})
+                    </a>
+                  </div>
                 </div>
 
                 {/* Search & Sort Controls */}
@@ -1742,7 +1758,7 @@ export default function Page() {
                 </div>
 
                 {/* Mobile: card list */}
-                <div className="md:hidden space-y-2">
+                <div className="md:hidden space-y-2" id="section-checkout">
                   {displayedTracks.map((t) => {
                     // Prioritize apple_url for Apple Music playlists, spotify_url for Spotify
                     const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
@@ -1813,7 +1829,7 @@ export default function Page() {
                 </div>
 
                 {/* Desktop: table */}
-                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/70 relative z-10">
+                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/70 relative z-10" id="section-checkout">
                   <table className="w-full text-xs table-fixed">
                     <thead className="bg-slate-900/90">
                       <tr className="border-b border-slate-800 text-slate-300">
@@ -2075,23 +2091,39 @@ export default function Page() {
               );
 
               return (
-                <div className="mb-4 p-3 bg-slate-800/50 rounded-lg">
-                  <button
-                    onClick={() => {
-                      storeUrls.forEach((url) => {
-                        window.open(url, '_blank');
-                      });
-                    }}
-                    disabled={tracksInStore.length === 0}
-                    className="w-full px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold rounded-lg transition"
-                  >
-                    Open {Math.min(tracksInStore.length, 10)} in {selectedStoreTab}
-                    {tracksInStore.length > 10 && ` (showing 10 of ${tracksInStore.length})`}
-                  </button>
-                  <p className="text-xs text-slate-400 mt-2">
+                <div className="mb-4 p-3 bg-slate-800/50 rounded-lg space-y-2">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        // Open only first link to avoid popup blocking
+                        if (storeUrls.length > 0) {
+                          window.open(storeUrls[0], '_blank');
+                        }
+                      }}
+                      disabled={tracksInStore.length === 0}
+                      className="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold rounded-lg transition"
+                    >
+                      Open in {selectedStoreTab}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const linksText = storeUrls.join('\n');
+                        navigator.clipboard.writeText(linksText).then(() => {
+                          alert(`Copied ${storeUrls.length} link${storeUrls.length > 1 ? 's' : ''} to clipboard`);
+                        }).catch(() => {
+                          alert('Failed to copy. Please try again.');
+                        });
+                      }}
+                      disabled={tracksInStore.length === 0}
+                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-semibold rounded-lg transition text-sm"
+                    >
+                      Copy links
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400">
                     {tracksInStore.length === 0
                       ? 'No tracks available in this store'
-                      : `${tracksInStore.length} track${tracksInStore.length > 1 ? 's' : ''} available`}
+                      : `${tracksInStore.length} track${tracksInStore.length > 1 ? 's' : ''} available. Click "Open" for first, "Copy links" for all.`}
                   </p>
                 </div>
               );
@@ -2137,6 +2169,50 @@ export default function Page() {
                 });
               })()}
             </div>
+
+            {/* Maybe (Bandcamp-only) section - shown in modal only */}
+            {(() => {
+              const bandcampOnlyTracks = currentResult?.tracks.filter((t) => {
+                if (categorizeTrack(t) !== 'hunt') return false;
+                // Show only Bandcamp-only tracks
+                return (t.stores?.bandcamp && t.stores.bandcamp.length > 0) && 
+                       (!t.stores?.beatport || t.stores.beatport.length === 0) &&
+                       (!t.stores?.itunes || t.stores.itunes.length === 0);
+              }) ?? [];
+
+              if (bandcampOnlyTracks.length === 0) return null;
+
+              return (
+                <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="text-sm font-semibold text-blue-300 mb-2">
+                    💙 Maybe: {bandcampOnlyTracks.length} on Bandcamp
+                  </div>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {bandcampOnlyTracks.map((t) => (
+                      <div key={`${t.index}-maybe`} className="flex items-center justify-between gap-2 p-2 bg-slate-800/30 rounded text-xs">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-slate-100 truncate">{t.title}</div>
+                          <div className="text-slate-400 truncate text-[10px]">{t.artist}</div>
+                        </div>
+                        {t.stores?.bandcamp && (
+                          <a
+                            href={t.stores.bandcamp}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-[10px] font-semibold whitespace-nowrap transition"
+                          >
+                            Try
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-blue-400 mt-2">
+                    These tracks are Bandcamp-only (less reliable). Try if store above doesn't have it.
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* Footer */}
             <div className="mt-4 pt-4 border-t border-slate-700 text-xs text-slate-400">
