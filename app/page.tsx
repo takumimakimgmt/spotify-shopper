@@ -144,37 +144,34 @@ function parseRekordboxXml(text: string): RekordboxTrack[] {
 
 // ==== Owned status helper ====
 
-function getOwnedStatusReason(
+function getOwnedStatusStyle(
   owned: boolean | null | undefined,
   ownedReason: string | null | undefined
-): { icon: string; label: string; tooltip: string } {
+): { borderClass: string; tooltip: string } {
   if (owned === true) {
-    const reasonLabel =
+    const tooltip =
       ownedReason === 'isrc'
-        ? 'Matched by ISRC'
+        ? '✅ Owned: Matched by ISRC'
         : ownedReason === 'exact'
-        ? 'Matched by Title + Artist'
+        ? '✅ Owned: Matched by Title + Artist'
         : ownedReason === 'album'
-        ? 'Matched by Title + Album'
+        ? '✅ Owned: Matched by Title + Album'
         : ownedReason === 'fuzzy'
-        ? 'Matched by Fuzzy Title + Artist'
-        : 'Matched';
+        ? '🟠 Maybe: Fuzzy match (low confidence)'
+        : '✅ Owned';
     return {
-      icon: '✅',
-      label: 'Owned',
-      tooltip: reasonLabel,
+      borderClass: 'border-l-4 border-emerald-500',
+      tooltip,
     };
   } else if (owned === false) {
     return {
-      icon: '⬛',
-      label: 'Not owned',
-      tooltip: 'Not found in library',
+      borderClass: 'border-l-4 border-slate-600',
+      tooltip: '⬛ Not owned: Not found in library',
     };
   } else {
     return {
-      icon: '🟠',
-      label: 'Maybe',
-      tooltip: 'Maybe (fuzzy match, low confidence)',
+      borderClass: 'border-l-4 border-slate-600',
+      tooltip: '? Unknown status',
     };
   }
 }
@@ -1568,7 +1565,14 @@ export default function Page() {
                     return (
                       <div
                         key={`${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
-                        className="rounded-lg border border-slate-800 bg-slate-900/70 p-3 text-xs"
+                        className={`rounded-lg border border-slate-800 bg-slate-900/70 p-3 text-xs ${(() => {
+                          const style = getOwnedStatusStyle(t.owned, t.ownedReason);
+                          return style.borderClass;
+                        })()}`}
+                        title={(() => {
+                          const style = getOwnedStatusStyle(t.owned, t.ownedReason);
+                          return style.tooltip;
+                        })()}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <a
@@ -1579,19 +1583,6 @@ export default function Page() {
                           >
                             {t.title}
                           </a>
-                          <div>
-                            {(() => {
-                              const status = getOwnedStatusReason(t.owned, t.ownedReason);
-                              return (
-                                <span
-                                  className="inline-flex items-center justify-center text-lg cursor-help"
-                                  title={status.tooltip}
-                                >
-                                  {status.icon}
-                                </span>
-                              );
-                            })()}
-                          </div>
                         </div>
                         <div className="mt-1 text-slate-300">{t.artist}</div>
                         <div className="mt-1 text-slate-400 text-xs">{t.album}</div>
@@ -1642,7 +1633,6 @@ export default function Page() {
                         <th className="px-3 py-2 text-left">Artist</th>
                         <th className="px-3 py-2 text-left">Album</th>
                         <th className="px-2 py-2 text-left w-24">ISRC</th>
-                        <th className="px-2 py-2 text-center w-16">Own</th>
                         <th className="px-3 py-2 text-left">Stores</th>
                         <th className="px-3 py-2 text-center w-40">
                           <div className="inline-flex items-center gap-2 justify-center">
@@ -1674,7 +1664,15 @@ export default function Page() {
                             <td className="px-3 py-1 text-slate-400">
                               {t.index}
                             </td>
-                            <td className="max-w-xs px-3 py-1 text-sm font-medium text-emerald-100">
+                            <td className={`max-w-xs px-3 py-1 text-sm font-medium text-emerald-100 ${(() => {
+                              const style = getOwnedStatusStyle(t.owned, t.ownedReason);
+                              return style.borderClass;
+                            })()}`}
+                              title={(() => {
+                                const style = getOwnedStatusStyle(t.owned, t.ownedReason);
+                                return style.tooltip;
+                              })()}
+                            >
                               <a
                                 href={trackUrl}
                                 target="_blank"
@@ -1693,19 +1691,6 @@ export default function Page() {
                             </td>
                             <td className="px-2 py-1 text-xs text-slate-400 truncate">
                               {t.isrc ?? ''}
-                            </td>
-                            <td className="px-2 py-1 text-center">
-                              {(() => {
-                                const status = getOwnedStatusReason(t.owned, t.ownedReason);
-                                return (
-                                  <span
-                                    className="inline-flex items-center justify-center text-base cursor-help"
-                                    title={status.tooltip}
-                                  >
-                                    {status.icon}
-                                  </span>
-                                );
-                              })()}
                             </td>
                             <td className="px-3 py-1">
                               <div className="flex flex-wrap gap-2">
