@@ -957,6 +957,11 @@ export default function Page() {
                         </a>
                       )}
                     </h2>
+                    <div className="text-xs text-slate-400 space-y-0.5">
+                      <div>Total: {currentResult.total}</div>
+                      <div>To buy: {toBuyCount}</div>
+                      <div>Owned: {ownedCount}</div>
+                    </div>
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-2 sm:flex-wrap">
                       <label className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium cursor-pointer hover:bg-slate-600">
                         Re-analyze with XML

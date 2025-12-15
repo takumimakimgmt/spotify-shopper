@@ -329,7 +329,7 @@ export function usePlaylistAnalyzer() {
               ? {
                   ...p,
                   status: 'fetching',
-                  message: isForceRefresh ? 'Reloading' : 'Loading',
+                  message: isForceRefresh ? 'force refresh' : 'fetching',
                 }
               : p
           )
