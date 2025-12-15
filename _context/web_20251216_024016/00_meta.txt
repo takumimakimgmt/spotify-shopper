@@ -1,2 +1,0 @@
-==> ROOT: /Users/takumimaki/dev/spotify-shopper-web
-==> STAMP: 20251216_024016
