@@ -19,3 +19,6 @@ yarn-error.log*
 
 # local teacher data link (do not commit)
 _teacher_data
+
+# context snapshots (for sharing; not tracked)
+_context/
