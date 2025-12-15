@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from 'react';
 import type { PlaylistSnapshotV1 } from '../lib/types';
+import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:8000';
@@ -152,6 +153,9 @@ function getOwnedStatusStyle(
 // ==== Main component ====
 
 export default function Page() {
+  // Hook for Analyze state management
+  const analyzer = usePlaylistAnalyzer();
+
   // Single/multiple playlist input
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
@@ -902,15 +906,15 @@ export default function Page() {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleAnalyze} className="space-y-4">
+            <form onSubmit={analyzer.handleAnalyze} className="space-y-4">
             <ProcessingBar analyzing={loading} reanalyzing={isReanalyzing} progress={progress} />
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 Playlist URLs
               </label>
               <textarea
-                value={playlistUrlInput}
-                onChange={(e) => setPlaylistUrlInput(e.target.value)}
+                value={analyzer.playlistUrlInput}
+                onChange={(e) => analyzer.setPlaylistUrlInput(e.target.value)}
                 className="w-full rounded-md border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 font-mono"
                 placeholder="https://open.spotify.com/playlist/...&#10;https://music.apple.com/...&#10;3KCXw0N4EJmHIg0KiKjNSM"
                 rows={4}
