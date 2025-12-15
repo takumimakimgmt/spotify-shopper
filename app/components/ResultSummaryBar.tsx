@@ -1,72 +1,67 @@
 'use client';
 
 import React from 'react';
-import { usePlaylistAnalyzer } from '@/lib/state/usePlaylistAnalyzer';
+import { ResultState } from '@/lib/types';
 
 export interface ResultSummaryBarProps {
-  analyzer: ReturnType<typeof usePlaylistAnalyzer>;
+  result: ResultState | null;
+  ownedCount: number;
+  checkoutCount: number;
 }
 
-export default function ResultSummaryBar({ analyzer }: ResultSummaryBarProps) {
-  if (!analyzer.currentResult) {
-    return null;
-  }
+export default function ResultSummaryBar({
+  result,
+  ownedCount,
+  checkoutCount,
+}: ResultSummaryBarProps) {
+  if (!result) return null;
 
-  const total = analyzer.currentResult.total;
-  const owned = analyzer.ownedCount;
-  const checkout = analyzer.checkoutCount;
-  const percentage = total > 0 ? ((owned / total) * 100).toFixed(0) : 0;
+  const total = result.total;
+  const coverage = total > 0 ? ((ownedCount / total) * 100).toFixed(0) : 0;
+  const cacheHit = result.meta?.cache_hit ?? false;
+  const fetchMs = result.meta?.fetch_ms ?? null;
+  const refreshUsed = result.meta?.refresh ?? false;
 
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-3">
-      {/* Status badges */}
-      <div className="flex gap-2 flex-wrap">
-        {analyzer.currentResult.meta?.cache_hit && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 border border-blue-500/30 px-2 py-1 text-xs text-blue-300">
+      {/* Stats row */}
+      <div className="grid grid-cols-4 gap-3 text-xs">
+        <div className="bg-slate-900/50 rounded px-2 py-1">
+          <div className="text-slate-400 text-xs">Total</div>
+          <div className="text-lg font-semibold text-slate-100">{total}</div>
+        </div>
+        <div className="bg-emerald-900/20 rounded px-2 py-1">
+          <div className="text-emerald-300 text-xs">Owned</div>
+          <div className="text-lg font-semibold text-emerald-200">{ownedCount}</div>
+        </div>
+        <div className="bg-orange-900/20 rounded px-2 py-1">
+          <div className="text-orange-300 text-xs">Checkout</div>
+          <div className="text-lg font-semibold text-orange-200">{checkoutCount}</div>
+        </div>
+        <div className="bg-blue-900/20 rounded px-2 py-1">
+          <div className="text-blue-300 text-xs">Coverage</div>
+          <div className="text-lg font-semibold text-blue-200">{coverage}%</div>
+        </div>
+      </div>
+
+      {/* Badge row: cache_hit, refresh, time */}
+      <div className="flex flex-wrap gap-2 items-center">
+        {cacheHit && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 px-2.5 py-1 text-xs text-blue-300">
             💾 Cache used
           </span>
         )}
-        {analyzer.currentResult.meta?.refresh === 1 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-500/30 px-2 py-1 text-xs text-amber-300">
-            🔄 Forced refresh
+        {refreshUsed && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs text-amber-300">
+            ✨ Fresh fetch
           </span>
         )}
-        {analyzer.forceRefreshHint && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 border border-green-500/30 px-2 py-1 text-xs text-green-300">
-            ✓ Force refresh pending
+        {fetchMs !== null && (
+          <span className="text-xs text-slate-400">
+            Fetched in {fetchMs}ms
           </span>
         )}
       </div>
-
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="space-y-1">
-          <div className="text-xs text-slate-400">Total</div>
-          <div className="text-lg font-semibold text-slate-100">{total}</div>
-        </div>
-        <div className="space-y-1">
-          <div className="text-xs text-slate-400">Owned</div>
-          <div className="text-lg font-semibold text-emerald-400">{owned}</div>
-        </div>
-        <div className="space-y-1">
-          <div className="text-xs text-slate-400">To Buy</div>
-          <div className="text-lg font-semibold text-amber-400">{checkout}</div>
-        </div>
-        <div className="space-y-1">
-          <div className="text-xs text-slate-400">Coverage</div>
-          <div className="text-lg font-semibold text-blue-400">{percentage}%</div>
-        </div>
-      </div>
-
-      {/* Performance info */}
-      {analyzer.currentResult.meta && (
-        <div className="text-xs text-slate-500 space-y-1">
-          <div>
-            Fetch: {analyzer.currentResult.meta.fetch_ms?.toFixed(0) || 0}ms |
-            API: {analyzer.currentResult.meta.total_api_ms?.toFixed(1) || 0}ms
-          </div>
-        </div>
-      )}
     </div>
   );
 }
