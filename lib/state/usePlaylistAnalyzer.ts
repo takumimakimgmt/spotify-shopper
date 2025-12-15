@@ -79,6 +79,9 @@ export function usePlaylistAnalyzer() {
   const [appleNotice, setAppleNotice] = useState(false);
   const [forceRefreshHint, setForceRefreshHint] = useState(false);
   const [reAnalyzeUrl, setReAnalyzeUrl] = useState<string | null>(null);
+  // Progress items for per-URL status visualization
+  type ProgressStatus = 'pending' | 'fetching' | 'done' | 'error';
+  const [progressItems, setProgressItems] = useState<Array<{ url: string; status: ProgressStatus; message?: string }>>([]);
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef<number>(0);
@@ -294,6 +297,9 @@ export function usePlaylistAnalyzer() {
       return;
     }
 
+    // Initialize progress items for each URL
+    setProgressItems(urls.map((url) => ({ url, status: 'pending' as ProgressStatus })));
+
     if (abortRef.current) {
       try { abortRef.current.abort(); } catch {}
     }
@@ -319,6 +325,19 @@ export function usePlaylistAnalyzer() {
       try {
         const t0 = performance.now();
         const effectiveSource = detectSourceFromUrl(url) || 'spotify';
+        // Mark fetching start (Apple calls out longer wait explicitly)
+        const isApple = effectiveSource === 'apple';
+        setProgressItems((prev) =>
+          prev.map((p) =>
+            p.url === url
+              ? {
+                  ...p,
+                  status: 'fetching',
+                  message: isApple ? 'Apple: may take up to 60s…' : isForceRefresh ? 'force refresh' : 'fetching',
+                }
+              : p
+          )
+        );
 
         if (effectiveSource === 'spotify') {
           const isSpotifyPlaylistUrl = /open\.spotify\.com\/.*playlist\//i.test(url);
@@ -367,6 +386,10 @@ export function usePlaylistAnalyzer() {
             meta: json.meta,
           },
         ]);
+        // Mark success
+        setProgressItems((prev) =>
+          prev.map((p) => (p.url === url ? { ...p, status: 'done', message: `${rows.length} tracks` } : p))
+        );
 
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -380,6 +403,11 @@ export function usePlaylistAnalyzer() {
         });
       } catch (err: any) {
         hasError = true;
+        // Short error message for progress list
+        const errShort = typeof err?.message === 'string' ? err.message : 'fetch failed';
+        setProgressItems((prev) =>
+          prev.map((p) => (p.url === url ? { ...p, status: 'error', message: errShort } : p))
+        );
         if (err?.data?.detail) {
           const detail = err.data.detail;
           const usedSource = typeof detail?.used_source === 'string' ? detail.used_source : undefined;
@@ -435,8 +463,8 @@ export function usePlaylistAnalyzer() {
       setRekordboxDate(null);
     }
 
-    if (hasError && newResults.length === 0 && !errorText) {
-      setErrorText('Failed to fetch playlists. Check URLs and try again.');
+    if (hasError && newResults.length === 0) {
+      setErrorText((prev) => prev ?? 'Failed to fetch playlists. Check URLs and try again.');
     }
 
     setProgress(100);
@@ -546,6 +574,25 @@ export function usePlaylistAnalyzer() {
     URL.revokeObjectURL(url);
   };
 
+  const cancelAnalyze = () => {
+    try {
+      abortRef.current?.abort();
+    } catch {
+      // ignore
+    }
+    setLoading(false);
+    setIsReanalyzing(false);
+    setProgress(0);
+    setProgressItems([]);
+  };
+
+  const retryFailed = () => {
+    const failedUrls = progressItems.filter((p) => p.status === 'error').map((p) => p.url);
+    if (failedUrls.length === 0) return;
+    setPlaylistUrlInput(failedUrls.join('\n'));
+    handleAnalyze({ preventDefault: () => {} } as unknown as FormEvent);
+  };
+
   return {
     // data & state
     playlistUrlInput,
@@ -576,6 +623,9 @@ export function usePlaylistAnalyzer() {
     appleNotice,
     forceRefreshHint,
     setForceRefreshHint,
+    progressItems,
+    cancelAnalyze,
+    retryFailed,
     currentResult,
     displayedTracks,
     checkoutCount,

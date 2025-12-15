@@ -9,6 +9,9 @@ import React, {
 } from 'react';
 import type { PlaylistSnapshotV1 } from '../lib/types';
 import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
+import AnalyzeForm from './components/AnalyzeForm';
+import ResultSummaryBar from './components/ResultSummaryBar';
+import ProgressList, { ProgressItem } from './components/ProgressList';
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:8000';
@@ -906,100 +909,32 @@ export default function Page() {
               </div>
             </div>
           ) : (
-            <form onSubmit={analyzer.handleAnalyze} className="space-y-4">
-            <ProcessingBar analyzing={loading} reanalyzing={isReanalyzing} progress={progress} />
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Playlist URLs
-              </label>
-              <textarea
-                value={analyzer.playlistUrlInput}
-                onChange={(e) => analyzer.setPlaylistUrlInput(e.target.value)}
-                className="w-full rounded-md border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 font-mono"
-                placeholder="https://open.spotify.com/playlist/...&#10;https://music.apple.com/...&#10;3KCXw0N4EJmHIg0KiKjNSM"
-                rows={4}
-              />
-              <p className="text-xs text-slate-400">
-                Full URL or playlist ID. Multiple playlists will be analyzed in parallel and results shown in tabs.
-              </p>
+            <AnalyzeForm
+              playlistUrlInput={analyzer.playlistUrlInput}
+              setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
+              handleAnalyze={analyzer.handleAnalyze}
+              rekordboxFile={analyzer.rekordboxFile}
+              setRekordboxFile={analyzer.setRekordboxFile}
+              handleRekordboxChange={analyzer.handleRekordboxChange}
+              onlyUnowned={analyzer.onlyUnowned}
+              setOnlyUnowned={analyzer.setOnlyUnowned}
+              loading={analyzer.loading}
+              isReanalyzing={analyzer.isReanalyzing}
+              progress={analyzer.progress}
+              errorText={analyzer.errorText}
+              appleNotice={analyzer.appleNotice}
+              progressItems={analyzer.progressItems}
+              setForceRefreshHint={analyzer.setForceRefreshHint}
+              cancelAnalyze={analyzer.cancelAnalyze}
+              retryFailed={analyzer.retryFailed}
+            />
+          )}
+
+          {/* Always-visible progress list under the form when processing */}
+          {analyzer.isProcessing && (
+            <div className="mt-4">
+              <ProgressList items={analyzer.progressItems} isProcessing={analyzer.isProcessing} />
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Rekordbox Collection XML (optional)
-              </label>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <input
-                  id="rekordbox-file-input"
-                  type="file"
-                  accept=".xml"
-                  onChange={handleRekordboxChange}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="rekordbox-file-input"
-                  className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold cursor-pointer ${isReanalyzing ? 'bg-slate-700 text-slate-300 pointer-events-none' : 'bg-emerald-500 text-slate-900 hover:bg-emerald-400'}`}
-                >
-                  {isReanalyzing ? (<><div className="inline-block h-3 w-3 mr-2 animate-spin rounded-full border-2 border-current border-r-transparent" /> Re-analyzing…</>) : 'Choose File'}
-                </label>
-                <span className="text-xs text-slate-400">
-                  Upload your Rekordbox collection XML to mark Owned / Not owned.
-                </span>
-              </div>
-              {rekordboxFile && (
-                <div className="text-xs text-emerald-300 space-y-0.5">
-                  <p>Selected: {rekordboxFile.name}</p>
-                  {rekordboxDate && <p>Date: {rekordboxDate}</p>}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between gap-3">
-              <label className="inline-flex items-center gap-2 text-sm text-slate-200">
-                <input
-                  type="checkbox"
-                  checked={onlyUnowned}
-                  onChange={(e) => setOnlyUnowned(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-500 bg-slate-900 text-emerald-500"
-                />
-                <span>Show only unowned tracks</span>
-              </label>
-
-              <button
-                type="submit"
-                disabled={isProcessing}
-                onClick={(e) => {
-                  // Capture shift key reliably before form submission
-                  if (e.shiftKey) {
-                    analyzer.setForceRefreshHint(true);
-                  } else {
-                    analyzer.setForceRefreshHint(false);
-                  }
-                }}
-                className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-r-transparent" />
-                    {isReanalyzing ? 'Re-analyzing…' : 'Analyzing…'}
-                  </>
-                ) : (
-                  'Analyze'
-                )}
-              </button>
-              {isProcessing && (
-                <button
-                  type="button"
-                  onClick={() => { try { abortRef.current?.abort(); } catch {}; setLoading(false); setIsReanalyzing(false); setProgress(0); }}
-                  className="inline-flex items-center justify-center rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600"
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-
-            {/* Duplicate inline progress bar removed; unified via ProcessingBar */}
-          </form>
           )}
 
           {errorText && (
@@ -1084,6 +1019,12 @@ export default function Page() {
 
             {currentResult && (
               <div className="space-y-4">
+                {/* Summary bar above controls and table */}
+                <ResultSummaryBar
+                  result={currentResult}
+                  ownedCount={ownedCount}
+                  checkoutCount={checkoutCount}
+                />
                 {/* Info & controls */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="space-y-1">

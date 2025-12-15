@@ -5,72 +5,49 @@ import React from 'react';
 export interface ProgressItem {
   url: string;
   status: 'pending' | 'fetching' | 'parsing' | 'done' | 'error';
-  trackCount?: number;
-  errorMessage?: string;
+  message?: string;
 }
 
 export interface ProgressListProps {
   items: ProgressItem[];
-  visible?: boolean;
+  isProcessing: boolean;
 }
 
-export default function ProgressList({ items, visible = true }: ProgressListProps) {
-  if (!visible || items.length === 0) {
+const statusIcons: Record<string, string> = {
+  pending: '⏳',
+  fetching: '📡',
+  parsing: '⚙️',
+  done: '✅',
+  error: '❌',
+};
+
+export default function ProgressList({ items, isProcessing }: ProgressListProps) {
+  if (!isProcessing || items.length === 0) {
     return null;
   }
 
-  const getStatusIcon = (status: ProgressItem['status']) => {
-    switch (status) {
-      case 'pending':
-        return '⏳';
-      case 'fetching':
-        return '📡';
-      case 'parsing':
-        return '⚙️';
-      case 'done':
-        return '✅';
-      case 'error':
-        return '❌';
-      default:
-        return '—';
-    }
-  };
-
-  const getStatusColor = (status: ProgressItem['status']) => {
-    switch (status) {
-      case 'done':
-        return 'text-emerald-400';
-      case 'error':
-        return 'text-red-400';
-      case 'pending':
-        return 'text-slate-400';
-      default:
-        return 'text-blue-400';
-    }
-  };
+  const total = items.length;
+  const completed = items.filter((i) => i.status === 'done' || i.status === 'error').length;
 
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
-      {items.map((item, idx) => (
-        <div key={`${idx}-${item.url}`} className="flex items-center gap-2 text-xs">
-          <span className={`${getStatusColor(item.status)} flex-shrink-0`}>
-            {getStatusIcon(item.status)}
-          </span>
-          <span className="text-slate-400 truncate flex-1">
-            {item.url.substring(0, 70)}...
-          </span>
-          {item.status === 'done' && item.trackCount !== undefined && (
-            <span className="text-slate-400 flex-shrink-0">
-              {item.trackCount} tracks
+    <div className="space-y-2">
+      <p className="text-xs text-slate-400 font-medium">
+        Processing ({completed}/{total})
+      </p>
+      <div className="space-y-1">
+        {items.map((item, idx) => (
+          <div
+            key={`${item.url}-${idx}`}
+            className="flex items-center gap-2 text-xs text-slate-300 bg-slate-900/30 rounded px-3 py-2"
+          >
+            <span className="text-sm">{statusIcons[item.status] || '◯'}</span>
+            <span className="flex-1 truncate font-mono">{item.url}</span>
+            <span className="text-slate-500 text-xs whitespace-nowrap">
+              {item.message || item.status}
             </span>
-          )}
-          {item.status === 'error' && item.errorMessage && (
-            <span className="text-red-400 flex-shrink-0" title={item.errorMessage}>
-              Error
-            </span>
-          )}
-        </div>
-      ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
