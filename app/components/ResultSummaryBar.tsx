@@ -26,7 +26,7 @@ export default function ResultSummaryBar({
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 text-xs">
         <div className="bg-slate-900/50 rounded px-2 py-1">
-          <div className="text-slate-400 text-xs">Total</div>
+          <div className="text-slate-400 text-xs">All</div>
           <div className="text-lg font-semibold text-slate-100">{total}</div>
         </div>
         <div className="bg-orange-900/20 rounded px-2 py-1">
