@@ -103,8 +103,8 @@ export default function Page() {
   // Dropdown state: track which "Other stores" dropdown is open
   const [openStoreDropdown, setOpenStoreDropdown] = useState<string | null>(null);
 
-  // Active category filter (UI facing). Default will snap to checkout when available.
-  const [showOwned, setShowOwned] = useState(false);
+  // Active category filter (UI facing). Default will snap to To buy when available.
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'toBuy' | 'owned'>('toBuy');
 
   // Import form collapse state
   const [formCollapsed, setFormCollapsed] = useState(false);
@@ -711,7 +711,7 @@ export default function Page() {
 
     let filtered = currentResult.tracks;
 
-    // Filter by owned status
+    // Filter by owned status when "only unowned" is toggled
     if (onlyUnowned) {
       filtered = filtered.filter((t) => t.owned !== true);
     }
@@ -737,23 +737,24 @@ export default function Page() {
     }
 
     // Category filter
-    if (showOwned) {
+    if (categoryFilter === 'owned') {
       filtered = filtered.filter((t) => categorizeTrack(t) === 'owned');
-    } else {
+    } else if (categoryFilter === 'toBuy') {
       filtered = filtered.filter((t) => categorizeTrack(t) === 'checkout');
     }
 
     return filtered;
-  }, [currentResult, onlyUnowned, searchQuery, sortKey, showOwned]);
+  }, [currentResult, onlyUnowned, searchQuery, sortKey, categoryFilter]);
 
   // Category labels for UI
-  const categoryLabels: Record<TrackCategory, string> = {
-    checkout: 'To Buy',
+  const categoryLabels: Record<'all' | TrackCategory, string> = {
+    all: 'All',
+    checkout: 'To buy',
     owned: 'Owned',
   };
 
   // Category counts
-  const checkoutCount = useMemo(() => {
+  const toBuyCount = useMemo(() => {
     return currentResult
       ? currentResult.tracks.filter(t => t.owned !== true).length
       : 0;
@@ -768,7 +769,7 @@ export default function Page() {
   // Snap default view when results arrive
   useEffect(() => {
     if (!currentResult) return;
-    setShowOwned(false);
+    setCategoryFilter('toBuy');
     setFormCollapsed(true);
   }, [currentResult]);
 
@@ -824,19 +825,21 @@ export default function Page() {
           {currentResult && formCollapsed ? (
             <div className="flex items-center justify-between text-sm text-slate-200">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Import</span>
-                <span className="text-xs text-slate-400">URL + XML</span>
+                <span className="font-semibold">Add playlist</span>
+                {currentResult.hasRekordboxData && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] text-emerald-200">
+                    XML attached
+                  </span>
+                )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <span>XML: {currentResult.hasRekordboxData ? 'attached' : 'not attached'}</span>
-                <button
-                  type="button"
-                  onClick={() => setFormCollapsed(false)}
-                  className="px-2 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 text-emerald-200"
-                >
-                  New playlist
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setFormCollapsed(false)}
+                className="px-3 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 text-emerald-200 flex items-center gap-2"
+              >
+                <span className="text-base leading-none">＋</span>
+                <span>Add playlist</span>
+              </button>
             </div>
           ) : (
             <AnalyzeForm
@@ -953,7 +956,7 @@ export default function Page() {
                 <ResultSummaryBar
                   result={currentResult}
                   ownedCount={ownedCount}
-                  checkoutCount={checkoutCount}
+                  toBuyCount={toBuyCount}
                 />
                 {/* Info & controls */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -972,9 +975,9 @@ export default function Page() {
                       )}
                     </h2>
                     <div className="text-xs text-slate-400 space-y-0.5">
-                      <div>Tracks: {currentResult.total}</div>
+                      <div>Total: {currentResult.total}</div>
+                      <div>To buy: {toBuyCount}</div>
                       <div>Owned: {ownedCount}</div>
-                      <div>To Buy: {checkoutCount}</div>
                     </div>
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-2 sm:flex-wrap">
                       <label className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium cursor-pointer hover:bg-slate-600">
@@ -1080,10 +1083,22 @@ export default function Page() {
                 {/* Category toggle */}
                 <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-xl p-4">
                   <div className="flex gap-2">
-                    <button onClick={() => setShowOwned(false)} className={`flex-1 px-3 py-1 rounded border text-xs transition ${!showOwned ? 'bg-amber-500/30 border-amber-500 text-amber-200' : 'bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20'}`}>
-                      To Buy ({checkoutCount})
+                    <button
+                      onClick={() => setCategoryFilter('all')}
+                      className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === 'all' ? 'bg-slate-700 border-slate-500 text-slate-100' : 'bg-slate-800/40 border-slate-700 text-slate-300 hover:bg-slate-800'}`}
+                    >
+                      All ({currentResult.total})
                     </button>
-                    <button onClick={() => setShowOwned(true)} className={`flex-1 px-3 py-1 rounded border text-xs transition ${showOwned ? 'bg-emerald-500/30 border-emerald-500 text-emerald-100' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20'}`}>
+                    <button
+                      onClick={() => setCategoryFilter('toBuy')}
+                      className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === 'toBuy' ? 'bg-amber-500/30 border-amber-500 text-amber-200' : 'bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20'}`}
+                    >
+                      To buy ({toBuyCount})
+                    </button>
+                    <button
+                      onClick={() => setCategoryFilter('owned')}
+                      className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === 'owned' ? 'bg-emerald-500/30 border-emerald-500 text-emerald-100' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20'}`}
+                    >
                       Owned ({ownedCount})
                     </button>
                   </div>

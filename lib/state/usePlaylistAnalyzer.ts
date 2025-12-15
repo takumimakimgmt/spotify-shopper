@@ -165,7 +165,7 @@ export function usePlaylistAnalyzer() {
     return filtered;
   }, [currentResult, onlyUnowned, searchQuery, sortKey, showOwned]);
 
-  const checkoutCount = useMemo(() => {
+  const toBuyCount = useMemo(() => {
     return currentResult
       ? currentResult.tracks.filter((t) => t.owned !== true).length
       : 0;
@@ -628,7 +628,7 @@ export function usePlaylistAnalyzer() {
     retryFailed,
     currentResult,
     displayedTracks,
-    checkoutCount,
+    toBuyCount,
     ownedCount,
     reAnalyzeUrl,
     setReAnalyzeUrl,
