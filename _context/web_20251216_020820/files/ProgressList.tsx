@@ -52,9 +52,6 @@ export default function ProgressList({ items, isProcessing }: ProgressListProps)
             <span className="flex-1 truncate font-mono">{item.url}</span>
             <span className="text-slate-500 text-xs whitespace-nowrap">
               {statusLabels[item.status] || item.status}
-              {item.message && (
-                <span className="text-slate-600 ml-1">({item.message})</span>
-              )}
             </span>
           </div>
         ))}
