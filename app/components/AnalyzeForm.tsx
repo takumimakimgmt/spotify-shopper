@@ -14,6 +14,7 @@ export interface AnalyzeFormProps {
   isReanalyzing: boolean;
   progress: number;
   errorText: string | null;
+  errorMeta?: any;
   progressItems: ProgressItem[];
   // Setters
   setPlaylistUrlInput: (value: string) => void;
@@ -29,6 +30,7 @@ export interface AnalyzeFormProps {
 
 export default function AnalyzeForm(props: AnalyzeFormProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const rekordboxInputRef = useRef<HTMLInputElement>(null);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
 
@@ -67,20 +69,62 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <div
             ref={errorSummaryRef}
             tabIndex={-1}
-            className="rounded-md border border-red-500 bg-red-900/40 px-3 py-2 text-xs text-red-100"
+            className="rounded-md border border-red-500 bg-red-900/40 px-3 py-2 text-xs text-red-100 space-y-2"
             role="alert"
             aria-live="polite"
           >
             <p className="font-semibold">There was a problem</p>
-            <a href="#playlist-urls" className="underline">
-              {props.errorText}
-            </a>
+            <p className="text-red-200">{props.errorText}</p>
+            {props.errorMeta && (
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => setDetailsExpanded(!detailsExpanded)}
+                  className="text-xs text-red-200 hover:text-red-100 underline"
+                >
+                  {detailsExpanded ? 'Hide details' : 'Show details'}
+                </button>
+                {detailsExpanded && (
+                  <div className="mt-2 space-y-2">
+                    <div className="bg-slate-950/50 rounded p-2 font-mono text-[10px] space-y-1">
+                      {props.errorMeta.reason && (
+                        <div><span className="text-slate-400">reason:</span> {props.errorMeta.reason}</div>
+                      )}
+                      {props.errorMeta.apple_playwright_phase && (
+                        <div><span className="text-slate-400">phase:</span> {props.errorMeta.apple_playwright_phase}</div>
+                      )}
+                      {props.errorMeta.apple_http_status && (
+                        <div><span className="text-slate-400">http_status:</span> {props.errorMeta.apple_http_status}</div>
+                      )}
+                      {props.errorMeta.apple_final_url && (
+                        <div className="break-all"><span className="text-slate-400">final_url:</span> {props.errorMeta.apple_final_url}</div>
+                      )}
+                      {props.errorMeta.apple_api_candidates && props.errorMeta.apple_api_candidates.length > 0 && (
+                        <div><span className="text-slate-400">api_candidates:</span> {props.errorMeta.apple_api_candidates.length} items</div>
+                      )}
+                      {props.errorMeta.apple_response_candidates && props.errorMeta.apple_response_candidates.length > 0 && (
+                        <div><span className="text-slate-400">response_candidates:</span> {props.errorMeta.apple_response_candidates.length} items</div>
+                      )}
+                      {props.errorMeta.apple_request_candidates && props.errorMeta.apple_request_candidates.length > 0 && (
+                        <div><span className="text-slate-400">request_candidates:</span> {props.errorMeta.apple_request_candidates.length} items</div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const json = JSON.stringify(props.errorMeta, null, 2);
+                        navigator.clipboard.writeText(json);
+                      }}
+                      className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded"
+                    >
+                      Copy details
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
-
-        <div className="text-xs text-slate-300 font-medium">
-          Paste playlist URL → Compare with Rekordbox → Open buy links
-        </div>
 
         {/* Playlist URLs input */}
         <div className="space-y-2">
@@ -151,87 +195,61 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <span>Show only unowned tracks</span>
           </label>
 
-          {/* Analyze button with Force Refresh dropdown */}
-          <div className="relative flex gap-1 items-center">
-            <button
-              type="submit"
-              disabled={isProcessing}
-              className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
-            >
-              {isProcessing ? (
-                <>
-                  <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-r-transparent" />
-                  {props.isReanalyzing ? 'Re-analyzing…' : 'Analyzing…'}
-                </>
-              ) : (
-                'Analyze'
-              )}
-            </button>
-
-            {isProcessing && props.cancelAnalyze && (
+          {/* Analyze button and controls */}
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 items-center">
               <button
-                type="button"
-                onClick={props.cancelAnalyze}
-                className="inline-flex items-center justify-center rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600"
+                type="submit"
+                disabled={isProcessing}
+                className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
               >
-                Cancel
+                {isProcessing ? (
+                  <>
+                    <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                    {props.isReanalyzing ? 'Re-analyzing…' : 'Analyzing…'}
+                  </>
+                ) : (
+                  'Analyze'
+                )}
               </button>
-            )}
 
-            {hasFailed && props.retryFailed && (
-              <button
-                type="button"
-                onClick={props.retryFailed}
-                className="inline-flex items-center justify-center rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600"
-              >
-                Retry failed
-              </button>
-            )}
-
-            {/* Force Refresh dropdown trigger */}
-            <button
-              type="button"
-              disabled={isProcessing}
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="inline-flex items-center justify-center rounded-md bg-slate-700 px-2 py-2 text-xs text-slate-300 hover:bg-slate-600 disabled:opacity-60"
-              title="Reload Options"
-            >
-              ▼
-            </button>
-
-            {/* Dropdown menu */}
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-10 w-40 bg-slate-800 border border-slate-700 rounded-md shadow-lg z-50">
+              {isProcessing && props.cancelAnalyze && (
                 <button
                   type="button"
-                  onClick={() => {
-                    props.setForceRefreshHint(false);
-                    props.handleAnalyze({ preventDefault: () => {} } as any);
-                    setDropdownOpen(false);
-                  }}
-                  className="block w-full text-left px-4 py-2 text-xs text-slate-200 hover:bg-slate-700"
+                  onClick={props.cancelAnalyze}
+                  className="inline-flex items-center justify-center rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600"
                 >
-                  Analyze (use cache)
+                  Cancel
                 </button>
+              )}
+
+              {hasFailed && props.retryFailed && (
+                <button
+                  type="button"
+                  onClick={props.retryFailed}
+                  className="inline-flex items-center justify-center rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600"
+                >
+                  Retry failed
+                </button>
+              )}
+
+              {!isProcessing && (
                 <button
                   type="button"
                   onClick={() => {
                     props.setForceRefreshHint(true);
                     props.handleAnalyze({ preventDefault: () => {} } as any);
-                    setDropdownOpen(false);
                   }}
-                  className="block w-full text-left px-4 py-2 text-xs text-slate-200 hover:bg-slate-700 border-t border-slate-700"
+                  className="text-xs text-slate-400 hover:text-emerald-300 underline"
                 >
                   Force reload
                 </button>
-              </div>
-            )}
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Spotify ~10s • Apple may be slower / sometimes unsupported
+            </p>
           </div>
-        </div>
-
-        <div className="text-[11px] text-slate-400 space-y-0.5">
-          <p>What it does: load track list + generate store links</p>
-          <p>Typical time: Spotify ~10s / Apple can be slower</p>
         </div>
 
         {/* Error display with aria-live */}

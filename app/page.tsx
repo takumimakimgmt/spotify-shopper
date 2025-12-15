@@ -806,9 +806,11 @@ export default function Page() {
           <h1 className="text-3xl font-bold tracking-tight">
             Playlist Shopper — Spotify & Apple Music
           </h1>
-          <p className="text-sm text-slate-300 leading-relaxed">
-            Fetch playlists from Spotify or Apple Music and optionally upload your Rekordbox collection XML
-            to mark tracks as Owned / Not owned. The app also generates Beatport, Bandcamp and iTunes search links.
+          <p className="text-base text-emerald-300 font-medium leading-relaxed">
+            Paste a playlist URL → Match with Rekordbox → Open buy links
+          </p>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Optional: upload Rekordbox XML to mark Owned / Not owned
           </p>
         </header>
 
@@ -846,6 +848,7 @@ export default function Page() {
               isReanalyzing={analyzer.isReanalyzing}
               progress={analyzer.progress}
               errorText={analyzer.errorText}
+              errorMeta={analyzer.errorMeta}
               progressItems={analyzer.progressItems}
               setForceRefreshHint={analyzer.setForceRefreshHint}
               cancelAnalyze={analyzer.cancelAnalyze}
