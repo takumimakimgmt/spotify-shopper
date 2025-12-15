@@ -233,22 +233,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 </button>
               )}
 
-              {!isProcessing && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    props.setForceRefreshHint(true);
-                    props.handleAnalyze({ preventDefault: () => {} } as any);
-                  }}
-                  className="text-xs text-slate-400 hover:text-emerald-300 underline"
-                >
-                  Force reload
-                </button>
-              )}
+              {/* Force reload removed per simplified UI */}
             </div>
-            <p className="text-[11px] text-slate-400">
-              Spotify ~10s • Apple may be slower / sometimes unsupported
-            </p>
+            {/* Timing hint moved to processing-only context */}
           </div>
         </div>
 
