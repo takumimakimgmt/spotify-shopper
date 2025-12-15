@@ -279,8 +279,8 @@ export function usePlaylistAnalyzer() {
   const handleAnalyze = async (e: FormEvent) => {
     e.preventDefault();
     setErrorText(null);
-    const isForceRefresh = Boolean((e as any)?.nativeEvent?.shiftKey);
-    setForceRefreshHint(isForceRefresh);
+    // Use forceRefreshHint from state (set by button onClick) instead of unreliable FormEvent.shiftKey
+    const isForceRefresh = forceRefreshHint;
     if (isForceRefresh) {
       window.setTimeout(() => setForceRefreshHint(false), 2000);
     }
@@ -575,6 +575,7 @@ export function usePlaylistAnalyzer() {
     setErrorText,
     appleNotice,
     forceRefreshHint,
+    setForceRefreshHint,
     currentResult,
     displayedTracks,
     checkoutCount,
