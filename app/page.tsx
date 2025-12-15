@@ -817,7 +817,6 @@ export default function Page() {
           {currentResult && formCollapsed ? (
             <div className="flex items-center justify-between text-sm text-slate-200">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Add playlist</span>
                 {currentResult.hasRekordboxData && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] text-emerald-200">
                     XML attached

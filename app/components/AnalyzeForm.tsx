@@ -78,6 +78,10 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </div>
         )}
 
+        <div className="text-xs text-slate-300 font-medium">
+          Paste playlist URL → Compare with Rekordbox → Open buy links
+        </div>
+
         {/* Playlist URLs input */}
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="playlist-urls">Playlist URLs</label>
@@ -223,6 +227,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="text-[11px] text-slate-400 space-y-0.5">
+          <p>What it does: load track list + generate store links</p>
+          <p>Typical time: Spotify ~10s / Apple can be slower</p>
         </div>
 
         {/* Error display with aria-live */}
