@@ -76,6 +76,7 @@ export function usePlaylistAnalyzer() {
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [progress, setProgress] = useState<number>(0);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [errorMeta, setErrorMeta] = useState<any>(null);
   const [forceRefreshHint, setForceRefreshHint] = useState(false);
   const [reAnalyzeUrl, setReAnalyzeUrl] = useState<string | null>(null);
   // Progress items for per-URL status visualization
@@ -410,6 +411,8 @@ export function usePlaylistAnalyzer() {
           const detail = err.data.detail;
           const usedSource = typeof detail?.used_source === 'string' ? detail.used_source : undefined;
           const errText = typeof detail?.error === 'string' ? detail.error : undefined;
+          const meta = detail?.meta || null;
+          setErrorMeta(meta);
           if (usedSource === 'spotify') {
             if (errText) {
               const lower = errText.toLowerCase();
@@ -617,6 +620,7 @@ export function usePlaylistAnalyzer() {
     progress,
     errorText,
     setErrorText,
+    errorMeta,
     forceRefreshHint,
     setForceRefreshHint,
     progressItems,
