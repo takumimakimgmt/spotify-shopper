@@ -968,6 +968,14 @@ export default function Page() {
               <button
                 type="submit"
                 disabled={isProcessing}
+                onClick={(e) => {
+                  // Capture shift key reliably before form submission
+                  if (e.shiftKey) {
+                    analyzer.setForceRefreshHint(true);
+                  } else {
+                    analyzer.setForceRefreshHint(false);
+                  }
+                }}
                 className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
               >
                 {isProcessing ? (
