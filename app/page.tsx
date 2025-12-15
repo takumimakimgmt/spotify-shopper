@@ -1257,16 +1257,17 @@ export default function Page() {
                 </div>
 
                 {/* Desktop: table */}
-                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/70 relative z-10">
-                  <table className="w-full text-xs table-fixed">
-                    <thead className="bg-slate-900/90">
-                      <tr className="border-b border-slate-800 text-slate-300">
-                        <th className="px-3 py-2 text-left w-14">#</th>
-                        <th className="px-3 py-2 text-left w-[30%]">Title</th>
-                        <th className="px-3 py-2 text-left w-[20%]">Artist</th>
-                        <th className="px-3 py-2 text-left w-[20%]">Album</th>
-                        <th className="px-2 py-2 text-left w-[12%]">ISRC</th>
-                        <th className="px-3 py-2 text-left w-[18%]">Stores</th>
+                <div className="hidden md:block mt-4 rounded-xl border border-slate-800 bg-slate-950/40 overflow-hidden">
+                  <div className="max-h-[70vh] overflow-auto">
+                    <table className="w-full text-xs table-fixed">
+                    <thead className="sticky top-0 z-10 bg-slate-950/90 backdrop-blur border-b border-slate-800">
+                      <tr className="text-slate-200">
+                        <th className="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap w-14">#</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap w-[30%]">Title</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap w-[20%]">Artist</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap w-[20%]">Album</th>
+                        <th className="px-2 py-2 text-left text-xs font-semibold whitespace-nowrap w-[12%]">ISRC</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap w-[18%]">Stores</th>
                         {/* Status column removed per UX request */}
                       </tr>
                     </thead>
@@ -1296,38 +1297,34 @@ export default function Page() {
                               return (
                                 <tr
                                   key={`${section.id}-${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
-                                  className="border-b border-slate-800/70 hover:bg-slate-800/40 even:bg-slate-900/60 relative"
+                                  className="border-b border-slate-900/60 hover:bg-slate-800/40 transition-colors relative"
                                 >
                                   <td className="px-3 py-1 text-slate-400">
                                     {t.index}
                                   </td>
-                                  <td
-                                    className={`px-3 py-1 text-sm font-medium text-emerald-100 ${(() => {
-                                      const style = getOwnedStatusStyle(t.owned, t.ownedReason);
-                                      return style.borderClass;
-                                    })()}`}
-                                    title={(() => {
-                                      const style = getOwnedStatusStyle(t.owned, t.ownedReason);
-                                      return style.tooltip;
-                                    })()}
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <a
-                                        href={trackUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="truncate hover:underline block"
-                                        title={t.title}
-                                      >
-                                        {t.title}
-                                      </a>
-                                    </div>
+                                  <td className="px-3 py-1 text-sm text-slate-100">
+                                    <a
+                                      href={trackUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="block max-w-full truncate hover:underline"
+                                      title={`${t.title}${(() => {
+                                        const style = getOwnedStatusStyle(t.owned, t.ownedReason);
+                                        return style.tooltip ? ` (${style.tooltip})` : '';
+                                      })()}`}
+                                    >
+                                      {t.title}
+                                    </a>
                                   </td>
                                   <td className="px-3 py-1 text-sm text-slate-300">
-                                    <div className="truncate" title={t.artist}>{t.artist}</div>
+                                    <span className="block max-w-full truncate" title={t.artist}>
+                                      {t.artist}
+                                    </span>
                                   </td>
                                   <td className="px-3 py-1 text-xs text-slate-300">
-                                    <div className="line-clamp-2" title={t.album}>{t.album}</div>
+                                    <span className="block max-w-full truncate" title={t.album}>
+                                      {t.album}
+                                    </span>
                                   </td>
                                   <td className="px-2 py-1 text-xs text-slate-400 truncate">
                                     {t.isrc ?? ''}
@@ -1405,6 +1402,7 @@ export default function Page() {
                       })()}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               </div>
             )}
