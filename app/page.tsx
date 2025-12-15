@@ -7,8 +7,8 @@ import React, {
   useEffect,
   useMemo,
 } from 'react';
-import type { PlaylistSnapshotV1 } from '../lib/types';
-import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
+import type { PlaylistSnapshotV1, TrackCategory, PlaylistRow, ResultState, StoreLinks, ApiTrack, ApiPlaylistResponse, SortKey } from '../lib/types';
+import { usePlaylistAnalyzer, categorizeTrack } from '../lib/state/usePlaylistAnalyzer';
 import AnalyzeForm from './components/AnalyzeForm';
 import ResultSummaryBar from './components/ResultSummaryBar';
 import ProgressList, { ProgressItem } from './components/ProgressList';
@@ -16,81 +16,7 @@ import ProgressList, { ProgressItem } from './components/ProgressList';
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:8000';
 
-// ==== Types ====
-
-type StoreLinks = {
-  beatport: string;
-  bandcamp: string;
-  itunes: string;
-};
-
-type ApiTrack = {
-  title: string;
-  artist: string;
-  album: string;
-  isrc?: string | null;
-  spotify_url: string;
-  apple_url?: string | null;
-  links: StoreLinks;
-  owned?: boolean | null;
-  owned_reason?: string | null;
-  track_key_primary?: string;
-  track_key_fallback?: string;
-  track_key_primary_type?: 'isrc' | 'norm';
-  track_key_version?: string;
-};
-
-type ApiPlaylistResponse = {
-  playlist_id: string;
-  playlist_name: string;
-  playlist_url: string;
-  tracks: ApiTrack[];
-};
-
-type PlaylistRow = {
-  index: number;
-  title: string;
-  artist: string;
-  album: string;
-  isrc?: string;
-  spotifyUrl: string;
-  appleUrl?: string;
-  stores: StoreLinks;
-  owned?: boolean | null;
-  ownedReason?: string | null;
-  trackKeyPrimary?: string;
-  trackKeyFallback?: string;
-  trackKeyPrimaryType?: 'isrc' | 'norm';
-};
-
-type ResultState = {
-  title: string;
-  total: number;
-  playlistUrl: string;
-  playlist_id?: string; // From API response
-  playlist_name?: string; // From API response
-  tracks: PlaylistRow[];
-  analyzedAt: number; // timestamp when analyzed
-  hasRekordboxData?: boolean; // true if analyzed with Rekordbox XML
-};
-
-type SortKey = 'none' | 'artist' | 'album' | 'title';
-
-// ==== Track category helper ====
-
-type TrackCategory = 'checkout' | 'owned';
-
-function categorizeTrack(
-  track: PlaylistRow
-): TrackCategory {
-  // Owned: confirmed by Rekordbox (true only)
-  if (track.owned === true) {
-    return 'owned';
-  }
-  
-  // Everything else (false or null): To Buy
-  return 'checkout';
-}
+// ==== Types removed - all imported from lib/types ====
 
 // ==== Store helpers ====
 
@@ -159,15 +85,20 @@ export default function Page() {
   // Hook for Analyze state management
   const analyzer = usePlaylistAnalyzer();
 
+  // Extract values from analyzer for use in this component
+  const multiResults = analyzer.multiResults || [];
+  const activeTab = analyzer.activeTab;
+  const setActiveTab = analyzer.setActiveTab;
+  const setMultiResults = analyzer.setMultiResults;
+  const currentResult = analyzer.currentResult;
+
   // Single/multiple playlist input
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
   const [rekordboxDate, setRekordboxDate] = useState<string | null>(null);
   const [onlyUnowned, setOnlyUnowned] = useState(false);
 
-  // Multi-playlist results: ordered array (newest first)
-  const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>([]);
-  const [activeTab, setActiveTab] = useState<string | null>(null);
+  // REMOVED: Old multi-playlist state now managed by analyzer hook
 
   // Dropdown state: track which "Other stores" dropdown is open
   const [openStoreDropdown, setOpenStoreDropdown] = useState<string | null>(null);
@@ -349,7 +280,7 @@ export default function Page() {
 
             if (!resp.ok) {
               console.error(`[Bulk Re-analyze] Failed for ${url}`);
-              updatedResults.push([url, result]); // Keep original
+              updatedResults.push([url, result as ResultState]); // Keep original
               continue;
             }
 
@@ -381,7 +312,7 @@ export default function Page() {
             ]);
           } catch (err) {
             console.error(`[Bulk Re-analyze] Error for ${url}:`, err);
-            updatedResults.push([url, result]); // Keep original
+            updatedResults.push([url, result as ResultState]); // Keep original
           }
         }
 
@@ -772,8 +703,7 @@ export default function Page() {
     }
   };
 
-  // Current active result
-  const currentResult = multiResults.find(([url]) => url === activeTab)?.[1] ?? null;
+  // REMOVED: currentResult/multiResults/activeTab now extracted at component top from analyzer hook
 
   // Filter & sort tracks
   const displayedTracks = useMemo(() => {
