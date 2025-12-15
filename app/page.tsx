@@ -1065,19 +1065,19 @@ export default function Page() {
                       onClick={() => setCategoryFilter('all')}
                       className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === 'all' ? 'bg-slate-700 border-slate-500 text-slate-100' : 'bg-slate-800/40 border-slate-700 text-slate-300 hover:bg-slate-800'}`}
                     >
-                      All ({currentResult.total})
+                      All
                     </button>
                     <button
                       onClick={() => setCategoryFilter('toBuy')}
                       className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === 'toBuy' ? 'bg-amber-500/30 border-amber-500 text-amber-200' : 'bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20'}`}
                     >
-                      To buy ({toBuyCount})
+                      To buy
                     </button>
                     <button
                       onClick={() => setCategoryFilter('owned')}
                       className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === 'owned' ? 'bg-emerald-500/30 border-emerald-500 text-emerald-100' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20'}`}
                     >
-                      Owned ({ownedCount})
+                      Owned
                     </button>
                   </div>
                 </div>

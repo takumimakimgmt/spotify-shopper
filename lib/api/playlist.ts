@@ -5,11 +5,16 @@ export async function getPlaylist(params: {
   url: string;
   source: 'spotify' | 'apple';
   refresh?: boolean;
+  enrichSpotify?: boolean; // when source=apple, false to skip enrichment
   signal?: AbortSignal;
 }): Promise<ApiPlaylistResponse> {
   const search = new URLSearchParams({ url: params.url, source: params.source });
   if (params.refresh) {
     search.set('refresh', '1');
+  }
+  if (params.source === 'apple') {
+    const val = params.enrichSpotify === true ? '1' : '0';
+    search.set('enrich_spotify', val);
   }
   return fetchJsonWithBase<ApiPlaylistResponse>(`/api/playlist?${search.toString()}`, {
     signal: params.signal,
@@ -21,6 +26,7 @@ export async function postPlaylistWithRekordboxUpload(params: {
   source: 'spotify' | 'apple';
   file: File;
   refresh?: boolean;
+  enrichSpotify?: boolean; // when source=apple, false to skip enrichment
   signal?: AbortSignal;
 }): Promise<ApiPlaylistResponse> {
   const form = new FormData();
@@ -30,6 +36,9 @@ export async function postPlaylistWithRekordboxUpload(params: {
   form.append('rekordbox_xml', params.file);
   if (params.refresh) {
     form.append('refresh', '1');
+  }
+  if (params.source === 'apple') {
+    form.append('enrich_spotify', params.enrichSpotify === true ? '1' : '0');
   }
 
   return fetchJsonWithBase<ApiPlaylistResponse>('/api/playlist-with-rekordbox-upload', {

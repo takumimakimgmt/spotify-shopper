@@ -351,6 +351,7 @@ export function usePlaylistAnalyzer() {
             url,
             source: effectiveSource,
             file: rekordboxFile,
+            enrichSpotify: effectiveSource === 'apple' ? false : undefined,
             refresh: isForceRefresh,
             signal: abortRef.current?.signal ?? undefined,
           });
@@ -358,6 +359,7 @@ export function usePlaylistAnalyzer() {
           json = await getPlaylist({
             url,
             source: effectiveSource,
+            enrichSpotify: effectiveSource === 'apple' ? false : undefined,
             refresh: isForceRefresh,
             signal: abortRef.current?.signal ?? undefined,
           });
