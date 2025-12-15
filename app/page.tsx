@@ -809,13 +809,15 @@ export default function Page() {
           <p className="text-base text-emerald-300 font-medium leading-relaxed">
             Paste a playlist URL → Match with Rekordbox → Open buy links
           </p>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Optional: upload Rekordbox XML to mark Owned / Not owned
-          </p>
         </header>
 
         {/* Form */}
         <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
+          {analyzer.isProcessing && (
+            <div className="text-[11px] text-slate-400">
+              Spotify ~10s • Apple may be slower / sometimes unsupported
+            </div>
+          )}
           {currentResult && formCollapsed ? (
             <div className="flex items-center justify-between text-sm text-slate-200">
               <div className="flex items-center gap-2">
