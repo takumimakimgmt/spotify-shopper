@@ -1,1 +1,1 @@
-export const APPLE_TIMEOUT_S = 95;
+export const APPLE_TIMEOUT_S = 30;

@@ -1,6 +1,9 @@
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
 export function getBackendUrl(): string {
+  if (!BASE_URL) {
+    throw new Error('NEXT_PUBLIC_BACKEND_URL environment variable is not set');
+  }
   return BASE_URL;
 }
 

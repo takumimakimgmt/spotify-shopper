@@ -311,12 +311,6 @@ export default function Page() {
               <ProgressList items={analyzer.progressItems} isProcessing={analyzer.isProcessing} />
             </div>
           )}
-
-          {errorText && (
-            <div className="mt-4 rounded-md border border-red-500/60 bg-red-900/30 px-3 py-2 text-xs whitespace-pre-wrap">
-              {errorText}
-            </div>
-          )}
         </section>
 
         {/* Hidden file input for re-analyze */}
