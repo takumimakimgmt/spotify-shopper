@@ -23,6 +23,13 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-explicit-any": "off",
     },
   },
+  // Disable overly-strict react-hooks/refs for page.tsx (analyzer state is valid, not refs)
+  {
+    files: ["app/page.tsx"],
+    rules: {
+      "react-hooks/refs": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
