@@ -38,6 +38,14 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
     rekordboxInputRef.current?.click();
   };
 
+  // Check if errorMeta has actual content
+  const meta = props.errorMeta ?? null;
+  const metaJson =
+    meta && typeof meta === 'object' && Object.keys(meta).length > 0
+      ? JSON.stringify(meta, null, 2)
+      : '';
+  const hasMeta = metaJson.length > 0;
+
   const isProcessing = props.loading || props.isReanalyzing;
   const hasFailed = useMemo(
     () => props.progressItems.some((p) => p.status === 'error'),
@@ -76,7 +84,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           >
             <p className="font-semibold">There was a problem</p>
             <p className="text-red-200">{props.errorText}</p>
-            {props.errorMeta && (
+            {hasMeta && (
               <div className="space-y-1">
                 <button
                   type="button"
@@ -109,12 +117,23 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                       {props.errorMeta.apple_request_candidates && props.errorMeta.apple_request_candidates.length > 0 && (
                         <div><span className="text-slate-400">request_candidates:</span> {props.errorMeta.apple_request_candidates.length} items</div>
                       )}
+                      {/* Fallback: if no specific fields matched, show full JSON */}
+                      {(!props.errorMeta.reason &&
+                        !props.errorMeta.apple_playwright_phase &&
+                        !props.errorMeta.apple_http_status &&
+                        !props.errorMeta.apple_final_url &&
+                        !props.errorMeta.apple_api_candidates &&
+                        !props.errorMeta.apple_response_candidates &&
+                        !props.errorMeta.apple_request_candidates) && (
+                        <pre className="whitespace-pre-wrap text-[9px] text-slate-300">
+                          {metaJson}
+                        </pre>
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => {
-                        const json = JSON.stringify(props.errorMeta, null, 2);
-                        navigator.clipboard.writeText(json);
+                        navigator.clipboard.writeText(metaJson);
                       }}
                       className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded"
                     >
