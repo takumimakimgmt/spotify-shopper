@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { PlaylistRow, ResultState } from '../../lib/types';
 import ResultSummaryBar from './ResultSummaryBar';
+import ErrorAlert from './ErrorAlert';
+import { MAX_XML_BYTES } from '@/lib/constants';
 
 interface SidePanelsProps {
   currentResult: ResultState;
@@ -19,15 +21,22 @@ export function SidePanels({
   applySnapshotWithXml,
   handleExportCSV,
 }: SidePanelsProps) {
+  const [xmlError, setXmlError] = useState<string | null>(null);
   const handleXmlChange: React.ChangeEventHandler<HTMLInputElement> = async (ev) => {
     const file = ev.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_XML_BYTES) {
+      const mb = (file.size / (1024 * 1024)).toFixed(1);
+      setXmlError(`XML is too large (${mb} MB). Please export smaller, playlist-level XML from Rekordbox and try again.`);
+      ev.target.value = '';
+      return;
+    }
     try {
+      setXmlError(null);
       await applySnapshotWithXml(file, currentResult, displayedTracks);
-      alert('XML適用しました');
     } catch (e: unknown) {
       const errorMsg = e instanceof Error ? e.message : String(e);
-      alert('XML適用失敗: ' + errorMsg);
+      setXmlError(`XML apply failed: ${errorMsg}`);
     } finally {
       ev.target.value = '';
     }
@@ -52,6 +61,11 @@ export function SidePanels({
               </a>
             )}
           </h2>
+          {xmlError && (
+            <div className="mt-2">
+              <ErrorAlert title="XML Error" message={xmlError} />
+            </div>
+          )}
           <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-2 sm:flex-wrap">
             <label className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium cursor-pointer hover:bg-slate-600">
               Re-analyze with XML

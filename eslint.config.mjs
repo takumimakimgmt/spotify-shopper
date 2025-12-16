@@ -12,7 +12,17 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Project-specific ignores
+    "_context/**",
+    "_teacher_data/**",
   ]),
+  // Loosen strictness for legacy state files without large refactors
+  {
+    files: ["lib/state/**", "lib/types.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
