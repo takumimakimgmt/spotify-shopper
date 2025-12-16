@@ -18,6 +18,7 @@ import { detectSourceFromUrl, sanitizeUrl } from '../utils/playlistUrl';
 
 const STORAGE_RESULTS = 'spotify-shopper-results';
 const STORAGE_ACTIVE_TAB = 'spotify-shopper-active-tab';
+const MAX_STORAGE_BYTES = 300 * 1024; // ~300KB guard
 
 export function categorizeTrack(track: PlaylistRow): TrackCategory {
   if (track.owned === true) return 'owned';
@@ -63,6 +64,7 @@ export function usePlaylistAnalyzer() {
   // Progress items for per-URL status visualization
   type ProgressStatus = 'pending' | 'fetching' | 'done' | 'error';
   const [progressItems, setProgressItems] = useState<Array<{ url: string; status: ProgressStatus; message?: string }>>([]);
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef<number>(0);
@@ -73,44 +75,59 @@ export function usePlaylistAnalyzer() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const savedResults = localStorage.getItem(STORAGE_RESULTS);
       const savedTab = localStorage.getItem(STORAGE_ACTIVE_TAB);
-      if (savedResults) {
-        const parsed = JSON.parse(savedResults);
-        setMultiResults(parsed);
-      }
       if (savedTab) {
         setActiveTab(savedTab);
       }
     } catch (err) {
-      console.error('[Storage] Failed to restore results:', err);
+      console.error('[Storage] Failed to restore active tab:', err);
     }
   }, []);
 
-  // Debounced localStorage save (500ms) to avoid UI blocking on large multiResults
+  // Debounced localStorage save (500ms) storing only slim summaries to avoid bloating localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    // Only save if not currently processing
-    if (loading || isReanalyzing) {
-      return;
-    }
-    // Clear existing debounce timer
+    if (loading || isReanalyzing) return;
+
     if (localStorageDebounceRef.current) {
       clearTimeout(localStorageDebounceRef.current);
     }
-    // Set new debounce timer
+
     localStorageDebounceRef.current = setTimeout(() => {
       try {
-        const t0 = performance.now();
-        localStorage.setItem(STORAGE_RESULTS, JSON.stringify(multiResults));
-        const t1 = performance.now();
-        if ((t1 - t0) > 50) {
-          console.warn(`[Storage] localStorage save took ${(t1 - t0).toFixed(1)}ms for ${multiResults.length} results`);
+        const slim = multiResults.map(([url, res]) => {
+          const userMarks = res.tracks.map((t) => ({
+            key: t.trackKeyPrimary || t.trackKeyFallback || t.isrc || `${t.title}-${t.artist}`,
+            owned: t.owned,
+            ownedReason: t.ownedReason,
+          }));
+          return {
+            url,
+            snapshotId: res.playlist_id || res.playlistUrl || url,
+            summary: {
+              title: res.title,
+              playlistUrl: res.playlistUrl,
+              analyzedAt: res.analyzedAt,
+              total: res.total,
+              hasRekordboxData: res.hasRekordboxData,
+            },
+            userMarks,
+          };
+        });
+
+        const payload = JSON.stringify({ version: 1, results: slim });
+        if (payload.length > MAX_STORAGE_BYTES) {
+          setStorageWarning(`Local data not saved (>${Math.round(MAX_STORAGE_BYTES / 1024)}KB). Clear old results or re-run analysis.`);
+          return;
         }
+        localStorage.setItem(STORAGE_RESULTS, payload);
+        setStorageWarning(null);
       } catch (err) {
         console.error('[Storage] Failed to save results:', err);
+        setStorageWarning('Failed to save local data.');
       }
     }, 500);
+
     return () => {
       if (localStorageDebounceRef.current) {
         clearTimeout(localStorageDebounceRef.current);
@@ -130,6 +147,21 @@ export function usePlaylistAnalyzer() {
       console.error('[Storage] Failed to save active tab:', err);
     }
   }, [activeTab]);
+
+  const clearLocalData = () => {
+    try {
+      localStorage.removeItem(STORAGE_RESULTS);
+      localStorage.removeItem(STORAGE_ACTIVE_TAB);
+      setMultiResults([]);
+      setActiveTab(null);
+      setFormCollapsed(false);
+      setPlaylistUrlInput('');
+      setStorageWarning(null);
+    } catch (err) {
+      console.error('[Storage] Failed to clear local data:', err);
+      setStorageWarning('Failed to clear local data.');
+    }
+  };
 
   const currentResult = multiResults.find(([url]) => url === activeTab)?.[1] ?? null;
 
@@ -398,7 +430,6 @@ export function usePlaylistAnalyzer() {
             meta: json.meta,
           },
         ]);
-        const t6_pushstate = performance.now();
         // Mark success
         setProgressItems((prev) =>
           prev.map((p) => (p.url === url ? { ...p, status: 'done', message: `${rows.length} tracks` } : p))
@@ -659,6 +690,8 @@ export function usePlaylistAnalyzer() {
     progressItems,
     cancelAnalyze,
     retryFailed,
+    storageWarning,
+    clearLocalData,
     currentResult,
     displayedTracks,
     toBuyCount,
