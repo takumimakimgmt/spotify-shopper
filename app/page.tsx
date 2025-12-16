@@ -107,8 +107,6 @@ export default function Page() {
     setPlaylistUrlInput,
     rekordboxFile,
     setRekordboxFile,
-    rekordboxDate,
-    setRekordboxDate,
     loading,
     isReanalyzing,
     isProcessing,
