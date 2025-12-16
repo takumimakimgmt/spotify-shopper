@@ -12,6 +12,9 @@ import { usePlaylistAnalyzer, categorizeTrack } from '../lib/state/usePlaylistAn
 import AnalyzeForm from './components/AnalyzeForm';
 import ResultSummaryBar from './components/ResultSummaryBar';
 import ProgressList, { ProgressItem } from './components/ProgressList';
+import { withBeatportAid } from '../lib/affiliates/beatport';
+
+const BEATPORT_A_AID = process.env.NEXT_PUBLIC_BEATPORT_A_AID;
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:8000';
@@ -292,7 +295,11 @@ export default function Page() {
               isrc: t.isrc ?? undefined,
               spotifyUrl: t.spotify_url ?? '',
               appleUrl: t.apple_url ?? undefined,
-              stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
+              stores: {
+                beatport: withBeatportAid(t.links?.beatport ?? '', BEATPORT_A_AID),
+                bandcamp: t.links?.bandcamp ?? '',
+                itunes: t.links?.itunes ?? '',
+              },
               owned: t.owned ?? null,
               ownedReason: t.owned_reason ?? null,
               trackKeyPrimary: t.track_key_primary,
@@ -375,7 +382,11 @@ export default function Page() {
         isrc: t.isrc ?? undefined,
         spotifyUrl: t.spotify_url ?? '',
         appleUrl: t.apple_url ?? undefined,
-        stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
+        stores: {
+          beatport: withBeatportAid(t.links?.beatport ?? '', BEATPORT_A_AID),
+          bandcamp: t.links?.bandcamp ?? '',
+          itunes: t.links?.itunes ?? '',
+        },
         owned: t.owned ?? null,
         ownedReason: t.owned_reason ?? null,
         trackKeyPrimary: t.track_key_primary,
@@ -620,7 +631,11 @@ export default function Page() {
           isrc: t.isrc ?? undefined,
           spotifyUrl: t.spotify_url ?? '',
           appleUrl: t.apple_url ?? undefined,
-          stores: t.links ?? { beatport: '', bandcamp: '', itunes: '' },
+          stores: {
+            beatport: withBeatportAid(t.links?.beatport ?? '', BEATPORT_A_AID),
+            bandcamp: t.links?.bandcamp ?? '',
+            itunes: t.links?.itunes ?? '',
+          },
           owned: t.owned ?? null,
           ownedReason: t.owned_reason ?? null,
           trackKeyPrimary: t.track_key_primary,
