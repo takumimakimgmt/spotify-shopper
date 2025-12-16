@@ -6,7 +6,8 @@ import React, {
   useMemo,
 } from 'react';
 import type { TrackCategory } from '../lib/types';
-import { usePlaylistAnalyzer, categorizeTrack } from '../lib/state/usePlaylistAnalyzer';
+import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
+import { selectDisplayedTracks, selectTrackCounts, categoryLabels } from '../lib/ui/selectors';
 import AnalyzeForm from './components/AnalyzeForm';
 import ProgressList from './components/ProgressList';
 import { ShopperHeader } from './components/ShopperHeader';
@@ -48,65 +49,20 @@ export default function Page() {
     });
   };
 
-  // Filter & sort tracks
+  // Compute derived data via selectors (single source of truth)
   const displayedTracks = useMemo(() => {
     if (!currentResult) return [];
+    return selectDisplayedTracks(currentResult.tracks, {
+      categoryFilter: filters.categoryFilter,
+      searchQuery: filters.searchQuery,
+      sortKey: filters.sortKey,
+      onlyUnowned: filters.onlyUnowned,
+    });
+  }, [currentResult, filters.categoryFilter, filters.searchQuery, filters.sortKey, filters.onlyUnowned]);
 
-    let filtered = currentResult.tracks;
-
-    // Filter by owned status when "only unowned" is toggled
-    if (filters.onlyUnowned) {
-      filtered = filtered.filter((t) => t.owned !== true);
-    }
-
-    // Filter by search
-    if (filters.searchQuery.trim()) {
-      const q = filters.searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          t.artist.toLowerCase().includes(q) ||
-          t.album.toLowerCase().includes(q)
-      );
-    }
-
-    // Sort
-    if (filters.sortKey === 'artist') {
-      filtered = [...filtered].sort((a, b) => a.artist.localeCompare(b.artist));
-    } else if (filters.sortKey === 'album') {
-      filtered = [...filtered].sort((a, b) => a.album.localeCompare(b.album));
-    } else if (filters.sortKey === 'title') {
-      filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
-    }
-
-    // Category filter
-    if (filters.categoryFilter === 'owned') {
-      filtered = filtered.filter((t) => categorizeTrack(t) === 'owned');
-    } else if (filters.categoryFilter === 'toBuy') {
-      filtered = filtered.filter((t) => categorizeTrack(t) === 'checkout');
-    }
-
-    return filtered;
-  }, [currentResult, filters.onlyUnowned, filters.searchQuery, filters.sortKey, filters.categoryFilter]);
-
-  // Category labels for UI
-  const categoryLabels: Record<'all' | TrackCategory, string> = {
-    all: 'All',
-    checkout: 'To buy',
-    owned: 'Owned',
-  };
-
-  // Category counts
-  const toBuyCount = useMemo(() => {
-    return currentResult
-      ? currentResult.tracks.filter(t => t.owned !== true).length
-      : 0;
-  }, [currentResult]);
-
-  const ownedCount = useMemo(() => {
-    return currentResult
-      ? currentResult.tracks.filter(t => t.owned === true).length
-      : 0;
+  const { ownedCount, toBuyCount } = useMemo(() => {
+    if (!currentResult) return { ownedCount: 0, toBuyCount: 0 };
+    return selectTrackCounts(currentResult.tracks);
   }, [currentResult]);
 
   // Snap default view when results arrive
