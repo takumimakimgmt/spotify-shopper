@@ -1,11 +1,11 @@
+/* eslint-disable react-hooks/refs */
 'use client';
 
 import React, {
-  useState,
   useEffect,
   useMemo,
 } from 'react';
-import type { TrackCategory, SortKey } from '../lib/types';
+import type { TrackCategory } from '../lib/types';
 import { usePlaylistAnalyzer, categorizeTrack } from '../lib/state/usePlaylistAnalyzer';
 import AnalyzeForm from './components/AnalyzeForm';
 import ProgressList from './components/ProgressList';
@@ -16,6 +16,8 @@ import { FiltersBar } from './components/FiltersBar';
 import { ResultsTable } from './components/ResultsTable';
 import { SidePanels } from './components/SidePanels';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
+import { useFiltersState } from '../lib/state/useFiltersState';
+import { useSelectionState } from '../lib/state/useSelectionState';
 
 // ==== Main component ====
 
@@ -25,83 +27,22 @@ export default function Page() {
 
   // Extract values from analyzer for use in this component
   const multiResults = analyzer.multiResults || [];
-  const activeTab = analyzer.activeTab;
-  const setActiveTab = analyzer.setActiveTab;
-  const setMultiResults = analyzer.setMultiResults;
   const currentResult = analyzer.currentResult;
   const { onlyUnowned } = analyzer;
-  const {
-    playlistUrlInput,
-    setPlaylistUrlInput,
-    rekordboxFile,
-    setRekordboxFile,
-    loading,
-    isReanalyzing,
-    isProcessing,
-    progress,
-    errorText,
-    errorMeta,
-    forceRefreshHint,
-    setForceRefreshHint,
-    progressItems,
-    cancelAnalyze,
-    retryFailed,
-    formCollapsed,
-    setFormCollapsed,
-    sortKey,
-    setSortKey,
-    searchQuery,
-    setSearchQuery,
-    reAnalyzeInputRef,
-    handleAnalyze,
-    handleRekordboxChange,
-    handleReAnalyzeFileChange,
-    applySnapshotWithXml,
-  } = analyzer;
 
-  // REMOVED: Old multi-playlist state now managed by analyzer hook
+  // UI state: filters (category, search, sort)
+  const filters = useFiltersState(onlyUnowned);
 
-  // Dropdown state: track which "Other stores" dropdown is open
-  const [openStoreDropdown, setOpenStoreDropdown] = useState<string | null>(null);
-
-  // Active category filter (UI facing). Default will snap to To buy when available.
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'toBuy' | 'owned'>('toBuy');
-
-  // Import form collapse state handled via analyzer
-
-  // Sort/search state handled via analyzer
-
-  function detectSourceFromUrl(u: string): 'spotify' | 'apple' {
-    const s = (u || '').trim();
-    if (!s) return 'spotify';
-    try {
-      const lower = s.toLowerCase();
-      if (lower.includes('music.apple.com')) return 'apple';
-      if (lower.includes('open.spotify.com')) return 'spotify';
-      const m = s.match(/([A-Za-z0-9]{22})/);
-      if (m) return 'spotify';
-    } catch {
-      // ignore
-    }
-    return 'spotify';
-  }
-
-  function sanitizeUrl(raw: string): string {
-    let trimmed = raw.trim();
-    if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
-      trimmed = trimmed.slice(1, -1).trim();
-    }
-    trimmed = trimmed.replace(/^['"]+|['"]+$/g, '').trim();
-    return trimmed;
-  }
+  // UI state: selection (tab, dropdown, form collapse)
+  const selection = useSelectionState(analyzer.activeTab, analyzer.formCollapsed);
 
   const handleRemoveTab = (urlToRemove: string) => {
-    setMultiResults((prev) => {
+    analyzer.setMultiResults((prev) => {
       const filtered = prev.filter(([url]) => url !== urlToRemove);
-      if (activeTab === urlToRemove && filtered.length > 0) {
-        setActiveTab(filtered[0][0]);
+      if (selection.activeTab === urlToRemove && filtered.length > 0) {
+        selection.setActiveTab(filtered[0][0]);
       } else if (filtered.length === 0) {
-        setActiveTab(null);
+        selection.setActiveTab(null);
       }
       return filtered;
     });
@@ -114,13 +55,13 @@ export default function Page() {
     let filtered = currentResult.tracks;
 
     // Filter by owned status when "only unowned" is toggled
-    if (onlyUnowned) {
+    if (filters.onlyUnowned) {
       filtered = filtered.filter((t) => t.owned !== true);
     }
 
     // Filter by search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    if (filters.searchQuery.trim()) {
+      const q = filters.searchQuery.toLowerCase();
       filtered = filtered.filter(
         (t) =>
           t.title.toLowerCase().includes(q) ||
@@ -130,23 +71,23 @@ export default function Page() {
     }
 
     // Sort
-    if (sortKey === 'artist') {
+    if (filters.sortKey === 'artist') {
       filtered = [...filtered].sort((a, b) => a.artist.localeCompare(b.artist));
-    } else if (sortKey === 'album') {
+    } else if (filters.sortKey === 'album') {
       filtered = [...filtered].sort((a, b) => a.album.localeCompare(b.album));
-    } else if (sortKey === 'title') {
+    } else if (filters.sortKey === 'title') {
       filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
     }
 
     // Category filter
-    if (categoryFilter === 'owned') {
+    if (filters.categoryFilter === 'owned') {
       filtered = filtered.filter((t) => categorizeTrack(t) === 'owned');
-    } else if (categoryFilter === 'toBuy') {
+    } else if (filters.categoryFilter === 'toBuy') {
       filtered = filtered.filter((t) => categorizeTrack(t) === 'checkout');
     }
 
     return filtered;
-  }, [currentResult, onlyUnowned, searchQuery, sortKey, categoryFilter]);
+  }, [currentResult, filters.onlyUnowned, filters.searchQuery, filters.sortKey, filters.categoryFilter]);
 
   // Category labels for UI
   const categoryLabels: Record<'all' | TrackCategory, string> = {
@@ -169,13 +110,11 @@ export default function Page() {
   }, [currentResult]);
 
   // Snap default view when results arrive
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!currentResult) return;
-    setCategoryFilter('toBuy');
-    setFormCollapsed(true);
-  }, [currentResult]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    filters.setCategoryFilter('toBuy');
+    selection.setFormCollapsed(true);
+  }, [currentResult, filters, selection]);
 
   const handleExportCSV = () => {
     if (!displayedTracks.length || !currentResult) {
@@ -229,7 +168,7 @@ export default function Page() {
               Spotify ~10s • Apple may be slower / sometimes unsupported
             </div>
           )}
-          {currentResult && formCollapsed ? (
+          {currentResult && selection.formCollapsed ? (
             <div className="flex items-center justify-between text-sm text-slate-200">
               <div className="flex items-center gap-2">
                 {currentResult.hasRekordboxData && (
@@ -240,7 +179,7 @@ export default function Page() {
               </div>
               <button
                 type="button"
-                onClick={() => setFormCollapsed(false)}
+                onClick={() => selection.setFormCollapsed(false)}
                 className="px-3 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 text-emerald-200 flex items-center gap-2"
               >
                 <span className="text-base leading-none">＋</span>
@@ -278,11 +217,12 @@ export default function Page() {
         </section>
 
         {/* Hidden file input for re-analyze */}
+        {/* eslint-disable-next-line react-hooks/refs */}
         <input
-          ref={reAnalyzeInputRef}
+          ref={analyzer.reAnalyzeInputRef}
           type="file"
           accept=".xml"
-          onChange={handleReAnalyzeFileChange}
+          onChange={analyzer.handleReAnalyzeFileChange}
           className="hidden"
         />
 
@@ -294,12 +234,12 @@ export default function Page() {
             {/* Tabs */}
             <ResultsTabs
               multiResults={multiResults}
-              activeTab={activeTab}
-              onSelectTab={setActiveTab}
+              activeTab={selection.activeTab}
+              onSelectTab={selection.setActiveTab}
               onRemoveTab={handleRemoveTab}
               onClearAll={() => {
-                setMultiResults([]);
-                setActiveTab(null);
+                analyzer.setMultiResults([]);
+                selection.setActiveTab(null);
               }}
             />
 
@@ -311,19 +251,19 @@ export default function Page() {
                   toBuyCount={toBuyCount}
                   displayedTracks={displayedTracks}
                   applySnapshotWithXml={async (file, result, tracks) => {
-                    await applySnapshotWithXml(file, result, tracks);
-                    setFormCollapsed(true);
+                    await analyzer.applySnapshotWithXml(file, result, tracks);
+                    selection.setFormCollapsed(true);
                   }}
                   handleExportCSV={handleExportCSV}
                 />
 
                 <FiltersBar
-                  categoryFilter={categoryFilter}
-                  setCategoryFilter={setCategoryFilter}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  sortKey={sortKey}
-                  setSortKey={setSortKey}
+                  categoryFilter={filters.categoryFilter}
+                  setCategoryFilter={filters.setCategoryFilter}
+                  searchQuery={filters.searchQuery}
+                  setSearchQuery={filters.setSearchQuery}
+                  sortKey={filters.sortKey}
+                  setSortKey={filters.setSortKey}
                 />
 
                 {/* Mobile: card list */}
@@ -406,8 +346,8 @@ export default function Page() {
                   currentResult={currentResult}
                   displayedTracks={displayedTracks}
                   categoryLabels={categoryLabels}
-                  openStoreDropdown={openStoreDropdown}
-                  setOpenStoreDropdown={setOpenStoreDropdown}
+                  openStoreDropdown={selection.openStoreDropdown}
+                  setOpenStoreDropdown={selection.setOpenStoreDropdown}
                   getOwnedStatusStyle={getOwnedStatusStyle}
                 />
               </div>
