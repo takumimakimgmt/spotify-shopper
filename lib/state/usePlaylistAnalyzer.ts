@@ -457,9 +457,10 @@ export function usePlaylistAnalyzer() {
               ? metaFromApi
               : null;
           
+          const detectedSource = detectSourceFromUrl(url) || 'spotify';
           const minimalContext = {
             url: url.substring(0, 80),
-            source: usedSource || effectiveSource,
+            source: usedSource || detectedSource,
             refresh: isForceRefresh ? 1 : 0,
           };
           
