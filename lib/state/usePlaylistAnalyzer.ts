@@ -14,6 +14,7 @@ import {
   postPlaylistWithRekordboxUpload,
   matchSnapshotWithXml,
 } from '../api/playlist';
+import { detectSourceFromUrl, sanitizeUrl } from '../utils/playlistUrl';
 
 const STORAGE_RESULTS = 'spotify-shopper-results';
 const STORAGE_ACTIVE_TAB = 'spotify-shopper-active-tab';
@@ -21,26 +22,6 @@ const STORAGE_ACTIVE_TAB = 'spotify-shopper-active-tab';
 export function categorizeTrack(track: PlaylistRow): TrackCategory {
   if (track.owned === true) return 'owned';
   return 'checkout';
-}
-
-function detectSourceFromUrl(u: string): 'spotify' | 'apple' {
-  const s = (u || '').trim();
-  if (!s) return 'spotify';
-  const lower = s.toLowerCase();
-  if (lower.includes('music.apple.com')) return 'apple';
-  if (lower.includes('open.spotify.com')) return 'spotify';
-  const m = s.match(/([A-Za-z0-9]{22})/);
-  if (m) return 'spotify';
-  return 'spotify';
-}
-
-function sanitizeUrl(raw: string): string {
-  let trimmed = raw.trim();
-  if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
-    trimmed = trimmed.slice(1, -1).trim();
-  }
-  trimmed = trimmed.replace(/^['"]+|['"]+$/g, '').trim();
-  return trimmed;
 }
 
 function mapTracks(json: ApiPlaylistResponse): PlaylistRow[] {
