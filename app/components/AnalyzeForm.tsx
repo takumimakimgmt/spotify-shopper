@@ -148,9 +148,14 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             Full URL or playlist ID. Multiple playlists will be analyzed in parallel and results shown in tabs.
           </p>
           {isAppleInput && (
-            <p className="text-xs text-amber-200">
-              Apple Music may take up to {APPLE_TIMEOUT_S}s (browser rendering + Spotify enrichment). If it times out, retry with a single Apple URL.
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs text-amber-200">
+                Apple Music may take up to {APPLE_TIMEOUT_S}s (browser rendering + Spotify enrichment). If it times out, retry with a single Apple URL.
+              </p>
+              <p className="text-xs text-yellow-600/80">
+                ⚠ Beta: Apple Music support is less reliable than Spotify and may fail or take longer.
+              </p>
+            </div>
           )}
         </div>
 
