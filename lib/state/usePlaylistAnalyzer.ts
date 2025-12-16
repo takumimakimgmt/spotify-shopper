@@ -220,6 +220,7 @@ export function usePlaylistAnalyzer() {
               url,
               source: detectedSource,
               file,
+              appleMode: detectedSource === 'apple' ? 'auto' : undefined,
             });
             const rows = mapTracks(json);
             updatedResults.push([
@@ -251,6 +252,7 @@ export function usePlaylistAnalyzer() {
         url: reAnalyzeUrl,
         source: detectedSource,
         file,
+        appleMode: detectedSource === 'apple' ? 'auto' : undefined,
       });
       const rows = mapTracks(json);
       setMultiResults((prev) =>
@@ -352,6 +354,7 @@ export function usePlaylistAnalyzer() {
             url,
             source: effectiveSource,
             file: rekordboxFile,
+            appleMode: effectiveSource === 'apple' ? 'auto' : undefined,
             enrichSpotify: effectiveSource === 'apple' ? false : undefined,
             refresh: isForceRefresh,
             signal: abortRef.current?.signal ?? undefined,
@@ -360,6 +363,7 @@ export function usePlaylistAnalyzer() {
           json = await getPlaylist({
             url,
             source: effectiveSource,
+            appleMode: effectiveSource === 'apple' ? 'auto' : undefined,
             enrichSpotify: effectiveSource === 'apple' ? false : undefined,
             refresh: isForceRefresh,
             signal: abortRef.current?.signal ?? undefined,

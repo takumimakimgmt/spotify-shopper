@@ -4,11 +4,15 @@ import { fetchJsonWithBase, getBackendUrl } from './client';
 export async function getPlaylist(params: {
   url: string;
   source: 'spotify' | 'apple';
+  appleMode?: 'auto' | 'fast' | 'legacy';
   refresh?: boolean;
   enrichSpotify?: boolean; // when source=apple, false to skip enrichment
   signal?: AbortSignal;
 }): Promise<ApiPlaylistResponse> {
   const search = new URLSearchParams({ url: params.url, source: params.source });
+  if (params.appleMode && params.source === 'apple') {
+    search.set('apple_mode', params.appleMode);
+  }
   if (params.refresh) {
     search.set('refresh', '1');
   }
@@ -25,6 +29,7 @@ export async function postPlaylistWithRekordboxUpload(params: {
   url: string;
   source: 'spotify' | 'apple';
   file: File;
+  appleMode?: 'auto' | 'fast' | 'legacy';
   refresh?: boolean;
   enrichSpotify?: boolean; // when source=apple, false to skip enrichment
   signal?: AbortSignal;
@@ -34,6 +39,9 @@ export async function postPlaylistWithRekordboxUpload(params: {
   form.append('source', params.source);
   form.append('file', params.file);
   form.append('rekordbox_xml', params.file);
+  if (params.appleMode && params.source === 'apple') {
+    form.append('apple_mode', params.appleMode);
+  }
   if (params.refresh) {
     form.append('refresh', '1');
   }

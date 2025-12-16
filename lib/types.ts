@@ -16,6 +16,22 @@ export type ApiMeta = {
   enrich_ms?: number;
   total_backend_ms?: number;
   total_api_ms?: number;
+  apple_mode?: 'auto' | 'fast' | 'legacy';
+  apple_legacy_used?: boolean;
+  apple_strategy?: 'html' | 'playwright';
+  apple_enrich_skipped?: boolean;
+  reason?: string;
+  seen_catalog_playlist_api?: boolean;
+  apple_api_candidates?: any[];
+  apple_response_candidates?: any[];
+  apple_request_candidates?: any[];
+  apple_xhr_fetch_requests?: any[];
+  json_responses_any_domain?: any[];
+  apple_console_errors?: string[];
+  apple_page_errors?: string[];
+  apple_page_title?: string;
+  apple_html_snippet?: string;
+  blocked_hint?: boolean;
 };
 
 export type ApiTrack = {
