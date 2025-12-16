@@ -1,11 +1,9 @@
-/* eslint-disable react-hooks/refs */
 'use client';
 
 import React, {
   useEffect,
   useMemo,
 } from 'react';
-import type { TrackCategory } from '../lib/types';
 import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
 import { selectDisplayedTracks, selectTrackCounts, categoryLabels } from '../lib/ui/selectors';
 import AnalyzeForm from './components/AnalyzeForm';
@@ -16,6 +14,7 @@ import { ResultsTabs } from './components/ResultsTabs';
 import { FiltersBar } from './components/FiltersBar';
 import { ResultsTable } from './components/ResultsTable';
 import { SidePanels } from './components/SidePanels';
+import ErrorAlert from './components/ErrorAlert';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 import { useFiltersState } from '../lib/state/useFiltersState';
 import { useSelectionState } from '../lib/state/useSelectionState';
@@ -31,6 +30,7 @@ export default function Page() {
   const multiResults = analyzer.multiResults || [];
   const currentResult = analyzer.currentResult;
   const { onlyUnowned } = analyzer;
+  const { reAnalyzeInputRef, handleReAnalyzeFileChange, storageWarning, clearLocalData } = analyzer;
 
   // UI state: filters (category, search, sort)
   const filters = useFiltersState(onlyUnowned);
@@ -174,12 +174,11 @@ export default function Page() {
         </section>
 
         {/* Hidden file input for re-analyze */}
-        {/* eslint-disable-next-line react-hooks/refs */}
         <input
-          ref={analyzer.reAnalyzeInputRef}
+          ref={reAnalyzeInputRef}
           type="file"
           accept=".xml"
-          onChange={analyzer.handleReAnalyzeFileChange}
+          onChange={handleReAnalyzeFileChange}
           className="hidden"
         />
 
@@ -188,6 +187,29 @@ export default function Page() {
         {/* Results */}
         {multiResults.length > 0 && (
           <section className="space-y-4" id="results-top">
+            {storageWarning && (
+              <ErrorAlert
+                title="Local data warning"
+                message={storageWarning}
+                hint="Use Clear saved data to reset local storage, then re-run analysis."
+              />
+            )}
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-slate-400">Results are saved locally (~300KB cap). Clear to free space.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  clearLocalData();
+                  selection.setActiveTab(null);
+                  selection.setFormCollapsed(false);
+                }}
+                className="self-start sm:self-auto inline-flex items-center gap-2 rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-700 border border-slate-700"
+              >
+                Clear saved data
+              </button>
+            </div>
+
             {/* Tabs */}
             <ResultsTabs
               multiResults={multiResults}
