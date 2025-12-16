@@ -1,14 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useRef, useState, ChangeEvent, FormEvent } from 'react';
-import {
-  ApiPlaylistResponse,
-  PlaylistRow,
-  ResultState,
-  SortKey,
-  TrackCategory,
-  PlaylistSnapshotV1,
-} from '../types';
+import { useEffect, useRef, useState, ChangeEvent, FormEvent } from 'react';
+import { ApiPlaylistResponse, PlaylistRow, ResultState, TrackCategory, PlaylistSnapshotV1 } from "../types";
 import {
   getPlaylist,
   postPlaylistWithRekordboxUpload,
@@ -47,12 +40,8 @@ export function usePlaylistAnalyzer() {
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
   const [rekordboxDate, setRekordboxDate] = useState<string | null>(null);
-  const [onlyUnowned, setOnlyUnowned] = useState(false);
   const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [showOwned, setShowOwned] = useState(false);
-  const [sortKey, setSortKey] = useState<SortKey>('none');
-  const [searchQuery, setSearchQuery] = useState('');
   const [formCollapsed, setFormCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
@@ -167,50 +156,7 @@ export function usePlaylistAnalyzer() {
 
   useEffect(() => {
     if (!currentResult) return;
-    setShowOwned(false);
     setFormCollapsed(true);
-  }, [currentResult]);
-
-  const displayedTracks = useMemo(() => {
-    if (!currentResult) return [] as PlaylistRow[];
-    let filtered = currentResult.tracks;
-    if (onlyUnowned) {
-      filtered = filtered.filter((t) => t.owned !== true);
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          t.artist.toLowerCase().includes(q) ||
-          t.album.toLowerCase().includes(q)
-      );
-    }
-    if (sortKey === 'artist') {
-      filtered = [...filtered].sort((a, b) => a.artist.localeCompare(b.artist));
-    } else if (sortKey === 'album') {
-      filtered = [...filtered].sort((a, b) => a.album.localeCompare(b.album));
-    } else if (sortKey === 'title') {
-      filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
-    }
-    if (showOwned) {
-      filtered = filtered.filter((t) => categorizeTrack(t) === 'owned');
-    } else {
-      filtered = filtered.filter((t) => categorizeTrack(t) === 'checkout');
-    }
-    return filtered;
-  }, [currentResult, onlyUnowned, searchQuery, sortKey, showOwned]);
-
-  const toBuyCount = useMemo(() => {
-    return currentResult
-      ? currentResult.tracks.filter((t) => t.owned !== true).length
-      : 0;
-  }, [currentResult]);
-
-  const ownedCount = useMemo(() => {
-    return currentResult
-      ? currentResult.tracks.filter((t) => t.owned === true).length
-      : 0;
   }, [currentResult]);
 
   const isProcessing = loading || isReanalyzing;
@@ -664,18 +610,10 @@ export function usePlaylistAnalyzer() {
     rekordboxFile,
     setRekordboxFile,
     rekordboxDate,
-    onlyUnowned,
-    setOnlyUnowned,
     multiResults,
     setMultiResults,
     activeTab,
     setActiveTab,
-    showOwned,
-    setShowOwned,
-    sortKey,
-    setSortKey,
-    searchQuery,
-    setSearchQuery,
     formCollapsed,
     setFormCollapsed,
     loading,
@@ -693,9 +631,6 @@ export function usePlaylistAnalyzer() {
     storageWarning,
     clearLocalData,
     currentResult,
-    displayedTracks,
-    toBuyCount,
-    ownedCount,
     reAnalyzeUrl,
     setReAnalyzeUrl,
     reAnalyzeInputRef,

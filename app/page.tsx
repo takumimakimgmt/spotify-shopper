@@ -29,11 +29,10 @@ export default function Page() {
   // Extract values from analyzer for use in this component
   const multiResults = analyzer.multiResults || [];
   const currentResult = analyzer.currentResult;
-  const { onlyUnowned } = analyzer;
   const { reAnalyzeInputRef, handleReAnalyzeFileChange, storageWarning, clearLocalData } = analyzer;
 
   // UI state: filters (category, search, sort)
-  const filters = useFiltersState(onlyUnowned);
+  const filters = useFiltersState();
 
   // UI state: selection (tab, dropdown, form collapse)
   const selection = useSelectionState(analyzer.activeTab, analyzer.formCollapsed);
@@ -151,8 +150,8 @@ export default function Page() {
               rekordboxFile={analyzer.rekordboxFile}
               setRekordboxFile={analyzer.setRekordboxFile}
               handleRekordboxChange={analyzer.handleRekordboxChange}
-              onlyUnowned={analyzer.onlyUnowned}
-              setOnlyUnowned={analyzer.setOnlyUnowned}
+              onlyUnowned={filters.onlyUnowned}
+              setOnlyUnowned={filters.setOnlyUnowned}
               loading={analyzer.loading}
               isReanalyzing={analyzer.isReanalyzing}
               progress={analyzer.progress}

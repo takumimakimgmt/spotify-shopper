@@ -1,27 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ALLOW_FILE="./_teacher_data/uiux/sources/README.md"
-if [ ! -f "$ALLOW_FILE" ]; then
-  echo "⚠ Allowlist not found: $ALLOW_FILE (skipping URL check)" >&2
-  exit 0
+ALLOWLIST_FILE="${ALLOWLIST_FILE:-_teacher_data/uiux/sources/README.md}"
+
+# allowlist domains (1行1ドメイン想定) を読む。無ければ空でOK
+ALLOWLIST_DOMAINS=""
+if [[ -f "$ALLOWLIST_FILE" ]]; then
+  ALLOWLIST_DOMAINS="$(cat "$ALLOWLIST_FILE")"
 fi
 
-# 変更されたmd/tsx/ts からURL抽出（プレースホルダーやローカルホストは除外）
-FILES=$(git diff --cached --name-only | grep -E '\.(md|tsx|ts)$' || true)
-[ -z "$FILES" ] && exit 0
+# stagedで追加/変更されたファイルのみ（ACM）
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(md|ts|tsx)$' || true)
 
-URLS=$(git diff --cached $FILES | grep -Eo 'https?://[^ )"]+' | \
-  grep -v 'localhost\|127\.0\.0\|placeholder\|example\.com\|\.\.\.&#10' || true)
-[ -z "$URLS" ] && exit 0
-
-# allowlist本文に載ってるドメイン/名前のいずれかが含まれてるかのチェック
-BAD=0
-while read -r u; do
-  if ! grep -qiE 'gov\.uk|w3\.org|w3c|nngroup\.com|developer\.apple\.com|support\.apple\.com|material\.io' <<<"$u"; then
-    echo "❌ Non-allowlisted URL in staged changes: $u"
-    BAD=1
+bad=0
+for f in $files; do
+  # stagedの最終内容をチェック（diffじゃなくて index の中身）
+  urls=$(git show ":$f" 2>/dev/null | grep -oE 'https?://[^ )"\t]+' || true)
+  if [[ -z "$urls" ]]; then
+    continue
   fi
-done <<<"$URLS"
 
-exit $BAD
+  while IFS= read -r u; do
+    domain=$(echo "$u" | sed -E 's#https?://([^/]+).*#\1#')
+    if [[ -n "$ALLOWLIST_DOMAINS" ]] && echo "$ALLOWLIST_DOMAINS" | grep -qx "$domain"; then
+      continue
+    fi
+    echo "❌ Non-allowlisted URL in staged content: $u"
+    bad=1
+  done <<< "$urls"
+done
+
+exit $bad
