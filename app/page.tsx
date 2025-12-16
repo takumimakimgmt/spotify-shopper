@@ -1,113 +1,43 @@
 'use client';
 
-import React, {
-  useEffect,
-  useMemo,
-} from 'react';
+import React, { useEffect } from 'react';
 import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
-import { selectDisplayedTracks, selectTrackCounts, categoryLabels } from '../lib/ui/selectors';
+import { useFiltersState } from '../lib/state/useFiltersState';
+import { useSelectionState } from '../lib/state/useSelectionState';
+import { useViewModel } from '../lib/state/useViewModel';
+import { useActions } from '../lib/state/useActions';
+import { categoryLabels } from '../lib/ui/selectors';
+import { getRecommendedStore, getOtherStores } from '../lib/playlist/stores';
 import AnalyzeForm from './components/AnalyzeForm';
 import ProgressList from './components/ProgressList';
 import { ShopperHeader } from './components/ShopperHeader';
-import { normalizeStores, getRecommendedStore, getOtherStores } from '../lib/playlist/stores';
 import { ResultsTabs } from './components/ResultsTabs';
 import { FiltersBar } from './components/FiltersBar';
 import { ResultsTable } from './components/ResultsTable';
 import { SidePanels } from './components/SidePanels';
 import ErrorAlert from './components/ErrorAlert';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
-import { useFiltersState } from '../lib/state/useFiltersState';
-import { useSelectionState } from '../lib/state/useSelectionState';
-import { sanitizeForCsvCell } from '../lib/utils/csvSanitize';
 
 // ==== Main component ====
 
 export default function Page() {
-  // Hook for Analyze state management
+  // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
-
-  // Extract values from analyzer for use in this component
-  const multiResults = analyzer.multiResults || [];
-  const currentResult = analyzer.currentResult;
-  const { reAnalyzeInputRef, handleReAnalyzeFileChange, storageWarning, clearLocalData } = analyzer;
-
-  // UI state: filters (category, search, sort)
   const filters = useFiltersState();
+  const selection = useSelectionState(analyzer.activeTab ?? null, analyzer.formCollapsed);
 
-  // UI state: selection (tab, dropdown, form collapse)
-  const selection = useSelectionState(analyzer.activeTab, analyzer.formCollapsed);
+  // === DERIVED DATA: Pure calculations ===
+  const vm = useViewModel(analyzer, filters);
 
-  const handleRemoveTab = (urlToRemove: string) => {
-    analyzer.setMultiResults((prev) => {
-      const filtered = prev.filter(([url]) => url !== urlToRemove);
-      if (selection.activeTab === urlToRemove && filtered.length > 0) {
-        selection.setActiveTab(filtered[0][0]);
-      } else if (filtered.length === 0) {
-        selection.setActiveTab(null);
-      }
-      return filtered;
-    });
-  };
+  // === ACTIONS: All operations ===
+  const actions = useActions(analyzer);
 
-  // Compute derived data via selectors (single source of truth)
-  const displayedTracks = useMemo(() => {
-    if (!currentResult) return [];
-    return selectDisplayedTracks(currentResult.tracks, {
-      categoryFilter: filters.categoryFilter,
-      searchQuery: filters.searchQuery,
-      sortKey: filters.sortKey,
-      onlyUnowned: filters.onlyUnowned,
-    });
-  }, [currentResult, filters.categoryFilter, filters.searchQuery, filters.sortKey, filters.onlyUnowned]);
-
-  const { ownedCount, toBuyCount } = useMemo(() => {
-    if (!currentResult) return { ownedCount: 0, toBuyCount: 0 };
-    return selectTrackCounts(currentResult.tracks);
-  }, [currentResult]);
-
-  // Snap default view when results arrive
+  // === SIDE EFFECTS ===
   useEffect(() => {
-    if (!currentResult) return;
+    if (!analyzer.currentResult) return;
     filters.setCategoryFilter('toBuy');
     selection.setFormCollapsed(true);
-  }, [currentResult, filters, selection]);
-
-  const handleExportCSV = () => {
-    if (!displayedTracks.length || !currentResult) {
-      alert('No tracks to export.');
-      return;
-    }
-
-    const headers = ['#', 'Title', 'Artist', 'Album', 'ISRC', 'Owned', 'Beatport', 'Bandcamp', 'iTunes'];
-    const rows = displayedTracks.map((t) => {
-      const stores = normalizeStores(t.stores);
-      return [
-        sanitizeForCsvCell(t.index),
-        sanitizeForCsvCell(t.title),
-        sanitizeForCsvCell(t.artist),
-        sanitizeForCsvCell(t.album),
-        sanitizeForCsvCell(t.isrc || ''),
-        sanitizeForCsvCell(t.owned === true ? 'Yes' : 'No'),
-        sanitizeForCsvCell(stores.beatport),
-        sanitizeForCsvCell(stores.bandcamp),
-        sanitizeForCsvCell(stores.itunes),
-      ];
-    });
-
-    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    // Use playlist name in filename
-    const safePlaylistName = currentResult.title
-      .replace(/[^a-zA-Z0-9_-]/g, '_')
-      .substring(0, 50);
-    a.download = `playlist_${safePlaylistName}_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  }, [analyzer.currentResult, filters, selection]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
@@ -124,10 +54,10 @@ export default function Page() {
               Spotify ~10s • Apple may be slower / sometimes unsupported
             </div>
           )}
-          {currentResult && selection.formCollapsed ? (
+          {analyzer.currentResult && selection.formCollapsed ? (
             <div className="flex items-center justify-between text-sm text-slate-200">
               <div className="flex items-center gap-2">
-                {currentResult.hasRekordboxData && (
+                {analyzer.currentResult.hasRekordboxData && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] text-emerald-200">
                     XML attached
                   </span>
@@ -146,7 +76,7 @@ export default function Page() {
             <AnalyzeForm
               playlistUrlInput={analyzer.playlistUrlInput}
               setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
-              handleAnalyze={analyzer.handleAnalyze}
+              handleAnalyze={actions.handleAnalyze}
               rekordboxFile={analyzer.rekordboxFile}
               setRekordboxFile={analyzer.setRekordboxFile}
               handleRekordboxChange={analyzer.handleRekordboxChange}
@@ -159,8 +89,8 @@ export default function Page() {
               errorMeta={analyzer.errorMeta}
               progressItems={analyzer.progressItems}
               setForceRefreshHint={analyzer.setForceRefreshHint}
-              cancelAnalyze={analyzer.cancelAnalyze}
-              retryFailed={analyzer.retryFailed}
+              cancelAnalyze={actions.cancelAnalyze}
+              retryFailed={actions.retryFailed}
             />
           )}
 
@@ -174,22 +104,20 @@ export default function Page() {
 
         {/* Hidden file input for re-analyze */}
         <input
-          ref={reAnalyzeInputRef}
+          ref={analyzer.reAnalyzeInputRef}
           type="file"
           accept=".xml"
-          onChange={handleReAnalyzeFileChange}
+          onChange={actions.handleReAnalyzeFileChange}
           className="hidden"
         />
 
-        {/* Progress bar removed; unified via ProcessingBar component above */}
-
         {/* Results */}
-        {multiResults.length > 0 && (
+        {vm.multiResults.length > 0 && (
           <section className="space-y-4" id="results-top">
-            {storageWarning && (
+            {vm.storageWarning && (
               <ErrorAlert
                 title="Local data warning"
-                message={storageWarning}
+                message={vm.storageWarning}
                 hint="Use Clear saved data to reset local storage, then re-run analysis."
               />
             )}
@@ -198,11 +126,7 @@ export default function Page() {
               <p className="text-xs text-slate-400">Results are saved locally (~300KB cap). Clear to free space.</p>
               <button
                 type="button"
-                onClick={() => {
-                  clearLocalData();
-                  selection.setActiveTab(null);
-                  selection.setFormCollapsed(false);
-                }}
+                onClick={() => actions.clearLocalData()}
                 className="self-start sm:self-auto inline-flex items-center gap-2 rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-700 border border-slate-700"
               >
                 Clear saved data
@@ -211,28 +135,25 @@ export default function Page() {
 
             {/* Tabs */}
             <ResultsTabs
-              multiResults={multiResults}
+              multiResults={vm.multiResults}
               activeTab={selection.activeTab}
               onSelectTab={selection.setActiveTab}
-              onRemoveTab={handleRemoveTab}
-              onClearAll={() => {
-                analyzer.setMultiResults([]);
-                selection.setActiveTab(null);
-              }}
+              onRemoveTab={actions.handleRemoveTab}
+              onClearAll={actions.handleClearAllTabs}
             />
 
-            {currentResult && (
+            {vm.currentResult && (
               <div className="space-y-4">
                 <SidePanels
-                  currentResult={currentResult}
-                  ownedCount={ownedCount}
-                  toBuyCount={toBuyCount}
-                  displayedTracks={displayedTracks}
+                  currentResult={vm.currentResult}
+                  ownedCount={vm.ownedCount}
+                  toBuyCount={vm.toBuyCount}
+                  displayedTracks={vm.displayedTracks}
                   applySnapshotWithXml={async (file, result, tracks) => {
-                    await analyzer.applySnapshotWithXml(file, result, tracks);
+                    await actions.applySnapshotWithXml(file, result, tracks);
                     selection.setFormCollapsed(true);
                   }}
-                  handleExportCSV={handleExportCSV}
+                  handleExportCSV={() => actions.downloadCsv(vm.displayedTracks, vm.currentResult)}
                 />
 
                 <FiltersBar
@@ -246,9 +167,8 @@ export default function Page() {
 
                 {/* Mobile: card list */}
                 <div className="md:hidden space-y-2">
-                  {displayedTracks.map((t) => {
-                    // Prioritize apple_url for Apple Music playlists, spotify_url for Spotify
-                    const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
+                  {vm.displayedTracks.map((t) => {
+                    const isApplePlaylist = vm.currentResult?.playlistUrl?.includes('music.apple.com');
                     const trackUrl = isApplePlaylist 
                       ? (t.appleUrl || t.spotifyUrl || undefined)
                       : (t.spotifyUrl || t.appleUrl || undefined);
@@ -321,8 +241,8 @@ export default function Page() {
                 </div>
 
                 <ResultsTable
-                  currentResult={currentResult}
-                  displayedTracks={displayedTracks}
+                  currentResult={vm.currentResult}
+                  displayedTracks={vm.displayedTracks}
                   categoryLabels={categoryLabels}
                   openStoreDropdown={selection.openStoreDropdown}
                   setOpenStoreDropdown={selection.setOpenStoreDropdown}
