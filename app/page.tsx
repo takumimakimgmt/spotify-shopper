@@ -15,37 +15,7 @@ import { ResultsTabs } from './components/ResultsTabs';
 import { FiltersBar } from './components/FiltersBar';
 import { ResultsTable } from './components/ResultsTable';
 import { SidePanels } from './components/SidePanels';
-
-// ==== Types removed - all imported from lib/types ====
-
-// ==== Owned status helper ====
-
-function getOwnedStatusStyle(
-  owned: boolean | null | undefined,
-  ownedReason: string | null | undefined
-): { borderClass: string; tooltip: string } {
-  if (owned === true) {
-    const tooltip =
-      ownedReason === 'isrc'
-        ? '✅ Owned: Matched by ISRC'
-        : ownedReason === 'exact'
-        ? '✅ Owned: Matched by Title + Artist'
-        : ownedReason === 'album'
-        ? '✅ Owned: Matched by Title + Album'
-        : ownedReason === 'fuzzy'
-        ? '🟠 Maybe: Fuzzy match (low confidence)'
-        : '✅ Owned';
-    return {
-      borderClass: 'border-l-4 border-emerald-500',
-      tooltip,
-    };
-  }
-  // All other cases (false, null, undefined) are "To Buy"
-  return {
-    borderClass: 'border-l-4 border-slate-600',
-    tooltip: '⬛ To Buy: Not found in library',
-  };
-}
+import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 
 // ==== Main component ====
 

@@ -1,6 +1,5 @@
 import React from 'react';
 import type { SortKey } from '../../lib/types';
-import type { TrackCategory } from '../../lib/types';
 
 interface FiltersBarProps {
   categoryFilter: 'all' | 'toBuy' | 'owned';
