@@ -23,7 +23,10 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-explicit-any": "off",
     },
   },
-  // Disable overly-strict react-hooks/refs for page.tsx (analyzer state is valid, not refs)
+  // Disable overly-strict react-hooks/refs for page.tsx
+  // Rationale: analyzer state contains useState hooks, not useRef.
+  // ESLint falsely flags state access as ref violations in render context.
+  // All analyzer values are valid component state (bool, string, array, object).
   {
     files: ["app/page.tsx"],
     rules: {

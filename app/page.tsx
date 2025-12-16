@@ -24,7 +24,8 @@ export default function Page() {
   // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
-  const selection = useSelectionState(analyzer.activeTab ?? null, analyzer.formCollapsed);
+  // selection: initialize with defaults (analyzer owns the persistent values)
+  const selection = useSelectionState(null, false);
 
   // === DERIVED DATA: Pure calculations ===
   const vm = useViewModel(analyzer, filters);
