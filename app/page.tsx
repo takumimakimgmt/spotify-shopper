@@ -169,11 +169,13 @@ export default function Page() {
   }, [currentResult]);
 
   // Snap default view when results arrive
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!currentResult) return;
     setCategoryFilter('toBuy');
     setFormCollapsed(true);
   }, [currentResult]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleExportCSV = () => {
     if (!displayedTracks.length || !currentResult) {

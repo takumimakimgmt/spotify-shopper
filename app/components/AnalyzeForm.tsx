@@ -2,8 +2,11 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ProcessingBar from './ProcessingBar';
+import ErrorAlert from './ErrorAlert';
 import { ProgressItem } from './ProgressList';
-import { APPLE_TIMEOUT_S } from '@/lib/constants';
+import { APPLE_TIMEOUT_S, MAX_XML_BYTES } from '@/lib/constants';
+
+type ErrorMeta = Record<string, unknown>;
 
 export interface AnalyzeFormProps {
   // State
@@ -14,7 +17,7 @@ export interface AnalyzeFormProps {
   isReanalyzing: boolean;
   progress: number;
   errorText: string | null;
-  errorMeta?: any;
+  errorMeta?: ErrorMeta;
   progressItems: ProgressItem[];
   // Setters
   setPlaylistUrlInput: (value: string) => void;
@@ -29,11 +32,9 @@ export interface AnalyzeFormProps {
 }
 
 export default function AnalyzeForm(props: AnalyzeFormProps) {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [detailsExpanded, setDetailsExpanded] = useState(false);
-  const rekordboxInputRef = useRef<HTMLInputElement>(null);
-  const errorSummaryRef = useRef<HTMLDivElement>(null);
-
+  const [localXmlError, setLocalXmlError] = useState<string | null>(null);
+   const rekordboxInputRef = useRef<HTMLInputElement>(null);
+   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const handleRekordboxClick = () => {
     rekordboxInputRef.current?.click();
   };
@@ -74,75 +75,12 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
 
         {/* Error summary (page-level) */}
         {props.errorText && (
-          <div
-            ref={errorSummaryRef}
-            tabIndex={-1}
-            id="error-summary"
-            className="rounded-md border border-red-500 bg-red-900/40 px-3 py-2 text-xs text-red-100 space-y-2"
-            role="alert"
-            aria-live="polite"
-          >
-            <p className="font-semibold">There was a problem</p>
-            <p className="text-red-200">{props.errorText}</p>
-            {hasMeta && (
-              <div className="space-y-1">
-                <button
-                  type="button"
-                  onClick={() => setDetailsExpanded(!detailsExpanded)}
-                  className="text-xs text-red-200 hover:text-red-100 underline"
-                >
-                  {detailsExpanded ? 'Hide details' : 'Show details'}
-                </button>
-                {detailsExpanded && (
-                  <div className="mt-2 space-y-2">
-                    <div className="bg-slate-950/50 rounded p-2 font-mono text-[10px] space-y-1">
-                      {props.errorMeta.reason && (
-                        <div><span className="text-slate-400">reason:</span> {props.errorMeta.reason}</div>
-                      )}
-                      {props.errorMeta.apple_playwright_phase && (
-                        <div><span className="text-slate-400">phase:</span> {props.errorMeta.apple_playwright_phase}</div>
-                      )}
-                      {props.errorMeta.apple_http_status && (
-                        <div><span className="text-slate-400">http_status:</span> {props.errorMeta.apple_http_status}</div>
-                      )}
-                      {props.errorMeta.apple_final_url && (
-                        <div className="break-all"><span className="text-slate-400">final_url:</span> {props.errorMeta.apple_final_url}</div>
-                      )}
-                      {props.errorMeta.apple_api_candidates && props.errorMeta.apple_api_candidates.length > 0 && (
-                        <div><span className="text-slate-400">api_candidates:</span> {props.errorMeta.apple_api_candidates.length} items</div>
-                      )}
-                      {props.errorMeta.apple_response_candidates && props.errorMeta.apple_response_candidates.length > 0 && (
-                        <div><span className="text-slate-400">response_candidates:</span> {props.errorMeta.apple_response_candidates.length} items</div>
-                      )}
-                      {props.errorMeta.apple_request_candidates && props.errorMeta.apple_request_candidates.length > 0 && (
-                        <div><span className="text-slate-400">request_candidates:</span> {props.errorMeta.apple_request_candidates.length} items</div>
-                      )}
-                      {/* Fallback: if no specific fields matched, show full JSON */}
-                      {(!props.errorMeta.reason &&
-                        !props.errorMeta.apple_playwright_phase &&
-                        !props.errorMeta.apple_http_status &&
-                        !props.errorMeta.apple_final_url &&
-                        !props.errorMeta.apple_api_candidates &&
-                        !props.errorMeta.apple_response_candidates &&
-                        !props.errorMeta.apple_request_candidates) && (
-                        <pre className="whitespace-pre-wrap text-[9px] text-slate-300">
-                          {metaJson}
-                        </pre>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(metaJson);
-                      }}
-                      className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded"
-                    >
-                      Copy details
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+          <div ref={errorSummaryRef} id="error-summary">
+            <ErrorAlert
+              title="There was a problem"
+              message={props.errorText}
+              details={hasMeta ? metaJson : undefined}
+            />
           </div>
         )}
 
@@ -177,13 +115,26 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         {/* Rekordbox XML upload */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Rekordbox Collection XML (optional)</label>
+          {localXmlError && (
+            <ErrorAlert title="XML too large" message={localXmlError} />
+          )}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <input
               ref={rekordboxInputRef}
               id="rekordbox-file-input"
               type="file"
               accept=".xml"
-              onChange={props.handleRekordboxChange}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f && f.size > MAX_XML_BYTES) {
+                  const mb = (f.size / (1024 * 1024)).toFixed(1);
+                  setLocalXmlError(`XML is too large (${mb} MB). Please export smaller, playlist-level XML from Rekordbox and try again.`);
+                  e.target.value = '';
+                  return;
+                }
+                setLocalXmlError(null);
+                props.handleRekordboxChange(e);
+              }}
               className="hidden"
             />
             <button
