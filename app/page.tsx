@@ -2,8 +2,6 @@
 
 import React, {
   useState,
-  ChangeEvent,
-  FormEvent,
   useEffect,
   useMemo,
 } from 'react';
@@ -24,7 +22,7 @@ const BACKEND_URL =
 // ==== Store helpers ====
 
 function getRecommendedStore(track: PlaylistRow): { name: string; url: string } | null {
-  const stores = track.stores;
+  const stores = normalizeStores(track.stores);
 
   // Beatport > Bandcamp > iTunes (consistent across UI)
   if (stores.beatport && stores.beatport.length > 0) {
@@ -40,17 +38,26 @@ function getRecommendedStore(track: PlaylistRow): { name: string; url: string } 
 }
 
 function getOtherStores(stores: StoreLinks, recommended: { name: string; url: string } | null): Array<{ name: string; url: string }> {
+  const s = normalizeStores(stores);
   const others: Array<{ name: string; url: string }> = [];
-  if (stores.beatport && stores.beatport.length > 0 && recommended?.name !== 'Beatport') {
-    others.push({ name: 'Beatport', url: stores.beatport });
+  if (s.beatport && s.beatport.length > 0 && recommended?.name !== 'Beatport') {
+    others.push({ name: 'Beatport', url: s.beatport });
   }
-  if (stores.bandcamp && stores.bandcamp.length > 0 && recommended?.name !== 'Bandcamp') {
-    others.push({ name: 'Bandcamp', url: stores.bandcamp });
+  if (s.bandcamp && s.bandcamp.length > 0 && recommended?.name !== 'Bandcamp') {
+    others.push({ name: 'Bandcamp', url: s.bandcamp });
   }
-  if (stores.itunes && stores.itunes.length > 0 && recommended?.name !== 'iTunes') {
-    others.push({ name: 'iTunes', url: stores.itunes });
+  if (s.itunes && s.itunes.length > 0 && recommended?.name !== 'iTunes') {
+    others.push({ name: 'iTunes', url: s.itunes });
   }
   return others;
+}
+
+function normalizeStores(stores: StoreLinks): StoreLinks {
+  return {
+    beatport: withBeatportAid(stores?.beatport ?? '', BEATPORT_A_AID),
+    bandcamp: stores?.bandcamp ?? '',
+    itunes: stores?.itunes ?? '',
+  };
 }
 
 // ==== Owned status helper ====
@@ -94,12 +101,39 @@ export default function Page() {
   const setActiveTab = analyzer.setActiveTab;
   const setMultiResults = analyzer.setMultiResults;
   const currentResult = analyzer.currentResult;
-
-  // Single/multiple playlist input
-  const [playlistUrlInput, setPlaylistUrlInput] = useState('');
-  const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
-  const [rekordboxDate, setRekordboxDate] = useState<string | null>(null);
-  const [onlyUnowned, setOnlyUnowned] = useState(false);
+  const { onlyUnowned } = analyzer;
+  const {
+    playlistUrlInput,
+    setPlaylistUrlInput,
+    rekordboxFile,
+    setRekordboxFile,
+    rekordboxDate,
+    setRekordboxDate,
+    loading,
+    isReanalyzing,
+    isProcessing,
+    progress,
+    errorText,
+    setErrorText,
+    errorMeta,
+    forceRefreshHint,
+    setForceRefreshHint,
+    progressItems,
+    cancelAnalyze,
+    retryFailed,
+    formCollapsed,
+    setFormCollapsed,
+    sortKey,
+    setSortKey,
+    searchQuery,
+    setSearchQuery,
+    reAnalyzeUrl,
+    setReAnalyzeUrl,
+    reAnalyzeInputRef,
+    handleAnalyze,
+    handleRekordboxChange,
+    handleReAnalyzeFileChange,
+  } = analyzer;
 
   // REMOVED: Old multi-playlist state now managed by analyzer hook
 
@@ -109,92 +143,9 @@ export default function Page() {
   // Active category filter (UI facing). Default will snap to To buy when available.
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'toBuy' | 'owned'>('toBuy');
 
-  // Import form collapse state
-  const [formCollapsed, setFormCollapsed] = useState(false);
+  // Import form collapse state handled via analyzer
 
-  // Loading/error state
-  const [loading, setLoading] = useState(false);
-  const [isReanalyzing, setIsReanalyzing] = useState(false);
-  const abortRef = React.useRef<AbortController | null>(null);
-  const requestIdRef = React.useRef<number>(0);
-  const [progress, setProgress] = useState<number>(0);
-  const [errorText, setErrorText] = useState<string | null>(null);
-  const isProcessing = loading || isReanalyzing;
-  // Unified processing bar component (single place)
-  function ProcessingBar({ analyzing, reanalyzing, progress }: { analyzing: boolean; reanalyzing: boolean; progress: number }) {
-    if (!analyzing && !reanalyzing) return null;
-    const label = analyzing ? 'Analyzing playlist…' : 'Matching with Rekordbox XML…';
-    const pct = Math.max(progress, 5);
-    return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-slate-300">
-          <span>{label}</span>
-          <span>{Math.round(pct)}%</span>
-        </div>
-        <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-700">
-          <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
-        </div>
-      </div>
-    );
-  }
-
-  // Sort/search state
-  const [sortKey, setSortKey] = useState<SortKey>('none');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Re-analyze with XML state
-  const [reAnalyzeUrl, setReAnalyzeUrl] = useState<string | null>(null);
-  const reAnalyzeInputRef = React.useRef<HTMLInputElement | null>(null);
-
-  const progressTimer = React.useRef<number | null>(null);
-
-  // Restore results from localStorage on mount (client-side only)
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        // Load from localStorage
-        const savedResults = localStorage.getItem('spotify-shopper-results');
-        const savedTab = localStorage.getItem('spotify-shopper-active-tab');
-        
-        if (savedResults) {
-          const parsed = JSON.parse(savedResults);
-          setMultiResults(parsed);
-        }
-        
-        if (savedTab) {
-          setActiveTab(savedTab);
-        }
-      } catch (err) {
-        console.error('[Storage] Failed to restore results:', err);
-      }
-    }
-  }, []); // Run once on mount
-
-  // Save results to localStorage whenever they change
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('spotify-shopper-results', JSON.stringify(multiResults));
-      } catch (err) {
-        console.error('[Storage] Failed to save results:', err);
-      }
-    }
-  }, [multiResults]);
-
-  // Save active tab to localStorage whenever it changes
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        if (activeTab) {
-          localStorage.setItem('spotify-shopper-active-tab', activeTab);
-        } else {
-          localStorage.removeItem('spotify-shopper-active-tab');
-        }
-      } catch (err) {
-        console.error('[Storage] Failed to save active tab:', err);
-      }
-    }
-  }, [activeTab]);
+  // Sort/search state handled via analyzer
 
   function detectSourceFromUrl(u: string): 'spotify' | 'apple' {
     const s = (u || '').trim();
@@ -220,497 +171,17 @@ export default function Page() {
     return trimmed;
   }
 
-  const handleRekordboxChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    setRekordboxFile(file);
-    
-    // Get file's last modified date
-    if (file && file.lastModified) {
-      const date = new Date(file.lastModified);
-      setRekordboxDate(date.toLocaleString());
-    } else {
-      setRekordboxDate(null);
-    }
-  };
-
   const handleRemoveTab = (urlToRemove: string) => {
     setMultiResults((prev) => {
       const filtered = prev.filter(([url]) => url !== urlToRemove);
-      
-      // If removed tab was active, switch to first remaining tab
       if (activeTab === urlToRemove && filtered.length > 0) {
         setActiveTab(filtered[0][0]);
       } else if (filtered.length === 0) {
         setActiveTab(null);
       }
-      
       return filtered;
     });
   };
-
-  const handleReAnalyzeFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Check if this is a bulk re-analyze
-    const isBulk = reAnalyzeUrl === '__BULK__';
-    
-    if (isBulk) {
-      // Bulk re-analyze all playlists
-      setIsReanalyzing(true);
-      setLoading(false);
-      setErrorText(null);
-      
-      try {
-        const updatedResults: Array<[string, ResultState]> = [];
-        
-        for (const [url, result] of multiResults) {
-          try {
-            const detectedSource = detectSourceFromUrl(url);
-            const formData = new FormData();
-            formData.append('url', url);
-            formData.append('source', detectedSource);
-            formData.append('file', file);
-
-            const resp = await fetch(
-              `${BACKEND_URL}/api/playlist-with-rekordbox-upload`,
-              {
-                method: 'POST',
-                body: formData,
-              }
-            );
-
-            if (!resp.ok) {
-              console.error(`[Bulk Re-analyze] Failed for ${url}`);
-              updatedResults.push([url, result as ResultState]); // Keep original
-              continue;
-            }
-
-            const json = (await resp.json()) as ApiPlaylistResponse;
-            const rows: PlaylistRow[] = json.tracks.map((t, idx) => ({
-              index: idx + 1,
-              title: t.title,
-              artist: t.artist,
-              album: t.album,
-              isrc: t.isrc ?? undefined,
-              spotifyUrl: t.spotify_url ?? '',
-              appleUrl: t.apple_url ?? undefined,
-              stores: {
-                beatport: withBeatportAid(t.links?.beatport ?? '', BEATPORT_A_AID),
-                bandcamp: t.links?.bandcamp ?? '',
-                itunes: t.links?.itunes ?? '',
-              },
-              owned: t.owned ?? null,
-              ownedReason: t.owned_reason ?? null,
-              trackKeyPrimary: t.track_key_primary,
-              trackKeyFallback: t.track_key_fallback,
-              trackKeyPrimaryType: t.track_key_primary_type,
-            }));
-
-            updatedResults.push([
-              url,
-              {
-                ...result,
-                tracks: rows,
-                analyzedAt: Date.now(),
-                hasRekordboxData: true,
-              },
-            ]);
-          } catch (err) {
-            console.error(`[Bulk Re-analyze] Error for ${url}:`, err);
-            updatedResults.push([url, result as ResultState]); // Keep original
-          }
-        }
-
-        setMultiResults(updatedResults);
-        setErrorText(null);
-      } catch (err) {
-        console.error('[Bulk Re-analyze] Error:', err);
-        setErrorText('一括XML照合中にエラーが発生しました');
-      } finally {
-        setIsReanalyzing(false);
-        setReAnalyzeUrl(null);
-        if (reAnalyzeInputRef.current) {
-          reAnalyzeInputRef.current.value = '';
-        }
-      }
-      return;
-    }
-    setIsReanalyzing(true);
-    setLoading(false);
-    setErrorText(null);
-
-    try {
-      // Find existing result
-      if (!reAnalyzeUrl) {
-        setErrorText('プレイリストURLが見つかりません');
-        return;
-      }
-      const existingResult = multiResults.find(([url]) => url === reAnalyzeUrl)?.[1];
-      if (!existingResult) {
-        setErrorText('プレイリストが見つかりません');
-        return;
-      }
-
-      const detectedSource = detectSourceFromUrl(reAnalyzeUrl);
-
-      const formData = new FormData();
-      formData.append('url', reAnalyzeUrl);
-      formData.append('source', detectedSource);
-      formData.append('file', file);
-
-      const resp = await fetch(
-        `${BACKEND_URL}/api/playlist-with-rekordbox-upload`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-
-      if (!resp.ok) {
-        const errText = await resp.text();
-        setErrorText('XML照合に失敗しました: ' + errText);
-        return;
-      }
-
-      const json = (await resp.json()) as ApiPlaylistResponse;
-      const rows: PlaylistRow[] = json.tracks.map((t, idx) => ({
-        index: idx + 1,
-        title: t.title,
-        artist: t.artist,
-        album: t.album,
-        isrc: t.isrc ?? undefined,
-        spotifyUrl: t.spotify_url ?? '',
-        appleUrl: t.apple_url ?? undefined,
-        stores: {
-          beatport: withBeatportAid(t.links?.beatport ?? '', BEATPORT_A_AID),
-          bandcamp: t.links?.bandcamp ?? '',
-          itunes: t.links?.itunes ?? '',
-        },
-        owned: t.owned ?? null,
-        ownedReason: t.owned_reason ?? null,
-        trackKeyPrimary: t.track_key_primary,
-        trackKeyFallback: t.track_key_fallback,
-        trackKeyPrimaryType: t.track_key_primary_type,
-      }));
-
-      // Update the specific result
-      setMultiResults((prev) =>
-        prev.map(([url, result]) =>
-          url === reAnalyzeUrl
-            ? [
-                url,
-                {
-                  ...result,
-                  tracks: rows,
-                  analyzedAt: Date.now(),
-                  hasRekordboxData: true,
-                },
-              ]
-            : [url, result]
-        )
-      );
-
-      setErrorText(null);
-    } catch (err) {
-      console.error('[Re-analyze] Error:', err);
-      setErrorText('XML照合中にエラーが発生しました');
-    } finally {
-      setIsReanalyzing(false);
-      setReAnalyzeUrl(null);
-      // Reset file input
-      if (reAnalyzeInputRef.current) {
-        reAnalyzeInputRef.current.value = '';
-      }
-    }
-  };
-
-  const handleAnalyze = async (e: FormEvent) => {
-    e.preventDefault();
-    setErrorText(null);
-
-    // Parse multiple URLs (one per line)
-    const urls = playlistUrlInput
-      .split('\n')
-      .map((line) => sanitizeUrl(line))
-      .filter((url) => url.length > 0);
-
-    if (urls.length === 0) {
-      setErrorText('Please enter at least one playlist URL or ID.');
-      return;
-    }
-
-    // Abort previous analyze if running
-    if (abortRef.current) {
-      try { abortRef.current.abort(); } catch {}
-    }
-    abortRef.current = new AbortController();
-    const localRequestId = requestIdRef.current + 1;
-    requestIdRef.current = localRequestId;
-
-    setLoading(true);
-    setProgress(2);
-    if (progressTimer.current) {
-      window.clearInterval(progressTimer.current);
-    }
-    progressTimer.current = window.setInterval(() => {
-      setProgress((p) => Math.min(98, p + Math.random() * 12 + 3));
-    }, 300) as unknown as number;
-
-    const newResults: Array<[string, ResultState]> = [];
-    let hasError = false;
-
-    for (const url of urls) {
-      try {
-        const t0 = performance.now();
-        const effectiveSource = detectSourceFromUrl(url) || 'spotify';
-
-        // Validate
-        if (effectiveSource === 'spotify') {
-          const isSpotifyPlaylistUrl = /open\.spotify\.com\/.*playlist\//i.test(url);
-          const isSpotifyUri = /^spotify:playlist:[A-Za-z0-9]{22}$/i.test(url);
-          const isIdOnly = /^[A-Za-z0-9]{22}$/.test(url);
-          if (!isSpotifyPlaylistUrl && !isSpotifyUri && !isIdOnly) {
-            hasError = true;
-            continue;
-          }
-        }
-
-        // Fetch
-        let res: Response;
-        if (rekordboxFile) {
-          const form = new FormData();
-          form.append('url', url);
-          form.append('source', effectiveSource);
-          form.append('file', rekordboxFile);
-          form.append('rekordbox_xml', rekordboxFile);
-
-          res = await fetch(`${BACKEND_URL}/api/playlist-with-rekordbox-upload`, {
-            method: 'POST',
-            body: form,
-            signal: abortRef.current.signal,
-          });
-        } else {
-          const params = new URLSearchParams({ url, source: effectiveSource });
-          res = await fetch(`${BACKEND_URL}/api/playlist?${params.toString()}` , { signal: abortRef.current.signal });
-        }
-        const t1 = performance.now();
-        const networkMs = t1 - t0;
-
-        let body: Record<string, unknown> | null = null;
-        try {
-          const rawText = await res.text();
-          body = rawText ? JSON.parse(rawText) : null;
-        } catch {
-          // ignore
-        }
-        const t2 = performance.now();
-        const jsonMs = t2 - t1;
-
-        if (!res.ok) {
-          hasError = true;
-          console.log('[DEBUG] Response not OK, status:', res.status);
-          // Try to surface more helpful error messages from backend
-          try {
-            const detail = (body && (body.detail ?? body)) || null;
-            const d =
-              detail && typeof detail === 'object'
-                ? (detail as Record<string, unknown>)
-                : null;
-            const usedSource: string | undefined =
-              typeof d?.used_source === 'string' ? d.used_source : undefined;
-            const errText: string | undefined =
-              typeof d?.error === 'string'
-                ? d.error
-                : typeof detail === 'string'
-                  ? detail
-                  : undefined;
-
-            console.log('[DEBUG] Full error response:', { 
-              body, 
-              detail, 
-              d, 
-              usedSource, 
-              errText, 
-              effectiveSource,
-              hasDetail: !!detail,
-              detailType: typeof detail,
-            });
-
-            if (usedSource === 'spotify' || effectiveSource === 'spotify') {
-              if (errText) {
-                const lower = errText.toLowerCase();
-                
-                // Check for personalized/private FIRST (higher priority)
-                const isPersonalized = lower.includes('personalized') || lower.includes('private') || lower.includes('daily mix') || lower.includes('blend');
-                
-                // Check for official editorial playlist (37i9 or region-restricted)
-                const isOfficial = 
-                  lower.includes('official editorial') ||
-                  lower.includes('owner=spotify') ||
-                  lower.includes('region-restricted') ||
-                  lower.includes('region-locked') ||
-                  lower.includes('tried markets') ||
-                  lower.includes('37i9') ||
-                  lower.includes('create a new public playlist');
-
-                console.log('[DEBUG] Error classification:', {
-                  isPersonalized,
-                  isOfficial,
-                  lower: lower.substring(0, 200),
-                });
-
-                if (isPersonalized && !isOfficial) {
-                  // Purely personalized/private (no 37i9)
-                  const msg = 
-                    '【日本語】\n' +
-                    'このSpotifyプレイリストはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
-                    'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。\n\n' +
-                    '【English】\n' +
-                    'This Spotify playlist is personalized/private and cannot be accessed with client credentials.\n' +
-                    'Workaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.';
-                  console.log('[DEBUG] Setting error (personalized):', msg.substring(0, 100));
-                  setErrorText(msg);
-                } else if (isPersonalized && isOfficial) {
-                  // Both personalized AND official (37i9) - show combined message
-                  const msg = 
-                    '【日本語】\n' +
-                    'このSpotifyプレイリストは公式編集プレイリスト（37i9で始まるID）またはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\n' +
-                    'ワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。\n\n' +
-                    '【English】\n' +
-                    'This Spotify playlist is an official editorial playlist (ID starts with 37i9) or personalized/private and cannot be accessed with client credentials.\n' +
-                    'Workaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.';
-                  console.log('[DEBUG] Setting error (personalized+official):', msg.substring(0, 100));
-                  setErrorText(msg);
-                } else if (isOfficial) {
-                  // Only official editorial
-                  const msg = 
-                    '【日本語】\n' +
-                    'このSpotifyの公式/編集プレイリスト（37i9で始まるID）は、地域制限や提供条件により取得できない場合があります。\n' +
-                    'ワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析してください。\n\n' +
-                    '【English】\n' +
-                    'This Spotify official/editorial playlist (ID starts with 37i9) cannot be accessed due to regional restrictions or availability conditions.\n' +
-                    'Workaround: Create a new public playlist in Spotify, copy all tracks from the original, and use that URL for analysis.';
-                  console.log('[DEBUG] Setting error (official):', msg.substring(0, 100));
-                  setErrorText(msg);
-                } else {
-                  const msg = 'Spotifyの取得に失敗しました / Spotify request failed: ' + errText;
-                  console.log('[DEBUG] Setting error (generic spotify):', msg);
-                  setErrorText(msg);
-                }
-              } else {
-                console.log('[DEBUG] No errText found for Spotify error');
-                setErrorText('Spotifyの取得に失敗しました（詳細不明）');
-              }
-            } else {
-              // Apple or other source errors
-              const msg = errText || 'プレイリストの取得に失敗しました';
-              console.log('[DEBUG] Setting error (apple/other):', msg);
-              setErrorText(msg);
-            }
-          } catch {
-            // ignore parse issues
-            console.log('[DEBUG] Error parsing error response, using generic message');
-            setErrorText('プレイリストの取得に失敗しました');
-          }
-          console.log('[DEBUG] After error handling, errorText state should be set. Continuing to next URL...');
-          continue;
-        }
-
-        // Guard: if a newer request started, discard this response
-        if (localRequestId !== requestIdRef.current) {
-          continue;
-        }
-        const json = body as ApiPlaylistResponse;
-        const t3a = performance.now();
-        const rows: PlaylistRow[] = json.tracks.map((t, idx) => ({
-          index: idx + 1,
-          title: t.title,
-          artist: t.artist,
-          album: t.album,
-          isrc: t.isrc ?? undefined,
-          spotifyUrl: t.spotify_url ?? '',
-          appleUrl: t.apple_url ?? undefined,
-          stores: {
-            beatport: withBeatportAid(t.links?.beatport ?? '', BEATPORT_A_AID),
-            bandcamp: t.links?.bandcamp ?? '',
-            itunes: t.links?.itunes ?? '',
-          },
-          owned: t.owned ?? null,
-          ownedReason: t.owned_reason ?? null,
-          trackKeyPrimary: t.track_key_primary,
-          trackKeyFallback: t.track_key_fallback,
-          trackKeyPrimaryType: t.track_key_primary_type,
-        }));
-
-        newResults.push([
-          url,
-          {
-            title: json.playlist_name,
-            total: rows.length,
-            playlistUrl: json.playlist_url,
-            playlist_id: json.playlist_id,
-            playlist_name: json.playlist_name,
-            tracks: rows,
-            analyzedAt: Date.now(),
-            hasRekordboxData: !!rekordboxFile,
-          },
-        ]);
-
-        // Schedule render metric after state updates (use requestAnimationFrame)
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const t3b = performance.now();
-            const renderMs = t3b - t3a;
-            const totalMs = t3b - t0;
-            const payloadBytes = new Blob([JSON.stringify(json)]).size;
-            console.log(
-              `[PERF] url=${url.substring(0, 60)} tracks=${rows.length} network_ms=${networkMs.toFixed(1)} json_ms=${jsonMs.toFixed(1)} render_ms=${renderMs.toFixed(1)} total_ms=${totalMs.toFixed(1)} payload_bytes=${payloadBytes}`
-            );
-          });
-        });
-      } catch (err) {
-        console.error(err);
-        hasError = true;
-      }
-    }
-
-    if (newResults.length > 0) {
-      // Replace existing tabs with same URL, or prepend new ones
-      const existingUrls = new Set(newResults.map(([url]) => url));
-      const filteredExisting = multiResults.filter(([url]) => !existingUrls.has(url));
-      const merged = [...newResults, ...filteredExisting];
-      setMultiResults(merged);
-      // Set active tab to first (newest) result
-      setActiveTab(merged[0][0]);
-      
-      // Clear input fields on successful analysis
-      setPlaylistUrlInput('');
-      setRekordboxFile(null);
-      setRekordboxDate(null);
-    }
-
-    // Only show generic error if no specific error was set
-    if (hasError && newResults.length === 0 && !errorText) {
-      console.log('[DEBUG] Showing generic error message because no specific error was set');
-      setErrorText('Failed to load playlists. Check URLs and try again.');
-    } else if (hasError && newResults.length === 0 && errorText) {
-      console.log('[DEBUG] hasError=true, newResults.length=0, errorText already set:', errorText.substring(0, 100));
-    } else if (hasError && newResults.length > 0) {
-      console.log('[DEBUG] hasError=true but got some results, newResults.length:', newResults.length);
-    }
-
-    setProgress(100);
-    setTimeout(() => setProgress(0), 600);
-
-    setLoading(false);
-    if (progressTimer.current) {
-      window.clearInterval(progressTimer.current);
-      progressTimer.current = null;
-    }
-  };
-
-  // REMOVED: currentResult/multiResults/activeTab now extracted at component top from analyzer hook
 
   // Filter & sort tracks
   const displayedTracks = useMemo(() => {
@@ -787,17 +258,20 @@ export default function Page() {
     }
 
     const headers = ['#', 'Title', 'Artist', 'Album', 'ISRC', 'Owned', 'Beatport', 'Bandcamp', 'iTunes'];
-    const rows = displayedTracks.map((t) => [
-      t.index,
-      t.title,
-      t.artist,
-      t.album,
-      t.isrc || '',
-      t.owned === true ? 'Yes' : 'No',
-      t.stores.beatport,
-      t.stores.bandcamp,
-      t.stores.itunes,
-    ]);
+    const rows = displayedTracks.map((t) => {
+      const stores = normalizeStores(t.stores);
+      return [
+        t.index,
+        t.title,
+        t.artist,
+        t.album,
+        t.isrc || '',
+        t.owned === true ? 'Yes' : 'No',
+        stores.beatport,
+        stores.bandcamp,
+        stores.itunes,
+      ];
+    });
 
     const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
 
@@ -994,7 +468,7 @@ export default function Page() {
                                 name: currentResult.playlist_name,
                                 track_count: currentResult.total,
                               },
-                              tracks: displayedTracks.map((t) => ({
+                              tracks: currentResult.tracks.map((t) => ({
                                 title: t.title,
                                 artist: t.artist,
                                 album: t.album,
