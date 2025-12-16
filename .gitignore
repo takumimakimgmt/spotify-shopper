@@ -23,3 +23,7 @@ _teacher_data
 
 # context snapshots (for sharing; not tracked)
 _context/
+
+# env
+.env
+.env.*
