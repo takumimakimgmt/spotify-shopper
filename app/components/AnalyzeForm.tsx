@@ -69,6 +69,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <div
             ref={errorSummaryRef}
             tabIndex={-1}
+            id="error-summary"
             className="rounded-md border border-red-500 bg-red-900/40 px-3 py-2 text-xs text-red-100 space-y-2"
             role="alert"
             aria-live="polite"
@@ -129,11 +130,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         {/* Playlist URLs input */}
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="playlist-urls">Playlist URLs</label>
-          {props.errorText && (
-            <p className="text-xs text-red-200" id="playlist-urls-error">
-              {props.errorText}
-            </p>
-          )}
           <textarea
             id="playlist-urls"
             value={props.playlistUrlInput}
@@ -142,7 +138,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             placeholder="https://open.spotify.com/playlist...&#10;https://music.apple.com...&#10;3KCXw0N4EJmHIg0KiKjNSM"
             rows={4}
             aria-invalid={props.errorText ? 'true' : 'false'}
-            aria-describedby={props.errorText ? 'playlist-urls-error' : undefined}
+            aria-describedby={props.errorText ? 'error-summary' : undefined}
           />
           <p className="text-xs text-slate-400">
             Full URL or playlist ID. Multiple playlists will be analyzed in parallel and results shown in tabs.
@@ -150,7 +146,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           {isAppleInput && (
             <div className="space-y-2">
               <p className="text-xs text-amber-200">
-                Apple Music may take up to {APPLE_TIMEOUT_S}s (browser rendering + Spotify enrichment). If it times out, retry with a single Apple URL.
+                Apple Music may take up to {APPLE_TIMEOUT_S}s. If it times out, retry with a single Apple URL.
               </p>
               <p className="text-xs text-yellow-600/80">
                 ⚠ Beta: Apple Music support is less reliable than Spotify and may fail or take longer.
