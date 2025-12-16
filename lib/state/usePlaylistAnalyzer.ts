@@ -449,8 +449,21 @@ export function usePlaylistAnalyzer() {
           const detail = err.data.detail;
           const usedSource = typeof detail?.used_source === 'string' ? detail.used_source : undefined;
           const errText = typeof detail?.error === 'string' ? detail.error : undefined;
-          const meta = detail?.meta || null;
-          setErrorMeta(meta);
+          const metaFromApi = detail?.meta;
+          
+          // Normalize empty objects to null, but always provide minimum context
+          const normalizedMeta =
+            metaFromApi && typeof metaFromApi === 'object' && Object.keys(metaFromApi).length > 0
+              ? metaFromApi
+              : null;
+          
+          const minimalContext = {
+            url: url.substring(0, 80),
+            source: usedSource || effectiveSource,
+            refresh: isForceRefresh ? 1 : 0,
+          };
+          
+          setErrorMeta(normalizedMeta ?? minimalContext);
           if (usedSource === 'spotify') {
             if (errText) {
               const lower = errText.toLowerCase();
