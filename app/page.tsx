@@ -19,6 +19,7 @@ import { SidePanels } from './components/SidePanels';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 import { useFiltersState } from '../lib/state/useFiltersState';
 import { useSelectionState } from '../lib/state/useSelectionState';
+import { sanitizeForCsvCell } from '../lib/utils/csvSanitize';
 
 // ==== Main component ====
 
@@ -82,15 +83,15 @@ export default function Page() {
     const rows = displayedTracks.map((t) => {
       const stores = normalizeStores(t.stores);
       return [
-        t.index,
-        t.title,
-        t.artist,
-        t.album,
-        t.isrc || '',
-        t.owned === true ? 'Yes' : 'No',
-        stores.beatport,
-        stores.bandcamp,
-        stores.itunes,
+        sanitizeForCsvCell(t.index),
+        sanitizeForCsvCell(t.title),
+        sanitizeForCsvCell(t.artist),
+        sanitizeForCsvCell(t.album),
+        sanitizeForCsvCell(t.isrc || ''),
+        sanitizeForCsvCell(t.owned === true ? 'Yes' : 'No'),
+        sanitizeForCsvCell(stores.beatport),
+        sanitizeForCsvCell(stores.bandcamp),
+        sanitizeForCsvCell(stores.itunes),
       ];
     });
 
