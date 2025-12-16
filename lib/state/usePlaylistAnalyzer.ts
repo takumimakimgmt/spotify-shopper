@@ -87,6 +87,7 @@ export function usePlaylistAnalyzer() {
   const requestIdRef = useRef<number>(0);
   const progressTimer = useRef<number | null>(null);
   const reAnalyzeInputRef = useRef<HTMLInputElement | null>(null);
+  const localStorageDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -105,14 +106,36 @@ export function usePlaylistAnalyzer() {
     }
   }, []);
 
+  // Debounced localStorage save (500ms) to avoid UI blocking on large multiResults
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem(STORAGE_RESULTS, JSON.stringify(multiResults));
-    } catch (err) {
-      console.error('[Storage] Failed to save results:', err);
+    // Only save if not currently processing
+    if (loading || isReanalyzing) {
+      return;
     }
-  }, [multiResults]);
+    // Clear existing debounce timer
+    if (localStorageDebounceRef.current) {
+      clearTimeout(localStorageDebounceRef.current);
+    }
+    // Set new debounce timer
+    localStorageDebounceRef.current = setTimeout(() => {
+      try {
+        const t0 = performance.now();
+        localStorage.setItem(STORAGE_RESULTS, JSON.stringify(multiResults));
+        const t1 = performance.now();
+        if ((t1 - t0) > 50) {
+          console.warn(`[Storage] localStorage save took ${(t1 - t0).toFixed(1)}ms for ${multiResults.length} results`);
+        }
+      } catch (err) {
+        console.error('[Storage] Failed to save results:', err);
+      }
+    }, 500);
+    return () => {
+      if (localStorageDebounceRef.current) {
+        clearTimeout(localStorageDebounceRef.current);
+      }
+    };
+  }, [multiResults, loading, isReanalyzing]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -324,6 +347,7 @@ export function usePlaylistAnalyzer() {
     for (const url of urls) {
       try {
         const t0 = performance.now();
+        const t1_start = t0;
         const effectiveSource = detectSourceFromUrl(url) || 'spotify';
         // Mark fetching start (Apple calls out longer wait explicitly)
         setProgressItems((prev) =>
@@ -348,6 +372,7 @@ export function usePlaylistAnalyzer() {
           }
         }
 
+        const t2_api_start = performance.now();
         let json: ApiPlaylistResponse | null = null;
         if (rekordboxFile) {
           json = await postPlaylistWithRekordboxUpload({
@@ -369,12 +394,15 @@ export function usePlaylistAnalyzer() {
             signal: abortRef.current?.signal ?? undefined,
           });
         }
+        const t3_api_done = performance.now();
 
         if (localRequestId !== requestIdRef.current) {
           continue;
         }
 
+        const t4_mapstart = performance.now();
         const rows = mapTracks(json);
+        const t5_mapdone = performance.now();
         newResults.push([
           url,
           {
@@ -389,6 +417,7 @@ export function usePlaylistAnalyzer() {
             meta: json.meta,
           },
         ]);
+        const t6_pushstate = performance.now();
         // Mark success
         setProgressItems((prev) =>
           prev.map((p) => (p.url === url ? { ...p, status: 'done', message: `${rows.length} tracks` } : p))
@@ -396,11 +425,16 @@ export function usePlaylistAnalyzer() {
 
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            const t3b = performance.now();
-            const totalMs = t3b - t0;
+            const t7_raf2 = performance.now();
+            const totalMs = t7_raf2 - t1_start;
             const payloadBytes = new Blob([JSON.stringify(json)]).size;
+            const api_ms = t3_api_done - t2_api_start;
+            const map_ms = t5_mapdone - t4_mapstart;
+            const overhead_ms = totalMs - api_ms - map_ms;
             console.log(
-              `[PERF] url=${url.substring(0, 60)} tracks=${rows.length} total_ms=${totalMs.toFixed(1)} payload_bytes=${payloadBytes}`
+              `[PERF] url=${url.substring(0, 60)} tracks=${rows.length}\n` +
+              `  Total: ${totalMs.toFixed(1)}ms | API: ${api_ms.toFixed(1)}ms | Map: ${map_ms.toFixed(1)}ms | Overhead: ${overhead_ms.toFixed(1)}ms\n` +
+              `  Payload: ${payloadBytes} bytes | TTFB+API: ${(t3_api_done - t1_start).toFixed(1)}ms`
             );
           });
         });
