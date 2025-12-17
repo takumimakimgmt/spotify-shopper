@@ -53,6 +53,7 @@ export default function Page() {
           {analyzer.isProcessing && (
             <div className="text-[11px] text-slate-400">
               {analyzer.phaseLabel || 'Processing…'}
+              {analyzer.progress < 10 && <span className="text-slate-500"> (server starting up…)</span>}
             </div>
           )}
           {analyzer.currentResult && selection.formCollapsed ? (
