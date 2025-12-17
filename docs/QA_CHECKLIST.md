@@ -11,7 +11,7 @@ Always run these before handoff. Keep scope small, high-signal.
 
 ## Rekordbox XML
 - [ ] Small valid XML applies owned status.
-- [ ] Near-limit XML (~20MB) is rejected client-side with helpful message.
+- [ ] Near-limit XML (~50MB) is rejected client-side with helpful message.
 - [ ] Broken/invalid XML shows clear ErrorAlert.
 
 ## CSV Export

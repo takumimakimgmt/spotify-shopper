@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ResultState } from '@/lib/types';
 
 export interface ResultSummaryBarProps {
@@ -14,12 +14,23 @@ export default function ResultSummaryBar({
   ownedCount,
   toBuyCount,
 }: ResultSummaryBarProps) {
+  const [debugOpen, setDebugOpen] = useState(false);
+
   if (!result) return null;
 
   const total = result.total;
   const cacheHit = result.meta?.cache_hit ?? false;
   const refreshUsed = result.meta?.refresh ?? false;
   const showPerf = process.env.NEXT_PUBLIC_SHOW_PERF === '1';
+  const totalMs = result.meta?.client_total_ms;
+  const apiMs = result.meta?.client_api_ms;
+  const mapMs = result.meta?.client_map_ms;
+  const overheadMs = result.meta?.client_overhead_ms;
+  const rbMetrics = result.meta?.rekordbox;
+
+  // Prepare debug info
+  const debugInfo = result.meta ? JSON.stringify(result.meta, null, 2) : '';
+  const hasDebugInfo = debugInfo.length > 0;
 
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-3">
@@ -51,6 +62,41 @@ export default function ResultSummaryBar({
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs text-amber-300">
               Reloaded
             </span>
+          )}
+        </div>
+      )}
+
+      {totalMs !== undefined && (
+        <div className="text-[11px] text-slate-400">
+          Finished in {(totalMs / 1000).toFixed(2)}s
+          {apiMs !== undefined ? ` • API ${(apiMs / 1000).toFixed(2)}s` : ''}
+          {mapMs !== undefined ? ` • Map ${mapMs.toFixed(0)}ms` : ''}
+          {overheadMs !== undefined ? ` • Overhead ${overheadMs.toFixed(0)}ms` : ''}
+        </div>
+      )}
+
+      {rbMetrics && (
+        <div className="text-[11px] text-slate-500">
+          Rekordbox: {rbMetrics.track_total ?? '-'} tracks • fuzzy {rbMetrics.fuzzy_count ?? 0} • {rbMetrics.match_ms ?? '-'}ms
+        </div>
+      )}
+
+      {/* Debug toggle */}
+      {hasDebugInfo && (
+        <div className="mt-2">
+          <button
+            onClick={() => setDebugOpen(!debugOpen)}
+            className="text-[11px] text-slate-400 hover:text-slate-300 underline"
+          >
+            {debugOpen ? 'Hide' : 'Show'} debug details
+          </button>
+          {debugOpen && (
+            <details open className="mt-2">
+              <summary className="text-[10px] text-slate-500 cursor-pointer">Meta info</summary>
+              <pre className="bg-slate-950 border border-slate-700 rounded p-2 mt-1 text-[9px] text-slate-300 overflow-auto max-h-48 whitespace-pre-wrap break-words">
+                {debugInfo}
+              </pre>
+            </details>
           )}
         </div>
       )}

@@ -52,7 +52,7 @@ export default function Page() {
         <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
           {analyzer.isProcessing && (
             <div className="text-[11px] text-slate-400">
-              Spotify ~10s • Apple may be slower / sometimes unsupported
+              {analyzer.phaseLabel || 'Processing…'}
             </div>
           )}
           {analyzer.currentResult && selection.formCollapsed ? (

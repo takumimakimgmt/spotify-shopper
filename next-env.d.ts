@@ -2,5 +2,5 @@
 /// <reference types="next/image-types/global" />
 import "./.next/types/routes.d.ts";
 
-// NOTE: This file should not be edited.
+// NOTE: This file should not be edited
 // See Next.js docs for TypeScript configuration info.

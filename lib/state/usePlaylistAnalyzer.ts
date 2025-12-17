@@ -36,6 +36,18 @@ function mapTracks(json: ApiPlaylistResponse): PlaylistRow[] {
   }));
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function classifyAppleError(message: string | undefined): 'timeout' | 'dom-change' | 'region' | 'bot-suspected' | 'unknown' {
+  if (!message) return 'unknown';
+  const lower = message.toLowerCase();
+  if (lower.includes('timeout') || lower.includes('timed out')) return 'timeout';
+  if (lower.includes('selector') || lower.includes('element not found') || lower.includes('dom')) return 'dom-change';
+  if (lower.includes('region') || lower.includes('country') || lower.includes('market')) return 'region';
+  if (lower.includes('bot') || lower.includes('captcha') || lower.includes('suspicious')) return 'bot-suspected';
+  return 'unknown';
+}
+
 export function usePlaylistAnalyzer() {
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
@@ -51,9 +63,10 @@ export function usePlaylistAnalyzer() {
   const [forceRefreshHint, setForceRefreshHint] = useState(false);
   const [reAnalyzeUrl, setReAnalyzeUrl] = useState<string | null>(null);
   // Progress items for per-URL status visualization
-  type ProgressStatus = 'pending' | 'fetching' | 'done' | 'error';
+  type ProgressStatus = 'pending' | 'fetching' | 'parsing' | 'done' | 'error';
   const [progressItems, setProgressItems] = useState<Array<{ url: string; status: ProgressStatus; message?: string }>>([]);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  const [phaseLabel, setPhaseLabel] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef<number>(0);
@@ -266,6 +279,7 @@ export function usePlaylistAnalyzer() {
   const handleAnalyze = async (e: FormEvent) => {
     e.preventDefault();
     setErrorText(null);
+    setPhaseLabel('Preparing');
     // Use forceRefreshHint from state (set by button onClick) instead of unreliable FormEvent.shiftKey
     const isForceRefresh = forceRefreshHint;
     if (isForceRefresh) {
@@ -278,6 +292,7 @@ export function usePlaylistAnalyzer() {
       .filter((url) => url.length > 0);
     if (urls.length === 0) {
       setErrorText('Please enter at least one playlist URL or ID.');
+      setPhaseLabel(null);
       return;
     }
 
@@ -304,10 +319,12 @@ export function usePlaylistAnalyzer() {
     let hasError = false;
 
     for (const url of urls) {
+      let effectiveSource: 'spotify' | 'apple' = 'spotify';
       try {
         const t0 = performance.now();
         const t1_start = t0;
-        const effectiveSource = detectSourceFromUrl(url) || 'spotify';
+        effectiveSource = (detectSourceFromUrl(url) || 'spotify') as 'spotify' | 'apple';
+        setPhaseLabel(effectiveSource === 'apple' ? 'Fetching Apple Music' : 'Fetching Spotify');
         // Mark fetching start (Apple calls out longer wait explicitly)
         setProgressItems((prev) =>
           prev.map((p) =>
@@ -333,25 +350,81 @@ export function usePlaylistAnalyzer() {
 
         const t2_api_start = performance.now();
         let json: ApiPlaylistResponse | null = null;
-        if (rekordboxFile) {
-          json = await postPlaylistWithRekordboxUpload({
+        const APPLE_TIMEOUT_MS = 25000; // 25 second timeout for Apple
+        
+        const fetchOnce = async (appleMode?: 'auto' | 'legacy' | 'fast') => {
+          if (rekordboxFile) {
+            return postPlaylistWithRekordboxUpload({
+              url,
+              source: effectiveSource,
+              file: rekordboxFile,
+              appleMode: appleMode ?? (effectiveSource === 'apple' ? 'auto' : undefined),
+              enrichSpotify: effectiveSource === 'apple' ? false : undefined,
+              refresh: isForceRefresh,
+              signal: abortRef.current?.signal ?? undefined,
+            });
+          }
+          return getPlaylist({
             url,
             source: effectiveSource,
-            file: rekordboxFile,
-            appleMode: effectiveSource === 'apple' ? 'auto' : undefined,
+            appleMode: appleMode ?? (effectiveSource === 'apple' ? 'auto' : undefined),
             enrichSpotify: effectiveSource === 'apple' ? false : undefined,
             refresh: isForceRefresh,
             signal: abortRef.current?.signal ?? undefined,
           });
+        };
+
+        if (effectiveSource === 'apple') {
+          const appleAttempts: Array<'auto' | 'legacy' | 'fast'> = ['auto', 'legacy', 'fast'];
+          let lastErr: any = null;
+          for (let i = 0; i < appleAttempts.length; i++) {
+            const mode = appleAttempts[i];
+            try {
+              setPhaseLabel(`Fetching Apple Music (${mode})`);
+              // Wrap the fetch call with timeout for Apple
+              const wrapped = async () => {
+                const timeoutController = new AbortController();
+                const timeoutId = setTimeout(() => timeoutController.abort(), APPLE_TIMEOUT_MS);
+                
+                // Merge with external abort signal
+                const externalSignal = abortRef.current?.signal;
+                if (externalSignal?.aborted) {
+                  timeoutController.abort();
+                }
+                if (externalSignal) {
+                  externalSignal.addEventListener('abort', () => timeoutController.abort());
+                }
+                
+                try {
+                  const result = await fetchOnce(mode);
+                  clearTimeout(timeoutId);
+                  return result;
+                } catch (err) {
+                  clearTimeout(timeoutId);
+                  // If timeout controller aborted but external signal didn't, it's a timeout
+                  if (timeoutController.signal.aborted && !externalSignal?.aborted) {
+                    const error = err instanceof Error ? err : new Error(String(err));
+                    error.message = 'timeout';
+                    throw error;
+                  }
+                  throw err;
+                }
+              };
+              json = await wrapped();
+              break;
+            } catch (err: any) {
+              lastErr = err;
+              if (i < appleAttempts.length - 1) {
+                const backoffMs = 400 * (i + 1);
+                setPhaseLabel(`Retrying Apple Music (backoff ${backoffMs}ms)`);
+                await sleep(backoffMs);
+                continue;
+              }
+              throw lastErr;
+            }
+          }
         } else {
-          json = await getPlaylist({
-            url,
-            source: effectiveSource,
-            appleMode: effectiveSource === 'apple' ? 'auto' : undefined,
-            enrichSpotify: effectiveSource === 'apple' ? false : undefined,
-            refresh: isForceRefresh,
-            signal: abortRef.current?.signal ?? undefined,
-          });
+          json = await fetchOnce();
         }
         const t3_api_done = performance.now();
 
@@ -359,9 +432,37 @@ export function usePlaylistAnalyzer() {
           continue;
         }
 
+        if (!json) {
+          throw new Error('Failed to fetch playlist data');
+        }
+
+        if (rekordboxFile) {
+          setPhaseLabel('Matching Rekordbox');
+          setProgressItems((prev) =>
+            prev.map((p) =>
+              p.url === url
+                ? { ...p, status: 'parsing', message: 'Matching Rekordbox' }
+                : p
+            )
+          );
+        }
+
         const t4_mapstart = performance.now();
         const rows = mapTracks(json);
         const t5_mapdone = performance.now();
+        const api_ms = t3_api_done - t2_api_start;
+        const map_ms = t5_mapdone - t4_mapstart;
+        const total_ms = performance.now() - t1_start;
+        const overhead_ms = Math.max(0, total_ms - api_ms - map_ms);
+        const payload_bytes = new Blob([JSON.stringify(json)]).size;
+        const metaWithTiming = {
+          ...(json.meta ?? {}),
+          client_total_ms: total_ms,
+          client_api_ms: api_ms,
+          client_map_ms: map_ms,
+          client_overhead_ms: overhead_ms,
+          payload_bytes,
+        };
         newResults.push([
           url,
           {
@@ -373,7 +474,7 @@ export function usePlaylistAnalyzer() {
             tracks: rows,
             analyzedAt: Date.now(),
             hasRekordboxData: !!rekordboxFile,
-            meta: json.meta,
+            meta: metaWithTiming,
           },
         ]);
         // Mark success
@@ -400,8 +501,15 @@ export function usePlaylistAnalyzer() {
         hasError = true;
         // Short error message for progress list
         const errShort = typeof err?.message === 'string' ? err.message : 'request failed';
+        const reasonTag = effectiveSource === 'apple'
+          ? classifyAppleError(err?.data?.detail?.error || errShort)
+          : null;
         setProgressItems((prev) =>
-          prev.map((p) => (p.url === url ? { ...p, status: 'error', message: errShort } : p))
+          prev.map((p) =>
+            p.url === url
+              ? { ...p, status: 'error', message: reasonTag ? `Apple ${reasonTag}` : errShort }
+              : p
+          )
         );
         if (err?.data?.detail) {
           const detail = err.data.detail;
@@ -420,6 +528,7 @@ export function usePlaylistAnalyzer() {
             url: url.substring(0, 80),
             source: usedSource || detectedSource,
             refresh: isForceRefresh ? 1 : 0,
+            reason: reasonTag || undefined,
           };
           
           setErrorMeta(normalizedMeta ?? minimalContext);
@@ -454,11 +563,14 @@ export function usePlaylistAnalyzer() {
               setErrorText('Spotifyの取得に失敗しました（詳細不明）');
             }
           } else {
-            const msg = errText || 'プレイリストの取得に失敗しました';
-            setErrorText(msg);
+            const base = errText || 'プレイリストの取得に失敗しました';
+            const reasonSuffix = usedSource === 'apple' && reasonTag ? ` (${reasonTag})` : '';
+            const hint = usedSource === 'apple' ? ' Continue without Apple data or retry.' : '';
+            setErrorText(base + reasonSuffix + hint);
           }
         } else {
-          setErrorText('プレイリストの取得に失敗しました');
+          const hint = reasonTag ? ` (${reasonTag})` : '';
+          setErrorText(`プレイリストの取得に失敗しました${hint}`);
         }
       }
     }
@@ -485,6 +597,7 @@ export function usePlaylistAnalyzer() {
       window.clearInterval(progressTimer.current);
       progressTimer.current = null;
     }
+    setPhaseLabel(null);
   };
 
   const applySnapshotWithXml = async (
@@ -594,6 +707,7 @@ export function usePlaylistAnalyzer() {
     setIsReanalyzing(false);
     setProgress(0);
     setProgressItems([]);
+    setPhaseLabel(null);
   };
 
   const retryFailed = () => {
@@ -626,6 +740,7 @@ export function usePlaylistAnalyzer() {
     forceRefreshHint,
     setForceRefreshHint,
     progressItems,
+    phaseLabel,
     cancelAnalyze,
     retryFailed,
     storageWarning,
