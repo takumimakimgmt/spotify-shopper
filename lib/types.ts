@@ -32,6 +32,17 @@ export type ApiMeta = {
   apple_page_title?: string;
   apple_html_snippet?: string;
   blocked_hint?: boolean;
+  // Client-side timings (measured in browser)
+  client_total_ms?: number;
+  client_api_ms?: number;
+  client_map_ms?: number;
+  client_overhead_ms?: number;
+  payload_bytes?: number;
+  rekordbox?: {
+    track_total?: number;
+    fuzzy_count?: number;
+    match_ms?: number;
+  };
 };
 
 export type ApiTrack = {

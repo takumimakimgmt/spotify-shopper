@@ -2,21 +2,21 @@
 
 ## Current Design Decision
 
-**Max Size: 20 MB (Maintained)**
+**Max Size: 50 MB (Maintained)**
 
 ### Rationale
 
 - **Current Data Point**: 2,226 tracks = 2.39 MB  
   Extrapolation: ~50,000 tracks would be ~50 MB (likely largest personal library)
-- **20 MB Limit Benefits**:
-  - Safe margin for most users (up to ~20,000 tracks)
+- **50 MB Limit Benefits**:
+  - Safe margin for most users (up to ~50,000 tracks)
   - Avoids frontend memory bloat during XML parsing
   - Backend can process iteratively with streaming (iterparse)
   - Prevents accidental uploads of entire music library
 
 ### User-Facing Guidance
 
-When file exceeds 20 MB, users see:
+When file exceeds 50 MB, users see:
 > "XML is too large ({size} MB). Please export smaller, playlist-level XML from Rekordbox and try again."
 
 **Action**: Export playlists individually rather than entire library XML.

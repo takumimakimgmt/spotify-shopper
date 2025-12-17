@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ProcessingBar from './ProcessingBar';
 import ErrorAlert from './ErrorAlert';
 import { ProgressItem } from './ProgressList';
-import { APPLE_TIMEOUT_S, MAX_XML_BYTES } from '@/lib/constants';
+import { MAX_XML_BYTES } from '@/lib/constants';
 
 type ErrorMeta = Record<string, unknown>;
 
@@ -92,7 +92,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             value={props.playlistUrlInput}
             onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
             className={`w-full rounded-md border ${props.errorText ? 'border-red-500' : 'border-slate-700'} bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 font-mono`}
-            placeholder="https://open.spotify.com/playlist...&#10;https://music.apple.com...&#10;3KCXw0N4EJmHIg0KiKjNSM"
+            placeholder="Spotify playlist URL\nApple Music URL\nPlaylist ID (optional)"
             rows={4}
             aria-invalid={props.errorText ? 'true' : 'false'}
             aria-describedby={props.errorText ? 'error-summary' : undefined}
@@ -102,12 +102,12 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </p>
           {isAppleInput && (
             <div className="space-y-2">
-              <p className="text-xs text-amber-200">
-                Apple Music may take up to {APPLE_TIMEOUT_S}s. If it times out, retry with a single Apple URL.
-              </p>
-              <p className="text-xs text-yellow-600/80">
-                ⚠ Beta: Apple Music support is less reliable than Spotify and may fail or take longer.
-              </p>
+                <p className="text-xs text-amber-200">
+                  Apple Music can be slower than Spotify. If it fails, retry with a single Apple URL.
+                </p>
+                <p className="text-xs text-yellow-600/80">
+                  ⚠ Beta: Apple Music support is less reliable than Spotify and may fail or take longer.
+                </p>
             </div>
           )}
         </div>
