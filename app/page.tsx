@@ -22,6 +22,10 @@ import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 // ==== Main component ====
 
 function PageInner() {
+  // Vercel / backend cold start warmup
+  useEffect(() => {
+    fetch("/api/health", { cache: "no-store" }).catch(() => {});
+  }, []);
 
   // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
