@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
 import { useFiltersState } from '../lib/state/useFiltersState';
 import { useSelectionState } from '../lib/state/useSelectionState';
@@ -25,18 +26,55 @@ export default function Page() {
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
   const selection = useSelectionState(null, false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // === DERIVED DATA: Pure calculations ===
   const hasResult = Boolean(analyzer.currentResult);
   const vm = useViewModel(analyzer, filters);
 
-  // ✅ Auto-select first tab after multiResults restoration（ここに移動）
-  useEffect(() => {
-    if (!selection.activeTab && vm.multiResults.length > 0) {
-      selection.setActiveTab(vm.multiResults[0][0]);
+  const TAB_QS_KEY = "t";
+  // URL(ASCII)を短く安全にクエリ化（base64url）
+  const encodeTab = (url: string) =>
+    btoa(url).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+
+  const decodeTab = (s: string) => {
+    try {
+      const padded = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+      return atob(padded);
+    } catch {
+      return null;
     }
+  };
+
+  // (1) 初期タブ決定：URL(t) → なければ先頭
+  useEffect(() => {
+    if (selection.activeTab) return;
+    if (vm.multiResults.length === 0) return;
+
+    const t = searchParams.get(TAB_QS_KEY);
+    const decoded = t ? decodeTab(t) : null;
+
+    if (decoded && vm.multiResults.some(([u]) => u === decoded)) {
+      selection.setActiveTab(decoded);
+      return;
+    }
+
+    selection.setActiveTab(vm.multiResults[0][0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vm.multiResults.length, selection.activeTab]);
+  }, [vm.multiResults.length, selection.activeTab, searchParams]);
+
+  // (2) タブ変更をURLへ同期（リロード耐性）
+  useEffect(() => {
+    const tab = selection.activeTab;
+    if (!tab) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(TAB_QS_KEY, encodeTab(tab));
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selection.activeTab, router, pathname, searchParams]);
 
   // === ACTIONS: All operations ===
   const actions = useActions(analyzer);
