@@ -21,22 +21,22 @@ import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 // ==== Main component ====
 
 export default function Page() {
-    // Auto-select first tab after multiResults restoration
-    useEffect(() => {
-      if (!selection.activeTab && vm.multiResults.length > 0) {
-        selection.setActiveTab(vm.multiResults[0][0]);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [vm.multiResults.length, selection.activeTab]);
   // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
-  // selection: initialize with defaults (analyzer owns the persistent values)
   const selection = useSelectionState(null, false);
 
   // === DERIVED DATA: Pure calculations ===
   const hasResult = Boolean(analyzer.currentResult);
   const vm = useViewModel(analyzer, filters);
+
+  // ✅ Auto-select first tab after multiResults restoration（ここに移動）
+  useEffect(() => {
+    if (!selection.activeTab && vm.multiResults.length > 0) {
+      selection.setActiveTab(vm.multiResults[0][0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vm.multiResults.length, selection.activeTab]);
 
   // === ACTIONS: All operations ===
   const actions = useActions(analyzer);
