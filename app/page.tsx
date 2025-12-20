@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
 import { useFiltersState } from '../lib/state/useFiltersState';
@@ -21,7 +21,7 @@ import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 
 // ==== Main component ====
 
-export default function Page() {
+function PageInner() {
   // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
@@ -149,149 +149,13 @@ export default function Page() {
           )}
 
           {/* Always-visible progress list under the form when processing */}
-          {analyzer.isProcessing && (
-            <div className="mt-4">
-              <ProgressList items={analyzer.progressItems} isProcessing={analyzer.isProcessing} />
-            </div>
-          )}
-        </section>
-
-        {/* Hidden file input for re-analyze */}
-        <input
-          ref={analyzer.reAnalyzeInputRef}
-          type="file"
-          accept=".xml"
-          onChange={actions.handleReAnalyzeFileChange}
-          className="hidden"
-        />
-
-        {/* Results */}
-        {vm.multiResults.length > 0 && (
-          <section className="space-y-4" id="results-top">
-            {vm.storageWarning && (
-              <ErrorAlert
-                title="Local data warning"
-                message={vm.storageWarning}
-                hint="Use Clear saved data to reset local storage, then re-run analysis."
-              />
-            )}
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-400">Results are saved locally (~300KB cap). Clear to free space.</p>
-              <button
-                type="button"
-                onClick={() => actions.clearLocalData()}
-                className="self-start sm:self-auto inline-flex items-center gap-2 rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-700 border border-slate-700"
-              >
-                Clear saved data
-              </button>
-            </div>
-
-            {/* Tabs */}
-            <ResultsTabs
-              multiResults={vm.multiResults}
-              activeTab={selection.activeTab}
-              onSelectTab={selection.setActiveTab}
-              onRemoveTab={actions.handleRemoveTab}
-              onClearAll={actions.handleClearAllTabs}
-            />
-
-            {vm.currentResult && (
-              <div className="space-y-4">
-                <SidePanels
-                  currentResult={vm.currentResult}
-                  ownedCount={vm.ownedCount}
-                  toBuyCount={vm.toBuyCount}
-                  displayedTracks={vm.displayedTracks}
-                  applySnapshotWithXml={async (file, result, tracks) => {
-                    await actions.applySnapshotWithXml(file, result, tracks);
-                  }}
-                  handleExportCSV={() => actions.downloadCsv(vm.displayedTracks, vm.currentResult)}
-                />
-
-                <FiltersBar
-                  categoryFilter={filters.categoryFilter}
-                  setCategoryFilter={filters.setCategoryFilter}
-                  searchQuery={filters.searchQuery}
-                  setSearchQuery={filters.setSearchQuery}
-                  sortKey={filters.sortKey}
-                  setSortKey={filters.setSortKey}
-                />
-
-                {/* Mobile: card list */}
-                <div className="md:hidden space-y-2">
-                  {vm.displayedTracks.map((t) => {
-                    const isApplePlaylist = vm.currentResult?.playlistUrl?.includes('music.apple.com');
-                    const trackUrl = isApplePlaylist 
-                      ? (t.appleUrl || t.spotifyUrl || undefined)
-                      : (t.spotifyUrl || t.appleUrl || undefined);
-                    return (
-                      <div
-                        key={`${trackUrl ?? ''}-${t.index}-${t.isrc ?? ''}`}
-                        className={`rounded-lg border border-slate-800 bg-slate-900/70 p-3 text-xs ${(() => {
-                          const style = getOwnedStatusStyle(t.owned, t.ownedReason);
-                          return style.borderClass;
-                        })()}`}
-                        title={(() => {
-                          const style = getOwnedStatusStyle(t.owned, t.ownedReason);
-                          return style.tooltip;
-                        })()}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={trackUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="font-semibold text-slate-100 truncate hover:underline"
-                              >
-                                {t.title}
-                              </a>
-                            </div>
-                            <div className="text-slate-400 text-[11px] truncate">{t.artist}</div>
-                            <div className="text-slate-500 text-[11px] truncate">{t.album}</div>
-                            {t.isrc && <div className="text-slate-500 text-[10px]">ISRC: {t.isrc}</div>}
-                          </div>
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {(() => {
-                            const recommended = getRecommendedStore(t);
-                            const others = getOtherStores(t.stores, recommended);
-                            
-                            if (!recommended) return null;
-                            
-                            return (
-                              <>
-                                <a
-                                  href={recommended.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 rounded-full border border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 transition"
-                                  title={`Open on ${recommended.name} (recommended)`}
-                                >
-                                  <span className="text-[10px] font-medium text-emerald-300">🔗</span>
-                                  <span className="text-[10px] text-emerald-300">{recommended.name}</span>
-                                </a>
-                                {others.map((store) => (
-                                  <a
-                                    key={store.name}
-                                    href={store.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700"
-                                  >
-                                    <span className="text-[10px]">{store.name}</span>
-                                  </a>
-                                ))}
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+          export default function Page() {
+            return (
+              <Suspense fallback={null}>
+                <PageInner />
+              </Suspense>
+            );
+          }
 
                 <ResultsTable
                   currentResult={vm.currentResult}
