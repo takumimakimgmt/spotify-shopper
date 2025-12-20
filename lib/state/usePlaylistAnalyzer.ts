@@ -49,6 +49,16 @@ function classifyAppleError(message: string | undefined): 'timeout' | 'dom-chang
 }
 
 export function usePlaylistAnalyzer() {
+    // rekordboxファイルと日付をセットで管理する共通関数
+    const applyRekordboxFile = (file: File | null) => {
+      setRekordboxFile(file);
+      if (file && typeof file.lastModified === 'number') {
+        const date = new Date(file.lastModified);
+        setRekordboxDate(date.toLocaleString());
+      } else {
+        setRekordboxDate(null);
+      }
+    };
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
   const [rekordboxDate, setRekordboxDate] = useState<string | null>(null);
@@ -158,6 +168,7 @@ export function usePlaylistAnalyzer() {
       setActiveTab(null);
       setFormCollapsed(false);
       setPlaylistUrlInput('');
+      applyRekordboxFile(null);
       setStorageWarning(null);
     } catch (err) {
       console.error('[Storage] Failed to clear local data:', err);
@@ -176,13 +187,7 @@ export function usePlaylistAnalyzer() {
 
   const handleRekordboxChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-    setRekordboxFile(file);
-    if (file && file.lastModified) {
-      const date = new Date(file.lastModified);
-      setRekordboxDate(date.toLocaleString());
-    } else {
-      setRekordboxDate(null);
-    }
+    applyRekordboxFile(file);
   };
 
   const handleRemoveTab = (urlToRemove: string) => {
@@ -200,6 +205,8 @@ export function usePlaylistAnalyzer() {
   const handleReAnalyzeFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Re-analyze/BulkでもXML日時を更新
+    applyRekordboxFile(file);
     const isBulk = reAnalyzeUrl === '__BULK__';
     setIsReanalyzing(true);
     setLoading(false);
