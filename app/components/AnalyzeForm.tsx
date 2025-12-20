@@ -13,6 +13,8 @@ export interface AnalyzeFormProps {
   playlistUrlInput: string;
   rekordboxFile: File | null;
   onlyUnowned: boolean;
+  rekordboxDate?: string | null;
+  rekordboxFilename?: string | null;
   loading: boolean;
   isReanalyzing: boolean;
   progress: number;
@@ -111,6 +113,12 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             </div>
           )}
         </div>
+        {(props.rekordboxFilename || props.rekordboxDate) && (
+          <div className="text-xs text-slate-400">
+            {props.rekordboxFilename && <span>XML: {props.rekordboxFilename}</span>}
+            {props.rekordboxDate && <span className="ml-2">Updated: {props.rekordboxDate}</span>}
+          </div>
+        )}
 
         {/* Rekordbox XML upload */}
         <div className="space-y-2">
