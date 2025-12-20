@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from "react";
 import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
 import { useFiltersState } from '../lib/state/useFiltersState';
 import { useSelectionState } from '../lib/state/useSelectionState';
@@ -21,6 +21,13 @@ import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 // ==== Main component ====
 
 export default function Page() {
+    // Auto-select first tab after multiResults restoration
+    useEffect(() => {
+      if (!selection.activeTab && vm.multiResults.length > 0) {
+        selection.setActiveTab(vm.multiResults[0][0]);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [vm.multiResults.length, selection.activeTab]);
   // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
@@ -28,17 +35,24 @@ export default function Page() {
   const selection = useSelectionState(null, false);
 
   // === DERIVED DATA: Pure calculations ===
+  const hasResult = Boolean(analyzer.currentResult);
   const vm = useViewModel(analyzer, filters);
 
   // === ACTIONS: All operations ===
   const actions = useActions(analyzer);
 
   // === SIDE EFFECTS ===
-  useEffect(() => {
-    if (!analyzer.currentResult) return;
-    filters.setCategoryFilter('toBuy');
-    selection.setFormCollapsed(true);
-  }, [analyzer.currentResult, filters, selection]);
+    const { setFormCollapsed } = selection;
+    const prevResultRef = useRef<any>(null);
+    useEffect(() => {
+      const r = analyzer.currentResult;
+      const hasTracks = (r?.tracks?.length ?? 0) > 0;
+      if (!hasTracks) return;
+      if (r !== prevResultRef.current) {
+        setFormCollapsed(true);
+        prevResultRef.current = r;
+      }
+    }, [analyzer.currentResult]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
@@ -153,7 +167,6 @@ export default function Page() {
                   displayedTracks={vm.displayedTracks}
                   applySnapshotWithXml={async (file, result, tracks) => {
                     await actions.applySnapshotWithXml(file, result, tracks);
-                    selection.setFormCollapsed(true);
                   }}
                   handleExportCSV={() => actions.downloadCsv(vm.displayedTracks, vm.currentResult)}
                 />
