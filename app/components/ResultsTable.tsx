@@ -7,12 +7,17 @@ interface ResultsTableProps {
   currentResult: ResultState;
   displayedTracks: PlaylistRow[];
   categoryLabels: Record<'all' | TrackCategory, string>;
-  openStoreDropdown: string | null;
-  setOpenStoreDropdown: (value: string | null) => void;
+  openStoreDropdown?: string | null;
+  setOpenStoreDropdown?: (value: string | null) => void;
   getOwnedStatusStyle: (
     owned: boolean | null | undefined,
     ownedReason: string | null | undefined
   ) => { borderClass: string; tooltip: string };
+  recommendedStore?: any;
+  otherStores?: any;
+  isLoading?: boolean;
+  errorText?: any;
+  errorMeta?: any;
 }
 
 export function ResultsTable({
@@ -22,6 +27,11 @@ export function ResultsTable({
   openStoreDropdown,
   setOpenStoreDropdown,
   getOwnedStatusStyle,
+  recommendedStore,
+  otherStores,
+  isLoading,
+  errorText,
+  errorMeta,
 }: ResultsTableProps) {
   if (!currentResult) return null;
 
@@ -131,7 +141,9 @@ export function ResultsTable({
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setOpenStoreDropdown(isOpen ? null : dropdownId);
+                                        if (setOpenStoreDropdown) {
+                                          setOpenStoreDropdown(isOpen ? null : dropdownId);
+                                        }
                                       }}
                                       className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700 transition text-[10px] text-slate-300"
                                       title="Other stores"
@@ -147,7 +159,7 @@ export function ResultsTable({
                                             target="_blank"
                                             rel="noreferrer"
                                             className="block px-3 py-2 text-xs text-slate-200 hover:bg-slate-700 first:rounded-t-lg last:rounded-b-lg transition"
-                                            onClick={() => setOpenStoreDropdown(null)}
+                                            onClick={() => setOpenStoreDropdown && setOpenStoreDropdown(null)}
                                           >
                                             {store.name}
                                           </a>
