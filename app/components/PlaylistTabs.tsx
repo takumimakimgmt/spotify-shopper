@@ -56,13 +56,6 @@ export function PlaylistTabs({ multiResults, activeTab, setActiveTab, onRemoveTa
           );
         })}
       </div>
-      <button
-        onClick={onClearAll}
-        className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition whitespace-nowrap"
-        title="Clear all playlists"
-      >
-        Clear All
-      </button>
     </div>
   );
 }
