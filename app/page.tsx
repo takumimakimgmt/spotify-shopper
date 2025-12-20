@@ -55,31 +55,31 @@ function PageInner() {
 
   // (1) 初期タブ決定：URL(t) → なければ先頭
   useEffect(() => {
-    if (selection.activeTab) return;
+    if (analyzer.activeTab) return;
     if (vm.multiResults.length === 0) return;
 
     const t = searchParams.get(TAB_QS_KEY);
     const decoded = t ? decodeTab(t) : null;
 
     if (decoded && vm.multiResults.some(([u]) => u === decoded)) {
-      selection.setActiveTab(decoded);
+      analyzer.setActiveTab(decoded);
       return;
     }
 
-    selection.setActiveTab(vm.multiResults[0][0]);
+    analyzer.setActiveTab(vm.multiResults[0][0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vm.multiResults.length, selection.activeTab, searchParams]);
+  }, [vm.multiResults.length, analyzer.activeTab, searchParams]);
 
   // (2) タブ変更をURLへ同期（リロード耐性）
   useEffect(() => {
-    const tab = selection.activeTab;
+    const tab = analyzer.activeTab;
     if (!tab) return;
 
     const params = new URLSearchParams(searchParams.toString());
     params.set(TAB_QS_KEY, encodeTab(tab));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selection.activeTab, router, pathname, searchParams]);
+  }, [analyzer.activeTab, router, pathname, searchParams]);
 
   // === ACTIONS: All operations ===
   const actions = useActions(analyzer);
@@ -179,8 +179,8 @@ function PageInner() {
             {/* Tabs */}
             <ResultsTabs
               multiResults={vm.multiResults}
-              activeTab={selection.activeTab}
-              onSelectTab={selection.setActiveTab}
+              activeTab={analyzer.activeTab}
+              onSelectTab={analyzer.setActiveTab}
               onRemoveTab={actions.handleRemoveTab}
               onClearAll={actions.handleClearAllTabs}
             />
