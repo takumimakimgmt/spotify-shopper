@@ -135,6 +135,8 @@ function PageInner() {
               rekordboxFile={analyzer.rekordboxFile}
               setRekordboxFile={analyzer.setRekordboxFile}
               handleRekordboxChange={analyzer.handleRekordboxChange}
+              rekordboxFilename={analyzer.rekordboxFile?.name ?? null}
+              rekordboxDate={analyzer.rekordboxDate ?? null}
               onlyUnowned={filters.onlyUnowned}
               setOnlyUnowned={filters.setOnlyUnowned}
               loading={analyzer.loading}
