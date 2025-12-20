@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ALLOWLIST_FILE="${ALLOWLIST_FILE:-_teacher_data/uiux/sources/README.md}"
+ALLOWLIST_FILE="${ALLOWLIST_FILE:-docs/uiux_sources_allowlist.txt}"
 
 # allowlist domains (1行1ドメイン想定) を読む。無ければ空でOK
 ALLOWLIST_DOMAINS=""
