@@ -29,6 +29,9 @@ import ErrorAlert from './components/ErrorAlert';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 
 function PageInner() {
+    // --- clean-first-then-sync: 初回ロードはクリーン、以降は同期 ---
+    const initialTabRef = useRef<string | null>(null);
+    const allowUrlSyncRef = useRef(false);
   // Vercel / backend cold start warmup
   useEffect(() => {
     fetch("/api/health", { cache: "no-store" }).catch(() => {});
@@ -62,25 +65,46 @@ function PageInner() {
 
   // (1) 初期タブ決定：URL(t) → なければ先頭
   useEffect(() => {
-    if (selection.activeTab) return;
     if (vm.multiResults.length === 0) return;
 
     const t = searchParams.get(TAB_QS_KEY);
     const decoded = t ? decodeTab(t) : null;
 
+    let next: string | null = null;
     if (decoded && vm.multiResults.some(([u]) => u === decoded)) {
-      selection.setActiveTab(decoded);
-      return;
+      next = decoded;
+    } else {
+      next = vm.multiResults[0][0];
     }
 
-    selection.setActiveTab(vm.multiResults[0][0]);
+    // 初期タブを確定（最初の1回だけ）
+    if (!initialTabRef.current) initialTabRef.current = next;
+
+    // activeTabが未設定 or URL指定が有効ならセット
+    if (!selection.activeTab || (decoded && next === decoded)) {
+      selection.setActiveTab(next);
+    }
+
+    // URLに t が付いて入ってきた場合は、復元後すぐクリーンに戻す
+    if (t) {
+      router.replace(pathname, { scroll: false });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vm.multiResults.length, selection.activeTab, searchParams]);
+  }, [vm.multiResults.length, pathname, searchParams]);
 
   // (2) タブ変更をURLへ同期（リロード耐性）
   useEffect(() => {
     const tab = selection.activeTab;
     if (!tab) return;
+
+    // 初回はクリーン維持：initialTabから変わるまでURL同期を許可しない
+    if (!allowUrlSyncRef.current) {
+      if (initialTabRef.current && tab !== initialTabRef.current) {
+        allowUrlSyncRef.current = true; // ここから“今まで通り”に戻す
+      } else {
+        return;
+      }
+    }
 
     const params = new URLSearchParams(searchParams.toString());
     params.set(TAB_QS_KEY, encodeTab(tab));
