@@ -36,9 +36,8 @@ export function PlaylistTabs({ multiResults, activeTab, setActiveTab, onRemoveTa
                 {result.hasRekordboxData && (
                   <span
                     className="text-[10px] px-1 py-0.5 bg-emerald-600/30 text-emerald-300 rounded"
-                    title="Analyzed with Rekordbox XML"
                   >
-                    XML✓
+                    XML
                   </span>
                 )}
               </button>

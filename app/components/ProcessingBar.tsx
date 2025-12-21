@@ -10,7 +10,7 @@ export interface ProcessingBarProps {
 
 export default function ProcessingBar({ analyzing, reanalyzing, progress }: ProcessingBarProps) {
   if (!analyzing && !reanalyzing) return null;
-  const label = analyzing ? 'Analyzing playlist…' : 'Matching with Rekordbox XML…';
+  const label = analyzing ? 'Analyzing playlist…' : 'Matching with Rekordbox XML';
   const pct = Math.max(progress, 5);
   return (
     <div className="space-y-2">

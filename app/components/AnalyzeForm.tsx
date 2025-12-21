@@ -116,13 +116,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         {/* Rekordbox XML upload */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Rekordbox Collection XML (optional)</label>
-          {/* プライバシー注記（grep用: not stored / never persist） */}
-          <div className="text-xs text-slate-400 mb-1">
-            <span>判定結果（Owned/To Buy等）はこの端末のlocalStorage/IndexedDBに保存されることがあります。</span>
-          </div>
-          <p className="mt-2 text-xs text-neutral-400">
-            Your Rekordbox XML is processed locally and is <span className="font-medium">not stored</span> or uploaded. We <span className="font-medium">never persist</span> the XML file.
-          </p>
           {localXmlError && (
             <ErrorAlert title="XML too large" message={localXmlError} />
           )}
@@ -159,9 +152,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             </button>
             <span className="text-xs text-slate-400">
               Upload your Rekordbox collection XML to mark Owned / Not owned.
-            </span>
-            <span className="text-[10px] text-slate-500 mt-1 block">
-              XML is processed locally in your browser and is <b>not stored</b> on our servers. We never persist your collection data.
             </span>
             {/* XMLファイル名/日付は補助的に表示（source of truthはcurrentResult.rekordboxMeta） */}
             {(props.rekordboxFilename || props.rekordboxDate) && (
