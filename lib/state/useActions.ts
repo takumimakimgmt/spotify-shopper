@@ -1,9 +1,15 @@
+
+"use client";
+type SelectionLike = {
+  activeTab: string | null;
+  setActiveTab: (v: string | null) => void;
+  setFormCollapsed: (v: boolean) => void;
+};
 /**
  * useActions.ts
  * Encapsulates all user-triggered operations (analyze, cancel, retry, etc.)
  * Used by page.tsx to invoke domain logic without mixing in UI concerns.
  */
-"use client";
 
 import { useCallback } from "react";
 import type { PlaylistRow, ResultState } from "../types";
@@ -35,27 +41,29 @@ export interface ActionsAPI {
 }
 
 export function useActions(
-  analyzer: ReturnType<typeof usePlaylistAnalyzer>
+  analyzer: ReturnType<typeof usePlaylistAnalyzer>,
+  selection: SelectionLike
 ): ActionsAPI {
   const handleRemoveTab = useCallback(
     (urlToRemove: string) => {
       analyzer.setMultiResults((prev) => {
         const filtered = prev.filter(([url]) => url !== urlToRemove);
-        if (analyzer.activeTab === urlToRemove && filtered.length > 0) {
-          analyzer.setActiveTab(filtered[0][0]);
-        } else if (filtered.length === 0) {
-          analyzer.setActiveTab(null);
+        if (selection.activeTab === urlToRemove) {
+          const next = filtered[0]?.[0] ?? null;
+          selection.setActiveTab(next);
+          if (!next) selection.setFormCollapsed(false);
         }
         return filtered;
       });
     },
-    [analyzer]
+    [analyzer, selection]
   );
 
   const handleClearAllTabs = useCallback(() => {
     analyzer.setMultiResults([]);
-    analyzer.setActiveTab(null);
-  }, [analyzer]);
+    selection.setActiveTab(null);
+    selection.setFormCollapsed(false);
+  }, [analyzer, selection]);
 
   const triggerReAnalyzeFileInput = useCallback(() => {
     analyzer.reAnalyzeInputRef.current?.click();
@@ -131,9 +139,9 @@ export function useActions(
 
   const handleClearDataAndReset = useCallback(() => {
     analyzer.clearLocalData();
-    analyzer.setActiveTab(null);
-    analyzer.setFormCollapsed(false);
-  }, [analyzer]);
+    selection.setActiveTab(null);
+    selection.setFormCollapsed(false);
+  }, [analyzer, selection]);
 
   return {
     handleAnalyze: analyzer.handleAnalyze,

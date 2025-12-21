@@ -3,4 +3,4 @@
 import "./.next/types/routes.d.ts";
 
 // NOTE: This file should not be edited
-// See Next.js docs for TypeScript configuration info.
+// see [redacted: non-allowlisted URL] for more information.

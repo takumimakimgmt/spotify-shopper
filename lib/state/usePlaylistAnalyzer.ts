@@ -63,8 +63,6 @@ export function usePlaylistAnalyzer() {
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
   const [rekordboxDate, setRekordboxDate] = useState<string | null>(null);
   const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>([]);
-  const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [formCollapsed, setFormCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [progress, setProgress] = useState<number>(0);
@@ -84,89 +82,12 @@ export function usePlaylistAnalyzer() {
   const reAnalyzeInputRef = useRef<HTMLInputElement | null>(null);
   const localStorageDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const savedTab = localStorage.getItem(STORAGE_ACTIVE_TAB);
-      if (savedTab) {
-        setActiveTab(savedTab);
-      }
-    } catch (err) {
-      console.error('[Storage] Failed to restore active tab:', err);
-    }
-  }, []);
-
-  // Debounced localStorage save (500ms) storing only slim summaries to avoid bloating localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (loading || isReanalyzing) return;
-
-    if (localStorageDebounceRef.current) {
-      clearTimeout(localStorageDebounceRef.current);
-    }
-
-    localStorageDebounceRef.current = setTimeout(() => {
-      try {
-        const slim = multiResults.map(([url, res]) => {
-          const userMarks = res.tracks.map((t) => ({
-            key: t.trackKeyPrimary || t.trackKeyFallback || t.isrc || `${t.title}-${t.artist}`,
-            owned: t.owned,
-            ownedReason: t.ownedReason,
-          }));
-          return {
-            url,
-            snapshotId: res.playlist_id || res.playlistUrl || url,
-            summary: {
-              title: res.title,
-              playlistUrl: res.playlistUrl,
-              analyzedAt: res.analyzedAt,
-              total: res.total,
-              hasRekordboxData: res.hasRekordboxData,
-            },
-            userMarks,
-          };
-        });
-
-        const payload = JSON.stringify({ version: 1, results: slim });
-        if (payload.length > MAX_STORAGE_BYTES) {
-          setStorageWarning(`Local data not saved (>${Math.round(MAX_STORAGE_BYTES / 1024)}KB). Clear old results or re-run analysis.`);
-          return;
-        }
-        localStorage.setItem(STORAGE_RESULTS, payload);
-        setStorageWarning(null);
-      } catch (err) {
-        console.error('[Storage] Failed to save results:', err);
-        setStorageWarning('Failed to save local data.');
-      }
-    }, 500);
-
-    return () => {
-      if (localStorageDebounceRef.current) {
-        clearTimeout(localStorageDebounceRef.current);
-      }
-    };
-  }, [multiResults, loading, isReanalyzing]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      if (activeTab) {
-        localStorage.setItem(STORAGE_ACTIVE_TAB, activeTab);
-      } else {
-        localStorage.removeItem(STORAGE_ACTIVE_TAB);
-      }
-    } catch (err) {
-      console.error('[Storage] Failed to save active tab:', err);
-    }
-  }, [activeTab]);
 
   const clearLocalData = () => {
     try {
       localStorage.removeItem(STORAGE_RESULTS);
       localStorage.removeItem(STORAGE_ACTIVE_TAB);
       setMultiResults([]);
-      setActiveTab(null);
-      setFormCollapsed(false);
       setPlaylistUrlInput('');
       applyRekordboxFile(null);
       setStorageWarning(null);
@@ -176,12 +97,10 @@ export function usePlaylistAnalyzer() {
     }
   };
 
-  const currentResult = multiResults.find(([url]) => url === activeTab)?.[1] ?? null;
+  // activeTab is now managed by selection, not analyzer
+  // currentResult is now derived in viewModel
 
-  useEffect(() => {
-    if (!currentResult) return;
-    setFormCollapsed(true);
-  }, [currentResult]);
+  // (formCollapsed is now managed only by selection)
 
   const isProcessing = loading || isReanalyzing;
 
@@ -191,15 +110,7 @@ export function usePlaylistAnalyzer() {
   };
 
   const handleRemoveTab = (urlToRemove: string) => {
-    setMultiResults((prev) => {
-      const filtered = prev.filter(([url]) => url !== urlToRemove);
-      if (activeTab === urlToRemove && filtered.length > 0) {
-        setActiveTab(filtered[0][0]);
-      } else if (filtered.length === 0) {
-        setActiveTab(null);
-      }
-      return filtered;
-    });
+    setMultiResults((prev) => prev.filter(([url]) => url !== urlToRemove));
   };
 
   const handleReAnalyzeFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -587,10 +498,10 @@ export function usePlaylistAnalyzer() {
       const filteredExisting = multiResults.filter(([url]) => !existingUrls.has(url));
       const merged = [...newResults, ...filteredExisting];
       setMultiResults(merged);
-      setActiveTab(merged[0][0]);
       setPlaylistUrlInput('');
-      setRekordboxFile(null);
-      setRekordboxDate(null);
+      // XMLファイル情報は消さない
+      // setRekordboxFile(null);
+      // setRekordboxDate(null);
     }
 
     if (hasError && newResults.length === 0) {
@@ -733,10 +644,6 @@ export function usePlaylistAnalyzer() {
     rekordboxDate,
     multiResults,
     setMultiResults,
-    activeTab,
-    setActiveTab,
-    formCollapsed,
-    setFormCollapsed,
     loading,
     isReanalyzing,
     isProcessing,
@@ -752,7 +659,6 @@ export function usePlaylistAnalyzer() {
     retryFailed,
     storageWarning,
     clearLocalData,
-    currentResult,
     reAnalyzeUrl,
     setReAnalyzeUrl,
     reAnalyzeInputRef,

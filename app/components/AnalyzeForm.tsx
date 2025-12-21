@@ -32,11 +32,10 @@ export interface AnalyzeFormProps {
   cancelAnalyze?: () => void;
   retryFailed?: () => void;
 }
-
 export default function AnalyzeForm(props: AnalyzeFormProps) {
   const [localXmlError, setLocalXmlError] = useState<string | null>(null);
-   const rekordboxInputRef = useRef<HTMLInputElement>(null);
-   const errorSummaryRef = useRef<HTMLDivElement>(null);
+  const rekordboxInputRef = useRef<HTMLInputElement>(null);
+  const errorSummaryRef = useRef<HTMLDivElement>(null);
   const handleRekordboxClick = () => {
     rekordboxInputRef.current?.click();
   };
@@ -104,21 +103,15 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </p>
           {isAppleInput && (
             <div className="space-y-2">
-                <p className="text-xs text-amber-200">
-                  Apple Music can be slower than Spotify. If it fails, retry with a single Apple URL.
-                </p>
-                <p className="text-xs text-yellow-600/80">
-                  ⚠ Beta: Apple Music support is less reliable than Spotify and may fail or take longer.
-                </p>
+              <p className="text-xs text-amber-200">
+                Apple Music can be slower than Spotify. If it fails, retry with a single Apple URL.
+              </p>
+              <p className="text-xs text-yellow-600/80">
+                ⚠ Beta: Apple Music support is less reliable than Spotify and may fail or take longer.
+              </p>
             </div>
           )}
         </div>
-        {(props.rekordboxFilename || props.rekordboxDate) && (
-          <div className="text-xs text-slate-400">
-            {props.rekordboxFilename && <span>XML: {props.rekordboxFilename}</span>}
-            {props.rekordboxDate && <span className="ml-2">Updated: {props.rekordboxDate}</span>}
-          </div>
-        )}
 
         {/* Rekordbox XML upload */}
         <div className="space-y-2">
@@ -160,6 +153,19 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <span className="text-xs text-slate-400">
               Upload your Rekordbox collection XML to mark Owned / Not owned.
             </span>
+            {/* ファイル名/日付をChoose File直下に表示 */}
+            {(props.rekordboxFilename || props.rekordboxDate) && (
+              <div className="text-xs text-slate-300 mt-1 flex flex-wrap gap-2">
+                {props.rekordboxFilename && (
+                  <span className="bg-slate-800/60 rounded px-2 py-0.5 font-medium">
+                    {props.rekordboxFilename}
+                  </span>
+                )}
+                {props.rekordboxDate && (
+                  <span>Updated: {props.rekordboxDate}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
         {/* Form controls: Unowned toggle + Analyze button */}
@@ -217,7 +223,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             {/* Timing hint moved to processing-only context */}
           </div>
         </div>
-
         {/* Error display with aria-live */}
         {props.errorText && (
           <div className="sr-only" aria-live="polite">{props.errorText}</div>
