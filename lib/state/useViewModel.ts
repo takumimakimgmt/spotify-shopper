@@ -39,10 +39,9 @@ export interface ViewModel {
  */
 export function useViewModel(
   analyzer: ReturnType<typeof usePlaylistAnalyzer>,
-  filters: FiltersState
+  filters: FiltersState,
+  activeTab: string | null
 ): ViewModel {
-  const currentResult = analyzer.currentResult;
-  
   const multiResults = useMemo(
     () => analyzer.multiResults || [],
     [analyzer.multiResults]
@@ -52,6 +51,12 @@ export function useViewModel(
     () => analyzer.storageWarning || null,
     [analyzer.storageWarning]
   );
+
+  // Compute currentResult from activeTab and multiResults
+  const currentResult = useMemo(() => {
+    if (!activeTab) return null;
+    return multiResults.find(([url]) => url === activeTab)?.[1] ?? null;
+  }, [activeTab, multiResults]);
 
   // Derive displayed tracks based on current result + filter options
   const displayedTracks = useMemo(() => {

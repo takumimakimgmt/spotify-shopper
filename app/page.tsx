@@ -36,8 +36,8 @@ function PageInner() {
   const searchParams = useSearchParams();
 
   // === DERIVED DATA: Pure calculations ===
-  const hasResult = Boolean(analyzer.currentResult);
-  const vm = useViewModel(analyzer, filters);
+  const vm = useViewModel(analyzer, filters, selection.activeTab);
+  const hasResult = Boolean(vm.currentResult);
 
   const TAB_QS_KEY = "t";
   // URL(ASCII)を短く安全にクエリ化（base64url）
@@ -55,47 +55,47 @@ function PageInner() {
 
   // (1) 初期タブ決定：URL(t) → なければ先頭
   useEffect(() => {
-    if (analyzer.activeTab) return;
+    if (selection.activeTab) return;
     if (vm.multiResults.length === 0) return;
 
     const t = searchParams.get(TAB_QS_KEY);
     const decoded = t ? decodeTab(t) : null;
 
     if (decoded && vm.multiResults.some(([u]) => u === decoded)) {
-      analyzer.setActiveTab(decoded);
+      selection.setActiveTab(decoded);
       return;
     }
 
-    analyzer.setActiveTab(vm.multiResults[0][0]);
+    selection.setActiveTab(vm.multiResults[0][0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vm.multiResults.length, analyzer.activeTab, searchParams]);
+  }, [vm.multiResults.length, selection.activeTab, searchParams]);
 
   // (2) タブ変更をURLへ同期（リロード耐性）
   useEffect(() => {
-    const tab = analyzer.activeTab;
+    const tab = selection.activeTab;
     if (!tab) return;
 
     const params = new URLSearchParams(searchParams.toString());
     params.set(TAB_QS_KEY, encodeTab(tab));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analyzer.activeTab, router, pathname, searchParams]);
+  }, [selection.activeTab, router, pathname, searchParams]);
 
   // === ACTIONS: All operations ===
-  const actions = useActions(analyzer);
+  const actions = useActions(analyzer, selection);
 
   // === SIDE EFFECTS ===
     const { setFormCollapsed } = selection;
     const prevResultRef = useRef<any>(null);
     useEffect(() => {
-      const r = analyzer.currentResult;
+      const r = vm.currentResult;
       const hasTracks = (r?.tracks?.length ?? 0) > 0;
       if (!hasTracks) return;
       if (r !== prevResultRef.current) {
         setFormCollapsed(true);
         prevResultRef.current = r;
       }
-    }, [analyzer.currentResult]);
+    }, [vm.currentResult]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
@@ -113,10 +113,10 @@ function PageInner() {
               {analyzer.progress < 10 && <span className="text-slate-500"> (server starting up…)</span>}
             </div>
           )}
-          {analyzer.currentResult && selection.formCollapsed ? (
+          {vm.currentResult && selection.formCollapsed ? (
             <div className="flex items-center justify-between text-sm text-slate-200">
               <div className="flex items-center gap-2">
-                {analyzer.currentResult.hasRekordboxData && (
+                {vm.currentResult.hasRekordboxData && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] text-emerald-200">
                     XML attached
                   </span>
@@ -152,7 +152,6 @@ function PageInner() {
               setForceRefreshHint={analyzer.setForceRefreshHint}
               cancelAnalyze={actions.cancelAnalyze}
               retryFailed={actions.retryFailed}
-
             />
           )}
         </section>
@@ -179,8 +178,8 @@ function PageInner() {
             {/* Tabs */}
             <ResultsTabs
               multiResults={vm.multiResults}
-              activeTab={analyzer.activeTab}
-              onSelectTab={analyzer.setActiveTab}
+              activeTab={selection.activeTab}
+              onSelectTab={selection.setActiveTab}
               onRemoveTab={actions.handleRemoveTab}
               onClearAll={actions.handleClearAllTabs}
             />
