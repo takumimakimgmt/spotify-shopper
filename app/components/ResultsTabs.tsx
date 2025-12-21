@@ -10,6 +10,7 @@ interface ResultsTabsProps {
 }
 
 export function ResultsTabs({ multiResults, activeTab, onSelectTab, onRemoveTab, onClearAll }: ResultsTabsProps) {
+  // タブはtracks未定義でも必ず表示。UIで「未解析」表示はtracks未定義または空の場合。
   if (multiResults.length === 0) return null;
 
   return (
@@ -17,6 +18,7 @@ export function ResultsTabs({ multiResults, activeTab, onSelectTab, onRemoveTab,
       <div className="flex gap-2 overflow-x-auto flex-1">
         {multiResults.map(([url, result]) => {
           const isActive = activeTab === url;
+          const isUnparsed = !result.tracks || result.tracks.length === 0;
           return (
             <div
               key={url}
@@ -32,6 +34,9 @@ export function ResultsTabs({ multiResults, activeTab, onSelectTab, onRemoveTab,
               >
                 <span>
                   {result.title} ({result.total})
+                  {isUnparsed && (
+                    <span className="ml-2 text-xs text-yellow-400">未解析</span>
+                  )}
                 </span>
                 {result.hasRekordboxData && (
                   <span

@@ -1,3 +1,13 @@
+// --- RekordboxMeta for XML meta info ---
+
+// 軽量保存用: tracksを除外したResultState
+export type LightResult = Omit<ResultState, 'tracks'> & {
+  tracks?: never;
+};
+export type RekordboxMeta = {
+  filename: string;
+  updatedAtISO: string; // new Date(file.lastModified).toISOString()
+};
 // Shared types used across the app (API responses, UI state)
 
 export type StoreLinks = {
@@ -95,6 +105,7 @@ export type ResultState = {
   analyzedAt: number;
   hasRekordboxData?: boolean;
   meta?: ApiMeta;
+  rekordboxMeta?: RekordboxMeta | null;
 };
 
 export type SortKey = 'none' | 'artist' | 'album' | 'title';

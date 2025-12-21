@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, Suspense } from "react";
@@ -14,12 +15,18 @@ import ProgressList from './components/ProgressList';
 import { ShopperHeader } from './components/ShopperHeader';
 import { ResultsTabs } from './components/ResultsTabs';
 import { FiltersBar } from './components/FiltersBar';
-import { ResultsTable } from './components/ResultsTable';
-import { SidePanels } from './components/SidePanels';
+import dynamic from 'next/dynamic';
+import SkeletonResults from './components/SkeletonResults';
+const ResultsTable = dynamic(
+  () => import('./components/ResultsTable').then(mod => mod.default),
+  { ssr: false, loading: () => <SkeletonResults /> }
+);
+const SidePanels = dynamic(
+  () => import('./components/SidePanels').then(mod => mod.default),
+  { ssr: false, loading: () => null }
+);
 import ErrorAlert from './components/ErrorAlert';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
-
-// ==== Main component ====
 
 function PageInner() {
   // Vercel / backend cold start warmup
@@ -97,6 +104,17 @@ function PageInner() {
       }
     }, [vm.currentResult]);
 
+  // タブ切替時にtracksが空ならensureHydratedで埋める
+  useEffect(() => {
+    const tab = selection.activeTab;
+    if (!tab) return;
+    const result = analyzer.multiResults.find(([url]) => url === tab)?.[1];
+    if (result && result.tracks.length === 0) {
+      // @ts-ignore
+      analyzer.ensureHydrated?.(tab);
+    }
+  }, [selection.activeTab]);
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
@@ -115,10 +133,19 @@ function PageInner() {
           )}
           {vm.currentResult && selection.formCollapsed ? (
             <div className="flex items-center justify-between text-sm text-slate-200">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {vm.currentResult.hasRekordboxData && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] text-emerald-200">
                     XML attached
+                  </span>
+                )}
+                {/* XML meta info always visible when collapsed (from currentResult) */}
+                {vm.currentResult?.rekordboxMeta && (
+                  <span className="text-xs text-slate-400 ml-2">
+                    XML: {vm.currentResult.rekordboxMeta.filename ?? '—'}
+                    {vm.currentResult.rekordboxMeta.updatedAtISO && (
+                      <span className="ml-2">Updated: {new Date(vm.currentResult.rekordboxMeta.updatedAtISO).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}</span>
+                    )}
                   </span>
                 )}
               </div>
@@ -190,6 +217,8 @@ function PageInner() {
                   ownedCount={vm.ownedCount}
                   toBuyCount={vm.toBuyCount}
                   displayedTracks={vm.displayedTracks}
+                  rekordboxFile={analyzer.rekordboxFile}
+                  rekordboxDate={analyzer.rekordboxDate}
                   applySnapshotWithXml={async (file, result, tracks) => {
                     await actions.applySnapshotWithXml(file, result, tracks);
                   }}
