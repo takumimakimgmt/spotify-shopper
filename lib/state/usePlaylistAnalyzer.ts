@@ -1,4 +1,9 @@
+
 "use client";
+import type { RekordboxMeta } from "../types";
+// RekordboxMeta utility
+const makeRekordboxMeta = (file: File | null): RekordboxMeta | null =>
+  file ? { filename: file.name, updatedAtISO: new Date(file.lastModified).toISOString() } : null;
 
 import { useEffect, useRef, useState, ChangeEvent, FormEvent } from 'react';
 import { ApiPlaylistResponse, PlaylistRow, ResultState, TrackCategory, PlaylistSnapshotV1 } from "../types";
@@ -49,22 +54,158 @@ function classifyAppleError(message: string | undefined): 'timeout' | 'dom-chang
 }
 
 export function usePlaylistAnalyzer() {
-    // rekordboxファイルと日付をセットで管理する共通関数
-    const applyRekordboxFile = (file: File | null) => {
-      setRekordboxFile(file);
-      if (file && typeof file.lastModified === 'number') {
-        const date = new Date(file.lastModified);
-        setRekordboxDate(date.toLocaleString());
-      } else {
-        setRekordboxDate(null);
+        // タブ切替時にtracks未定義ならAPIでhydrate
+        const ensureHydrated = async (url: string) => {
+          const idx = multiResults.findIndex(([u]) => u === url);
+          if (idx === -1) return;
+          const [_, result] = multiResults[idx];
+          if (result.tracks && result.tracks.length > 0) return;
+          try {
+            setMultiResults((prev) =>
+              prev.map(([u, r]) =>
+                u === url ? [u, { ...r, tracks: [] }] : [u, r]
+              )
+            );
+            const detectedSource = detectSourceFromUrl(url);
+            const json = await getPlaylist({ url, source: detectedSource });
+            const rows = mapTracks(json);
+            setMultiResults((prev) =>
+              prev.map(([u, r]) =>
+                u === url ? [u, { ...r, tracks: rows, analyzedAt: Date.now() }] : [u, r]
+              )
+            );
+          } catch (err) {
+            setMultiResults((prev) =>
+              prev.map(([u, r]) =>
+                u === url ? [u, { ...r, errorText: 'トラックの取得に失敗しました', tracks: [] }] : [u, r]
+              )
+            );
+          }
+        };
+
+      // 起動時にSTORAGE_RESULTSからmultiResultsを軽量復元（tracksは絶対に混入させない）
+      useEffect(() => {
+        if (typeof window === 'undefined') return;
+        let idleId: any = null;
+        let timeoutId: any = null;
+        const run = () => {
+          try {
+            const saved = localStorage.getItem(STORAGE_RESULTS);
+            if (!saved) return;
+            if (saved.length > 512 * 1024) {
+              localStorage.removeItem(STORAGE_RESULTS);
+              setStorageWarning('保存データが大きすぎるため復元をスキップしました');
+              return;
+            }
+            let parsed;
+            try {
+              parsed = JSON.parse(saved);
+            } catch (err) {
+              localStorage.removeItem(STORAGE_RESULTS);
+              setStorageWarning('保存データが壊れていたため復元をスキップしました');
+              return;
+            }
+            if (!parsed || !Array.isArray(parsed.results)) return;
+            const restored: Array<[string, ResultState]> = parsed.results.map((r: any) => [
+              r.url,
+              {
+                title: r.title ?? '',
+                total: r.total ?? 0,
+                playlistUrl: r.playlistUrl ?? r.url,
+                playlist_id: r.playlist_id ?? undefined,
+                playlist_name: r.playlist_name ?? undefined,
+                tracks: undefined, // tracksは絶対に復元しない
+                analyzedAt: r.analyzedAt ?? Date.now(),
+                hasRekordboxData: r.hasRekordboxData ?? false,
+                rekordboxMeta: r.rekordboxMeta ?? null,
+                meta: r.meta ?? undefined,
+              }
+            ]);
+            setMultiResults(restored);
+          } catch (err) {
+            // ignore
+          }
+        };
+        if ('requestIdleCallback' in window) {
+          idleId = (window as any).requestIdleCallback(run, { timeout: 1500 });
+        } else {
+          timeoutId = setTimeout(run, 0);
+        }
+        return () => {
+          if (idleId && 'cancelIdleCallback' in window) (window as any).cancelIdleCallback(idleId);
+          if (timeoutId) clearTimeout(timeoutId);
+        };
+      }, []);
+
+      // 1-1: STORAGE_RESULTSへ保存時はtracksを絶対に含めない
+      function saveResultsToStorage(results: Array<[string, ResultState]>) {
+        if (typeof window === 'undefined') return;
+        // tracksを除外したLightResultのみ保存
+        const lightResults = results.map(([url, r]) => [
+          url,
+          {
+            title: r.title,
+            total: r.total,
+            playlistUrl: r.playlistUrl,
+            playlist_id: r.playlist_id,
+            playlist_name: r.playlist_name,
+            analyzedAt: r.analyzedAt,
+            hasRekordboxData: r.hasRekordboxData,
+            rekordboxMeta: r.rekordboxMeta,
+            meta: r.meta,
+            // tracksは絶対に保存しない
+          }
+        ]);
+        localStorage.setItem(STORAGE_RESULTS, JSON.stringify({ results: lightResults }));
       }
-    };
+
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
   const [rekordboxDate, setRekordboxDate] = useState<string | null>(null);
   const [multiResults, setMultiResults] = useState<Array<[string, ResultState]>>([]);
   const [loading, setLoading] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!multiResults.length) return;
+    if (localStorageDebounceRef.current) clearTimeout(localStorageDebounceRef.current);
+    localStorageDebounceRef.current = setTimeout(() => {
+      // summary-only: url, snapshotId, summaryのみ
+      const results = multiResults.map(([url, r]) => ({
+        url,
+        snapshotId: r.playlist_id,
+        summary: {
+          title: r.title,
+          total: r.total,
+          playlistUrl: r.playlistUrl,
+          playlist_id: r.playlist_id,
+          playlist_name: r.playlist_name,
+          analyzedAt: r.analyzedAt,
+          hasRekordboxData: r.hasRekordboxData,
+          rekordboxMeta: r.rekordboxMeta,
+          meta: r.meta,
+        }
+      }));
+      const payload = JSON.stringify({ version: 2, results });
+      if (payload.length > MAX_STORAGE_BYTES) {
+        setStorageWarning('保存容量上限を超えました');
+        return;
+      }
+      localStorage.setItem(STORAGE_RESULTS, payload);
+    }, 500);
+  }, [multiResults]);
+
+  // rekordboxファイルと日付をセットで管理する共通関数
+  const applyRekordboxFile = (file: File | null) => {
+    setRekordboxFile(file);
+    if (file && typeof file.lastModified === 'number') {
+      const date = new Date(file.lastModified);
+      setRekordboxDate(date.toLocaleString());
+    } else {
+      setRekordboxDate(null);
+    }
+  };
   const [progress, setProgress] = useState<number>(0);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [errorMeta, setErrorMeta] = useState<any>(null);
@@ -138,7 +279,7 @@ export function usePlaylistAnalyzer() {
             const rows = mapTracks(json);
             updatedResults.push([
               url,
-              { ...result, tracks: rows, analyzedAt: Date.now(), hasRekordboxData: true },
+              { ...result, tracks: rows, analyzedAt: Date.now(), hasRekordboxData: true, rekordboxMeta: makeRekordboxMeta(file) },
             ]);
           } catch (err) {
             console.error(`[Bulk Re-analyze] Error for ${url}:`, err);
@@ -178,6 +319,7 @@ export function usePlaylistAnalyzer() {
                   tracks: rows,
                   analyzedAt: Date.now(),
                   hasRekordboxData: true,
+                  rekordboxMeta: makeRekordboxMeta(file),
                 },
               ]
             : [url, result]
@@ -243,7 +385,6 @@ export function usePlaylistAnalyzer() {
         const t1_start = t0;
         effectiveSource = (detectSourceFromUrl(url) || 'spotify') as 'spotify' | 'apple';
         setPhaseLabel(effectiveSource === 'apple' ? 'Fetching Apple Music' : 'Fetching Spotify');
-        // Mark fetching start (Apple calls out longer wait explicitly)
         setProgressItems((prev) =>
           prev.map((p) =>
             p.url === url
@@ -268,8 +409,8 @@ export function usePlaylistAnalyzer() {
 
         const t2_api_start = performance.now();
         let json: ApiPlaylistResponse | null = null;
-        const APPLE_TIMEOUT_MS = 25000; // 25 second timeout for Apple
-        
+        const APPLE_TIMEOUT_MS = 45000; // 45秒に延長
+
         const fetchOnce = async (appleMode?: 'auto' | 'legacy' | 'fast') => {
           if (rekordboxFile) {
             return postPlaylistWithRekordboxUpload({
@@ -292,54 +433,40 @@ export function usePlaylistAnalyzer() {
           });
         };
 
+        // Apple Musicはautoモード1回のみ（backendでfast/legacy自動フォールバック）
         if (effectiveSource === 'apple') {
-          const appleAttempts: Array<'auto' | 'legacy' | 'fast'> = ['auto', 'legacy', 'fast'];
-          let lastErr: any = null;
-          for (let i = 0; i < appleAttempts.length; i++) {
-            const mode = appleAttempts[i];
-            try {
-              setPhaseLabel(`Fetching Apple Music (${mode})`);
-              // Wrap the fetch call with timeout for Apple
-              const wrapped = async () => {
-                const timeoutController = new AbortController();
-                const timeoutId = setTimeout(() => timeoutController.abort(), APPLE_TIMEOUT_MS);
-                
-                // Merge with external abort signal
-                const externalSignal = abortRef.current?.signal;
-                if (externalSignal?.aborted) {
-                  timeoutController.abort();
-                }
-                if (externalSignal) {
-                  externalSignal.addEventListener('abort', () => timeoutController.abort());
-                }
-                
-                try {
-                  const result = await fetchOnce(mode);
-                  clearTimeout(timeoutId);
-                  return result;
-                } catch (err) {
-                  clearTimeout(timeoutId);
-                  // If timeout controller aborted but external signal didn't, it's a timeout
-                  if (timeoutController.signal.aborted && !externalSignal?.aborted) {
-                    const error = err instanceof Error ? err : new Error(String(err));
-                    error.message = 'timeout';
-                    throw error;
-                  }
-                  throw err;
-                }
-              };
-              json = await wrapped();
-              break;
-            } catch (err: any) {
-              lastErr = err;
-              if (i < appleAttempts.length - 1) {
-                const backoffMs = 400 * (i + 1);
-                setPhaseLabel(`Retrying Apple Music (backoff ${backoffMs}ms)`);
-                await sleep(backoffMs);
-                continue;
-              }
-              throw lastErr;
+          setPhaseLabel('Fetching Apple Music (auto)');
+          const timeoutController = new AbortController();
+          const timeoutId = setTimeout(() => timeoutController.abort(), APPLE_TIMEOUT_MS);
+          const externalSignal = abortRef.current?.signal;
+          if (externalSignal?.aborted) timeoutController.abort();
+          if (externalSignal) externalSignal.addEventListener('abort', () => timeoutController.abort());
+          try {
+            json = await fetchOnce('auto');
+            clearTimeout(timeoutId);
+          } catch (err: any) {
+            clearTimeout(timeoutId);
+            // UI向けエラー文言を具体化
+            const reasonTag = classifyAppleError(err?.message);
+            let errorMsg = '';
+            switch (reasonTag) {
+              case 'timeout':
+                errorMsg = 'Apple Musicの取得が時間切れ。再実行する場合は時間を置いてください。';
+                break;
+              case 'dom-change':
+                errorMsg = 'Apple側のDOM変更の可能性。時間を置く or URL形式を確認。';
+                break;
+              case 'region':
+                errorMsg = '地域制限/ログイン状態の可能性。';
+                break;
+              case 'bot-suspected':
+                errorMsg = 'bot検知の可能性。時間を置く/回数を減らす。';
+                break;
+              default:
+                errorMsg = 'Apple Music取得に失敗しました。';
             }
+            setErrorText(errorMsg);
+            throw err;
           }
         } else {
           json = await fetchOnce();
@@ -481,9 +608,19 @@ export function usePlaylistAnalyzer() {
               setErrorText('Spotifyの取得に失敗しました（詳細不明）');
             }
           } else {
-            const base = errText || 'プレイリストの取得に失敗しました';
-            const reasonSuffix = usedSource === 'apple' && reasonTag ? ` (${reasonTag})` : '';
-            const hint = usedSource === 'apple' ? ' Continue without Apple data or retry.' : '';
+            // 2-3: Apple Musicエラー詳細化
+            let base = errText || 'プレイリストの取得に失敗しました';
+            let reasonSuffix = usedSource === 'apple' && reasonTag ? ` (${reasonTag})` : '';
+            let hint = '';
+            if (usedSource === 'apple') {
+              if (reasonTag === 'timeout') {
+                hint = '\nApple Musicは遅い/失敗しやすい場合があります。単体URLでRetry推奨。時間をおいて再試行してください。';
+              } else if (reasonTag === 'region') {
+                hint = '\nApple Musicの地域制限・提供条件により取得できない場合があります。';
+              } else if (reasonTag === 'bot-suspected') {
+                hint = '\nApple Music側でbot判定・CAPTCHA等によりブロックされている可能性があります。時間をおいて再試行してください。';
+              }
+            }
             setErrorText(base + reasonSuffix + hint);
           }
         } else {
@@ -494,9 +631,14 @@ export function usePlaylistAnalyzer() {
     }
 
     if (newResults.length > 0) {
+      const rbMeta = makeRekordboxMeta(rekordboxFile);
       const existingUrls = new Set(newResults.map(([url]) => url));
       const filteredExisting = multiResults.filter(([url]) => !existingUrls.has(url));
-      const merged = [...newResults, ...filteredExisting];
+      // 新規resultにrekordboxMetaを焼き込む
+      const merged: Array<[string, ResultState]> = [
+        ...newResults.map(([url, result]) => [url, { ...result, rekordboxMeta: rbMeta }] as [string, ResultState]),
+        ...filteredExisting
+      ];
       setMultiResults(merged);
       setPlaylistUrlInput('');
       // XMLファイル情報は消さない

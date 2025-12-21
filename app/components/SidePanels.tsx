@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import type { PlaylistRow, ResultState } from '../../lib/types';
 import ResultSummaryBar from './ResultSummaryBar';
@@ -9,6 +10,8 @@ interface SidePanelsProps {
   ownedCount: number;
   toBuyCount: number;
   displayedTracks: PlaylistRow[];
+  rekordboxFile: File | null;
+  rekordboxDate?: string | null;
   applySnapshotWithXml: (file: File, current: ResultState, displayedTracks: PlaylistRow[]) => Promise<void>;
   handleExportCSV: () => void;
 }
@@ -18,6 +21,8 @@ export function SidePanels({
   ownedCount,
   toBuyCount,
   displayedTracks,
+  // rekordboxFile,
+  // rekordboxDate,
   applySnapshotWithXml,
   handleExportCSV,
 }: SidePanelsProps) {
@@ -45,7 +50,6 @@ export function SidePanels({
   return (
     <div className="space-y-4">
       <ResultSummaryBar result={currentResult} ownedCount={ownedCount} toBuyCount={toBuyCount} />
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="space-y-1">
           <h2 className="font-semibold">
@@ -61,6 +65,13 @@ export function SidePanels({
               </a>
             )}
           </h2>
+          {/* XML meta info always visible in side panel (from currentResult) */}
+          {currentResult.rekordboxMeta && (
+            <div className="text-xs text-slate-400 mt-1">
+              Last XML: {currentResult.rekordboxMeta.filename ?? '—'}
+              <span className="ml-2">Updated: {currentResult.rekordboxMeta.updatedAtISO ? new Date(currentResult.rekordboxMeta.updatedAtISO).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : '—'}</span>
+            </div>
+          )}
           {xmlError && (
             <div className="mt-2">
               <ErrorAlert title="XML Error" message={xmlError} />
@@ -83,3 +94,5 @@ export function SidePanels({
     </div>
   );
 }
+
+export default SidePanels;
