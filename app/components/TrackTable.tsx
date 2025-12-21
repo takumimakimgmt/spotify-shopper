@@ -27,11 +27,12 @@ export function TrackTable({
   getRecommendedStore,
   getOtherStores,
 }: TrackTableProps) {
+  const safeTracks = Array.isArray(tracks) ? tracks : [];
   return (
     <>
       {/* Mobile: card list */}
       <div className="md:hidden space-y-2">
-        {tracks.map((t) => {
+        {safeTracks.map((t) => {
           const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
           const trackUrl = isApplePlaylist ? t.appleUrl || t.spotifyUrl || undefined : t.spotifyUrl || t.appleUrl || undefined;
           const ownedStyle = getOwnedStatusStyle(t.owned, t.ownedReason);
@@ -112,8 +113,8 @@ export function TrackTable({
             <tbody>
               {(() => {
                 const sections: Array<{ id: TrackCategory; label: string; color: string; items: PlaylistRow[]; icon: string }> = [
-                  { id: 'checkout', label: categoryLabels.checkout, color: 'text-amber-300', icon: '🛒', items: tracks.filter((t) => categorizeTrack(t) === 'checkout') },
-                  { id: 'owned', label: categoryLabels.owned, color: 'text-emerald-300', icon: '✅', items: tracks.filter((t) => categorizeTrack(t) === 'owned') },
+                  { id: 'checkout', label: categoryLabels.checkout, color: 'text-amber-300', icon: '🛒', items: safeTracks.filter((t) => categorizeTrack(t) === 'checkout') },
+                  { id: 'owned', label: categoryLabels.owned, color: 'text-emerald-300', icon: '✅', items: safeTracks.filter((t) => categorizeTrack(t) === 'owned') },
                 ];
 
                 return sections.flatMap((section) => {

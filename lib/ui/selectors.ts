@@ -16,7 +16,8 @@ export function selectDisplayedTracks(
   tracks: PlaylistRow[],
   options: FilterOptions
 ): PlaylistRow[] {
-  let filtered = tracks;
+  const safeTracks = Array.isArray(tracks) ? tracks : [];
+  let filtered = safeTracks;
 
   // Filter by owned status when "only unowned" is toggled
   if (options.onlyUnowned) {
@@ -60,9 +61,10 @@ export function selectTrackCounts(tracks: PlaylistRow[]): {
   ownedCount: number;
   toBuyCount: number;
 } {
+  const safeTracks = Array.isArray(tracks) ? tracks : [];
   return {
-    ownedCount: tracks.filter((t) => t.owned === true).length,
-    toBuyCount: tracks.filter((t) => t.owned !== true).length,
+    ownedCount: safeTracks.filter((t) => t.owned === true).length,
+    toBuyCount: safeTracks.filter((t) => t.owned !== true).length,
   };
 }
 
