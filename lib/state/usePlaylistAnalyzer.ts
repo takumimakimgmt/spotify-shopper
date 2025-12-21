@@ -114,7 +114,7 @@ export function usePlaylistAnalyzer() {
                 playlistUrl: r.playlistUrl ?? r.url,
                 playlist_id: r.playlist_id ?? undefined,
                 playlist_name: r.playlist_name ?? undefined,
-                tracks: undefined, // tracksは絶対に復元しない
+                tracks: [], // tracksは必ず空配列でshapeを保証
                 analyzedAt: r.analyzedAt ?? Date.now(),
                 hasRekordboxData: r.hasRekordboxData ?? false,
                 rekordboxMeta: r.rekordboxMeta ?? null,
