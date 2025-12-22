@@ -71,7 +71,8 @@ export function useActions(
 
   const generateCsv = useCallback(
     (displayedTracks: PlaylistRow[], currentResult: ResultState | null): string | null => {
-      if (!displayedTracks.length || !currentResult) {
+      const safeTracks = Array.isArray(displayedTracks) ? displayedTracks : [];
+      if (!safeTracks.length || !currentResult) {
         return null;
       }
 
@@ -86,7 +87,7 @@ export function useActions(
         "Bandcamp",
         "iTunes",
       ];
-      const rows = displayedTracks.map((t) => {
+      const rows = safeTracks.map((t) => {
         const stores = normalizeStores(t.stores);
         return [
           sanitizeForCsvCell(String(t.index)),
@@ -116,7 +117,8 @@ export function useActions(
 
   const downloadCsv = useCallback(
     (displayedTracks: PlaylistRow[], currentResult: ResultState | null) => {
-      const csv = generateCsv(displayedTracks, currentResult);
+      const safeTracks = Array.isArray(displayedTracks) ? displayedTracks : [];
+      const csv = generateCsv(safeTracks, currentResult);
       if (!csv) {
         alert("No tracks to export.");
         return;

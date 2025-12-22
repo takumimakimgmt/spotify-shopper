@@ -1,5 +1,79 @@
 
 "use client";
+
+// --- Apple Music feature flag ---
+const ENABLE_APPLE = process.env.NEXT_PUBLIC_ENABLE_APPLE === '1';
+
+// --- Robust localStorage restore utilities ---
+function safeJsonParse<T>(s: string | null): T | null {
+  if (!s) return null;
+  try {
+    return JSON.parse(s) as T;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeStoredResults(parsed: any): Array<[string, ResultState]> | null {
+  if (!parsed) return null;
+
+  // v2: { version: 2, results: [{ url, summary: {...} }] }
+  if (parsed.version === 2 && Array.isArray(parsed.results)) {
+    const out: Array<[string, ResultState]> = [];
+    for (const r of parsed.results) {
+      const url = typeof r?.url === 'string' ? r.url : null;
+      if (!url) continue;
+      const s = r?.summary ?? {};
+      out.push([
+        url,
+        {
+          title: s.title ?? '',
+          total: Number.isFinite(s.total) ? s.total : 0,
+          playlistUrl: s.playlistUrl ?? url,
+          playlist_id: s.playlist_id,
+          playlist_name: s.playlist_name,
+          analyzedAt: Number.isFinite(s.analyzedAt) ? s.analyzedAt : Date.now(),
+          hasRekordboxData: !!s.hasRekordboxData,
+          rekordboxMeta: s.rekordboxMeta ?? null,
+          meta: s.meta,
+          errorText: s.errorText ?? null,
+          tracks: [], // Always array
+        },
+      ]);
+    }
+    return out;
+  }
+
+  // legacy: { results: [[url, resultState], ...] }
+  if (Array.isArray(parsed.results) && Array.isArray(parsed.results[0])) {
+    const out: Array<[string, ResultState]> = [];
+    for (const pair of parsed.results) {
+      const url = typeof pair?.[0] === 'string' ? pair[0] : null;
+      const r = pair?.[1] ?? {};
+      if (!url) continue;
+      out.push([
+        url,
+        {
+          title: r.title ?? '',
+          total: Number.isFinite(r.total) ? r.total : 0,
+          playlistUrl: r.playlistUrl ?? url,
+          playlist_id: r.playlist_id,
+          playlist_name: r.playlist_name,
+          analyzedAt: Number.isFinite(r.analyzedAt) ? r.analyzedAt : Date.now(),
+          hasRekordboxData: !!r.hasRekordboxData,
+          rekordboxMeta: r.rekordboxMeta ?? null,
+          meta: r.meta,
+          errorText: r.errorText ?? null,
+          tracks: Array.isArray(r.tracks) ? r.tracks : [], // Always array
+        },
+      ]);
+    }
+    return out;
+  }
+
+  return null;
+}
+
 import type { RekordboxMeta } from "../types";
 // RekordboxMeta utility
 const makeRekordboxMeta = (file: File | null): RekordboxMeta | null =>
@@ -83,58 +157,22 @@ export function usePlaylistAnalyzer() {
           }
         };
 
-      // 起動時にSTORAGE_RESULTSからmultiResultsを軽量復元（tracksは絶対に混入させない）
+      // Robust restore: always arrayify tracks, auto-discard broken/legacy data
       useEffect(() => {
-        if (typeof window === 'undefined') return;
-        let idleId: any = null;
-        let timeoutId: any = null;
-        const run = () => {
-          try {
-            const saved = localStorage.getItem(STORAGE_RESULTS);
-            if (!saved) return;
-            if (saved.length > 512 * 1024) {
-              localStorage.removeItem(STORAGE_RESULTS);
-              setStorageWarning('保存データが大きすぎるため復元をスキップしました');
-              return;
-            }
-            let parsed;
-            try {
-              parsed = JSON.parse(saved);
-            } catch (err) {
-              localStorage.removeItem(STORAGE_RESULTS);
-              setStorageWarning('保存データが壊れていたため復元をスキップしました');
-              return;
-            }
-            if (!parsed || !Array.isArray(parsed.results)) return;
-            const restored: Array<[string, ResultState]> = parsed.results.map((r: any) => [
-              r.url,
-              {
-                title: r.title ?? '',
-                total: r.total ?? 0,
-                playlistUrl: r.playlistUrl ?? r.url,
-                playlist_id: r.playlist_id ?? undefined,
-                playlist_name: r.playlist_name ?? undefined,
-                tracks: [], // tracksは必ず空配列でshapeを保証
-                analyzedAt: r.analyzedAt ?? Date.now(),
-                hasRekordboxData: r.hasRekordboxData ?? false,
-                rekordboxMeta: r.rekordboxMeta ?? null,
-                meta: r.meta ?? undefined,
-              }
-            ]);
+        try {
+          if (typeof window === 'undefined') return;
+          const saved = localStorage.getItem(STORAGE_RESULTS);
+          if (!saved) return;
+          const parsed = safeJsonParse<any>(saved);
+          const restored = normalizeStoredResults(parsed);
+          if (restored && restored.length > 0) {
             setMultiResults(restored);
-          } catch (err) {
-            // ignore
+          } else {
+            // Broken or unrecognized format: auto-discard
+            localStorage.removeItem(STORAGE_RESULTS);
           }
-        };
-        if ('requestIdleCallback' in window) {
-          idleId = (window as any).requestIdleCallback(run, { timeout: 1500 });
-        } else {
-          timeoutId = setTimeout(run, 0);
+        } finally {
         }
-        return () => {
-          if (idleId && 'cancelIdleCallback' in window) (window as any).cancelIdleCallback(idleId);
-          if (timeoutId) clearTimeout(timeoutId);
-        };
       }, []);
 
       // 1-1: STORAGE_RESULTSへ保存時はtracksを絶対に含めない
@@ -379,6 +417,7 @@ export function usePlaylistAnalyzer() {
     let hasError = false;
 
     for (const url of urls) {
+
       let effectiveSource: 'spotify' | 'apple' = 'spotify';
       try {
         const t0 = performance.now();
@@ -396,6 +435,19 @@ export function usePlaylistAnalyzer() {
               : p
           )
         );
+
+        // Apple Music OFF: feature flag
+        if (effectiveSource === 'apple' && !ENABLE_APPLE) {
+          hasError = true;
+          setProgressItems((prev) =>
+            prev.map((p) =>
+              p.url === url
+                ? { ...p, status: 'error', message: 'Apple Music is temporarily disabled (Spotify only).' }
+                : p
+            )
+          );
+          continue;
+        }
 
         if (effectiveSource === 'spotify') {
           const isSpotifyPlaylistUrl = /open\.spotify\.com\/.*playlist\//i.test(url);
@@ -665,6 +717,8 @@ export function usePlaylistAnalyzer() {
     currentResult: ResultState,
     displayedTracks: PlaylistRow[]
   ) => {
+    // Always arrayify tracks for safety
+    const baseTracks = Array.isArray(displayedTracks) ? displayedTracks : [];
     const snapshot: PlaylistSnapshotV1 = {
       schema: 'playlist_snapshot',
       version: 1,
@@ -676,7 +730,7 @@ export function usePlaylistAnalyzer() {
         name: currentResult.playlist_name,
         track_count: currentResult.total,
       },
-      tracks: displayedTracks.map((t) => {
+      tracks: baseTracks.map((t) => {
         const primaryKey = t.trackKeyPrimary || t.trackKeyFallback || `${t.title}::${t.artist}`;
         const fallbackKey = t.trackKeyFallback || t.trackKeyPrimary || `${t.title}::${t.artist}`;
         return {
@@ -712,7 +766,9 @@ export function usePlaylistAnalyzer() {
       const idx = next.findIndex((r) => r[1].playlist_id === currentResult.playlist_id);
       if (idx >= 0) {
         const nt = next[idx][1];
-        nt.tracks = nt.tracks.map((t) => {
+        // Always arrayify tracks before .map
+        const safeTracks = Array.isArray(nt.tracks) ? nt.tracks : [];
+        nt.tracks = safeTracks.map((t) => {
           const key = t.trackKeyPrimary || t.trackKeyFallback;
           const u = byKey[key || ''];
           if (u) {
