@@ -35,9 +35,10 @@ export function ResultsTable({
 }: ResultsTableProps) {
   if (!currentResult) return null;
 
+  const safeDisplayedTracks = Array.isArray(displayedTracks) ? displayedTracks : [];
   const sections: Array<{ id: TrackCategory; label: string; color: string; items: PlaylistRow[]; icon: string }> = [
-    { id: 'checkout', label: categoryLabels.checkout, color: 'text-amber-300', icon: '🛒', items: displayedTracks.filter((t) => categorizeTrack(t) === 'checkout') },
-    { id: 'owned', label: categoryLabels.owned, color: 'text-emerald-300', icon: '✅', items: displayedTracks.filter((t) => categorizeTrack(t) === 'owned') },
+    { id: 'checkout', label: categoryLabels.checkout, color: 'text-amber-300', icon: '🛒', items: safeDisplayedTracks.filter((t) => categorizeTrack(t) === 'checkout') },
+    { id: 'owned', label: categoryLabels.owned, color: 'text-emerald-300', icon: '✅', items: safeDisplayedTracks.filter((t) => categorizeTrack(t) === 'owned') },
   ];
 
   return (

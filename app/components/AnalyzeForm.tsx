@@ -151,7 +151,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               Choose File
             </button>
             <span className="text-xs text-slate-400">
-              Upload your Rekordbox collection XML to mark Owned / Not owned.
+              Rekordbox XML is used on this page for matching your library.
             </span>
             {/* XMLファイル名/日付は補助的に表示（source of truthはcurrentResult.rekordboxMeta） */}
             {(props.rekordboxFilename || props.rekordboxDate) && (
