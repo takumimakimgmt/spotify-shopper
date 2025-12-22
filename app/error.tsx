@@ -1,32 +1,86 @@
 "use client";
-import React from "react";
 
-export default function ErrorPage({ reset }: { reset: () => void }) {
-  const handleClear = () => {
-    localStorage.removeItem("playlist-shopper-results");
-    localStorage.removeItem("playlist-shopper-selection");
-    localStorage.removeItem("playlist-shopper-filters");
-    window.location.reload();
+import React, { useEffect } from "react";
+
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.error("[GlobalError]", error);
+  }, [error]);
+
+  const clearLocal = () => {
+    try {
+      const EXACT_KEYS = [
+        'spotify-shopper-results',
+        'spotify-shopper-active-tab',
+      ];
+      for (const k of EXACT_KEYS) localStorage.removeItem(k);
+
+      const PREFIXES = [
+        "playlist-shopper",
+        "spotify-shopper",
+        "buylist",
+        "share:",
+      ];
+      for (const k of Object.keys(localStorage)) {
+        if (PREFIXES.some((p) => k.startsWith(p))) localStorage.removeItem(k);
+      }
+    } catch {}
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 p-8">
-      <h1 className="text-2xl font-bold mb-4">Application error</h1>
-      <p className="mb-6">A client-side exception occurred. This may be due to a schema change or corrupted local data.</p>
-      <div className="flex gap-4">
-        <button
-          className="px-4 py-2 rounded bg-emerald-600 text-white font-semibold hover:bg-emerald-500"
-          onClick={handleClear}
-        >
-          Reset local data
-        </button>
-        <button
-          className="px-4 py-2 rounded bg-slate-700 text-white font-semibold hover:bg-slate-600"
-          onClick={reset}
-        >
-          Try again
-        </button>
-      </div>
-    </div>
+    <html>
+      <body>
+        <div style={{ maxWidth: 720, margin: "40px auto", padding: 16, fontFamily: "ui-sans-serif, system-ui" }}>
+          <h1 style={{ fontSize: 18, marginBottom: 8 }}>Something went wrong</h1>
+          <p style={{ opacity: 0.75, marginBottom: 16 }}>
+            If this keeps happening, try resetting local data and reload.
+          </p>
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <button
+              onClick={() => reset()}
+              style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #333" }}
+            >
+              Retry
+            </button>
+
+            <button
+              onClick={() => {
+                clearLocal();
+                reset();
+              }}
+              style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #333" }}
+            >
+              Reset local data & Retry
+            </button>
+
+            <button
+              onClick={() => {
+                clearLocal();
+                location.href = "/";
+              }}
+              style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #333" }}
+            >
+              Reset & Go Home
+            </button>
+          </div>
+
+          <details style={{ marginTop: 16 }}>
+            <summary style={{ cursor: "pointer" }}>Error details</summary>
+            <pre style={{ whiteSpace: "pre-wrap", marginTop: 8, opacity: 0.75 }}>
+{String(error?.message ?? error)}
+{error?.digest ? `\n\ndigest: ${error.digest}` : ""}
+            </pre>
+          </details>
+        </div>
+      </body>
+    </html>
   );
 }

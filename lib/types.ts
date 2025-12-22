@@ -106,6 +106,8 @@ export type ResultState = {
   hasRekordboxData?: boolean;
   meta?: ApiMeta;
   rekordboxMeta?: RekordboxMeta | null;
+  errorText?: string | null;
+  errorMeta?: unknown;
 };
 
 export type SortKey = 'none' | 'artist' | 'album' | 'title';
