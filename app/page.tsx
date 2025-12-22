@@ -29,22 +29,8 @@ import ErrorAlert from './components/ErrorAlert';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 
 function PageInner() {
-      // Apple Music URLブロック: フラグOFF時は案内してreturn
-      const handleAnalyzeWithAppleBlock = (e: React.FormEvent) => {
-        const url = analyzer.playlistUrlInput.trim();
-        if (!FLAGS.ENABLE_APPLE && /music\.apple\.com/i.test(url)) {
-          analyzer.setErrorText?.("Apple Music is temporarily disabled. Please use a Spotify playlist URL.");
-          return;
-        }
-        actions.handleAnalyze(e);
-      };
-    // --- clean-first-then-sync: 初回ロードはクリーン、以降は同期 ---
-    const initialTabRef = useRef<string | null>(null);
-    const allowUrlSyncRef = useRef(false);
-  // Vercel / backend cold start warmup
-  useEffect(() => {
-    fetch("/api/health", { cache: "no-store" }).catch(() => {});
-  }, []);
+  // Apple Music URLブロック: フラグOFF時は案内してreturn
+  const [banner, setBanner] = React.useState<null | { kind: "error" | "info"; text: string }>(null);
 
   // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
@@ -53,6 +39,27 @@ function PageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    setBanner(null);
+  }, [analyzer.playlistUrlInput]);
+
+  const handleAnalyzeWithAppleBlock = (e: React.FormEvent) => {
+    const url = analyzer.playlistUrlInput.trim();
+    if (!FLAGS.ENABLE_APPLE && /music\.apple\.com/i.test(url)) {
+      setBanner({ kind: "error", text: "Apple Musicは現在停止中。SpotifyプレイリストURLを貼ってください。" });
+      return;
+    }
+    actions.handleAnalyze(e);
+  };
+    // --- clean-first-then-sync: 初回ロードはクリーン、以降は同期 ---
+    const initialTabRef = useRef<string | null>(null);
+    const allowUrlSyncRef = useRef(false);
+  // Vercel / backend cold start warmup
+  useEffect(() => {
+    fetch("/api/health", { cache: "no-store" }).catch(() => {});
+  }, []);
+
 
   // === DERIVED DATA: Pure calculations ===
   const vm = useViewModel(analyzer, filters, selection.activeTab);
@@ -151,6 +158,19 @@ function PageInner() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
+        {/* Top explanation card */}
+        <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <h1 className="text-lg font-semibold">Spotify Playlist Shopper</h1>
+          <p className="mt-2 text-sm text-white/80">
+            SpotifyのプレイリストとRekordbox XMLを照合して、<span className="text-white">未所持曲だけ</span>を抽出。
+            そのまま購入リンクへ飛べます。
+          </p>
+          <ol className="mt-3 space-y-1 text-sm text-white/70">
+            <li>1) SpotifyプレイリストURLを貼る</li>
+            <li>2) Rekordbox XMLをアップロード</li>
+            <li>3) Owned / To Buy を見て買う</li>
+          </ol>
+        </div>
         <ShopperHeader
           title="Playlist Shopper — Spotify & Apple Music"
           subtitle="Paste a playlist URL → Match with Rekordbox → Open buy links"
@@ -212,6 +232,8 @@ function PageInner() {
               setForceRefreshHint={analyzer.setForceRefreshHint}
               cancelAnalyze={actions.cancelAnalyze}
               retryFailed={actions.retryFailed}
+              banner={banner}
+              onDismissBanner={() => setBanner(null)}
             />
           )}
         </section>

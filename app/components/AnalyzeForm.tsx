@@ -19,6 +19,8 @@ export interface AnalyzeFormProps {
   isReanalyzing: boolean;
   progress: number;
   errorText: string | null;
+  banner?: { kind: "error" | "info"; text: string } | null;
+  onDismissBanner?: () => void;
   errorMeta?: ErrorMeta;
   progressItems: ProgressItem[];
   // Setters
@@ -84,6 +86,21 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             />
           </div>
         )}
+        {/* Persistent banner (Apple block, etc) */}
+        {props.banner ? (
+          <div className="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm">
+            <div className={props.banner.kind === "error" ? "text-red-200" : "text-white/80"}>
+              {props.banner.text}
+            </div>
+            <button
+              type="button"
+              onClick={() => props.onDismissBanner?.()}
+              className="mt-1 text-xs text-white/50 hover:text-white/80"
+            >
+              close
+            </button>
+          </div>
+        ) : null}
 
         {/* Playlist URLs input */}
         <div className="space-y-2">
