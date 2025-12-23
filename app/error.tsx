@@ -14,14 +14,26 @@ export default function GlobalError({
     console.error("[GlobalError]", error);
   }, [error]);
 
-  const clearLocal = () => {
+
+  // Staged wipe helpers
+  const clearResults = () => {
+    try {
+      localStorage.removeItem('spotify-shopper-results');
+    } catch {}
+  };
+  const clearFiltersSelection = () => {
+    try {
+      localStorage.removeItem('spotify-shopper-active-tab');
+      // 他にfilters/selection系キーがあればここで追加
+    } catch {}
+  };
+  const clearAll = () => {
     try {
       const EXACT_KEYS = [
         'spotify-shopper-results',
         'spotify-shopper-active-tab',
       ];
       for (const k of EXACT_KEYS) localStorage.removeItem(k);
-
       const PREFIXES = [
         "playlist-shopper",
         "spotify-shopper",
@@ -43,6 +55,7 @@ export default function GlobalError({
             If this keeps happening, try resetting local data and reload.
           </p>
 
+
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button
               onClick={() => reset()}
@@ -50,25 +63,41 @@ export default function GlobalError({
             >
               Retry
             </button>
-
             <button
               onClick={() => {
-                clearLocal();
+                clearResults();
                 reset();
               }}
               style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #333" }}
             >
-              Reset local data & Retry
+              結果だけ消す（タブ/設定は維持）
             </button>
-
             <button
               onClick={() => {
-                clearLocal();
+                clearFiltersSelection();
+                reset();
+              }}
+              style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #333" }}
+            >
+              設定/フィルタだけ消す（結果は維持）
+            </button>
+            <button
+              onClick={() => {
+                clearAll();
+                reset();
+              }}
+              style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #333" }}
+            >
+              全部消す（完全リセット）
+            </button>
+            <button
+              onClick={() => {
+                clearAll();
                 location.href = "/";
               }}
               style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #333" }}
             >
-              Reset & Go Home
+              全部消してホームへ
             </button>
           </div>
 

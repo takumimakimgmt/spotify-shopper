@@ -27,3 +27,8 @@ _context/
 # env
 .env
 .env.*
+
+# Backup files
+app/*.bak.*
+
+*.bak.*

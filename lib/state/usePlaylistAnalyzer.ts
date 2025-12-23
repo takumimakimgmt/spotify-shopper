@@ -81,6 +81,7 @@ const makeRekordboxMeta = (file: File | null): RekordboxMeta | null =>
 
 import { useEffect, useRef, useState, ChangeEvent, FormEvent } from 'react';
 import { ApiPlaylistResponse, PlaylistRow, ResultState, TrackCategory, PlaylistSnapshotV1 } from "../types";
+import { canonicalizeKey } from "@/lib/utils/normalize";
 import {
   getPlaylist,
   postPlaylistWithRekordboxUpload,
@@ -112,6 +113,7 @@ function mapTracks(json: ApiPlaylistResponse): PlaylistRow[] {
     trackKeyPrimary: t.track_key_primary,
     trackKeyFallback: t.track_key_fallback,
     trackKeyPrimaryType: t.track_key_primary_type,
+    trackKeyGuess: canonicalizeKey(`${normalizeTitle(t.title ?? "")}::${normalizeArtist(t.artist ?? "")}`),
   }));
 }
 
@@ -418,12 +420,12 @@ export function usePlaylistAnalyzer() {
 
     for (const url of urls) {
 
-      let effectiveSource: 'spotify' | 'apple' = 'spotify';
+      let effectiveSource: 'spotify' = 'spotify';
       try {
         const t0 = performance.now();
         const t1_start = t0;
-        effectiveSource = (detectSourceFromUrl(url) || 'spotify') as 'spotify' | 'apple';
-        setPhaseLabel(effectiveSource === 'apple' ? 'Fetching Apple Music' : 'Fetching Spotify');
+        effectiveSource = 'spotify';
+        setPhaseLabel('Fetching Spotify');
         setProgressItems((prev) =>
           prev.map((p) =>
             p.url === url
@@ -436,41 +438,23 @@ export function usePlaylistAnalyzer() {
           )
         );
 
-        // Apple Music OFF: feature flag
-        if (effectiveSource === 'apple' && !ENABLE_APPLE) {
+        const isSpotifyPlaylistUrl = /open\.spotify\.com\/.*playlist\//i.test(url);
+        const isSpotifyUri = /^spotify:playlist:[A-Za-z0-9]{22}$/i.test(url);
+        const isIdOnly = /^[A-Za-z0-9]{22}$/.test(url);
+        if (!isSpotifyPlaylistUrl && !isSpotifyUri && !isIdOnly) {
           hasError = true;
-          setProgressItems((prev) =>
-            prev.map((p) =>
-              p.url === url
-                ? { ...p, status: 'error', message: 'Apple Music is temporarily disabled (Spotify only).' }
-                : p
-            )
-          );
           continue;
-        }
-
-        if (effectiveSource === 'spotify') {
-          const isSpotifyPlaylistUrl = /open\.spotify\.com\/.*playlist\//i.test(url);
-          const isSpotifyUri = /^spotify:playlist:[A-Za-z0-9]{22}$/i.test(url);
-          const isIdOnly = /^[A-Za-z0-9]{22}$/.test(url);
-          if (!isSpotifyPlaylistUrl && !isSpotifyUri && !isIdOnly) {
-            hasError = true;
-            continue;
-          }
         }
 
         const t2_api_start = performance.now();
         let json: ApiPlaylistResponse | null = null;
-        const APPLE_TIMEOUT_MS = 45000; // 45秒に延長
 
-        const fetchOnce = async (appleMode?: 'auto' | 'legacy' | 'fast') => {
+        const fetchOnce = async () => {
           if (rekordboxFile) {
             return postPlaylistWithRekordboxUpload({
               url,
               source: effectiveSource,
               file: rekordboxFile,
-              appleMode: appleMode ?? (effectiveSource === 'apple' ? 'auto' : undefined),
-              enrichSpotify: effectiveSource === 'apple' ? false : undefined,
               refresh: isForceRefresh,
               signal: abortRef.current?.signal ?? undefined,
             });
@@ -487,7 +471,7 @@ export function usePlaylistAnalyzer() {
 
         // Apple Musicはautoモード1回のみ（backendでfast/legacy自動フォールバック）
         if (effectiveSource === 'apple') {
-          setPhaseLabel('Fetching Apple Music (auto)');
+          setPhaseLabel('Fetching playlist (auto)');
           const timeoutController = new AbortController();
           const timeoutId = setTimeout(() => timeoutController.abort(), APPLE_TIMEOUT_MS);
           const externalSignal = abortRef.current?.signal;
@@ -503,7 +487,7 @@ export function usePlaylistAnalyzer() {
             let errorMsg = '';
             switch (reasonTag) {
               case 'timeout':
-                errorMsg = 'Apple Musicの取得が時間切れ。再実行する場合は時間を置いてください。';
+                errorMsg = '取得が時間切れでした。時間をおいて再実行してください。';
                 break;
               case 'dom-change':
                 errorMsg = 'Apple側のDOM変更の可能性。時間を置く or URL形式を確認。';
@@ -515,7 +499,7 @@ export function usePlaylistAnalyzer() {
                 errorMsg = 'bot検知の可能性。時間を置く/回数を減らす。';
                 break;
               default:
-                errorMsg = 'Apple Music取得に失敗しました。';
+                errorMsg = '取得に失敗しました。';
             }
             setErrorText(errorMsg);
             throw err;
@@ -666,11 +650,11 @@ export function usePlaylistAnalyzer() {
             let hint = '';
             if (usedSource === 'apple') {
               if (reasonTag === 'timeout') {
-                hint = '\nApple Musicは遅い/失敗しやすい場合があります。単体URLでRetry推奨。時間をおいて再試行してください。';
+                hint = '\n取得元が遅い/失敗しやすい場合があります。単体URLでRetry推奨。時間をおいて再試行してください。';
               } else if (reasonTag === 'region') {
-                hint = '\nApple Musicの地域制限・提供条件により取得できない場合があります。';
+                hint = '\n地域制限・提供条件により取得できない場合があります。';
               } else if (reasonTag === 'bot-suspected') {
-                hint = '\nApple Music側でbot判定・CAPTCHA等によりブロックされている可能性があります。時間をおいて再試行してください。';
+                hint = '\n取得元側でbot判定・CAPTCHA等によりブロックされている可能性があります。時間をおいて再試行してください。';
               }
             }
             setErrorText(base + reasonSuffix + hint);
@@ -757,9 +741,12 @@ export function usePlaylistAnalyzer() {
 
     const json = await matchSnapshotWithXml(JSON.stringify(snapshot), file);
     const byKey: Record<string, Record<string, unknown>> = {};
+    const byKeyCanonical = new Map<string, any>();
     for (const t of json.tracks || []) {
       const key = (t as any).track_key_primary || (t as any).track_key_fallback;
       if (key) byKey[key] = t as any;
+      const ck = canonicalizeKey(String(key ?? ""));
+      if (ck && !byKeyCanonical.has(ck)) byKeyCanonical.set(ck, t);
     }
     setMultiResults((prev) => {
       const next = [...prev];
@@ -769,13 +756,23 @@ export function usePlaylistAnalyzer() {
         // Always arrayify tracks before .map
         const safeTracks = Array.isArray(nt.tracks) ? nt.tracks : [];
         nt.tracks = safeTracks.map((t) => {
-          const key = t.trackKeyPrimary || t.trackKeyFallback;
-          const u = byKey[key || ''];
-          if (u) {
-            t.owned = typeof (u as any).owned === 'boolean' ? (u as any).owned : null;
-            t.ownedReason = typeof (u as any).owned_reason === 'string' ? (u as any).owned_reason : null;
+          // pick: exact -> canonical, with debug info
+          const keys = [t.trackKeyPrimary, t.trackKeyFallback, t.trackKeyGuess].filter(Boolean) as string[];
+          let picked: { m: any; via: "exact" | "canonical" } | null = null;
+          for (const k of keys) {
+            if (byKey[k]) { picked = { m: byKey[k], via: "exact" }; break; }
+            const ck = canonicalizeKey(k);
+            if (ck && byKeyCanonical.has(ck)) { picked = { m: byKeyCanonical.get(ck), via: "canonical" }; break; }
           }
-          return t;
+          const m = picked?.m ?? null;
+          return {
+            ...t,
+            owned: Boolean(m?.owned),
+            ownedSource: m?.source ?? null,
+            ownedReason:
+              (m?.reason ?? null) +
+              (picked?.via === "canonical" ? " (canonical match)" : ""),
+          };
         });
         next[idx][1] = { ...nt, hasRekordboxData: true };
       }

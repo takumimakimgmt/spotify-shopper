@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Playlist Shopper",
-  description: "Analyze playlists. Match your library. Generate links.",
+  title: "Playlist Shopper — Spotify",
+  description:
+    "SpotifyのプレイリストとRekordbox XMLを照合して、未所持曲だけを抽出。購入リンクにすぐ飛べます。",
 };
 
 export default function RootLayout({

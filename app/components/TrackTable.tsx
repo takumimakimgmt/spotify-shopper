@@ -28,13 +28,109 @@ export function TrackTable({
   getOtherStores,
 }: TrackTableProps) {
   const safeTracks = Array.isArray(tracks) ? tracks : [];
+  // --- Action Bar state ---
+  const [actionBanner, setActionBanner] = React.useState<null | { kind: "info" | "error"; text: string }>(null);
+  // Only To Buy (checkout) tracks, unowned
+  const toBuyTracks = safeTracks.filter((t) => categorizeTrack(t) === 'checkout');
+  const toBuyLinks = toBuyTracks.map((t) => t.spotifyUrl).filter(Boolean);
+  // All store links for To Buy
+  const toBuyStoreLinks = toBuyTracks.flatMap((t) => {
+    const rec = getRecommendedStore(t);
+    const others = getOtherStores(t.stores, rec);
+    return [rec, ...others].map((s) => s?.url).filter(Boolean);
+  });
+  // Store dropdown options (unique)
+  const allStores = Array.from(new Set(toBuyTracks.flatMap((t) => [getRecommendedStore(t)?.name, ...getOtherStores(t.stores, getRecommendedStore(t)).map(s => s.name)]).filter(Boolean)));
+
+  // --- Action handlers ---
+  const handleBuyAll = async () => {
+    if (toBuyStoreLinks.length === 0) return;
+    try {
+      await navigator.clipboard.writeText(toBuyStoreLinks.join("\n"));
+      setActionBanner({ kind: "info", text: "Copied purchase links" });
+    } catch {
+      setActionBanner({ kind: "error", text: "Failed to copy links" });
+    }
+  };
+  const handleExportCSV = () => {
+    const header = 'Title,Artist,Album,ISRC,Spotify URL\n';
+    const rows = toBuyTracks.map(t => [t.title, t.artist, t.album, t.isrc, t.spotifyUrl].map(f => `"${(f ?? '').replace(/"/g, '""')}"`).join(','));
+    const csv = header + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'to-buy.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  };
+  // ---
   return (
     <>
+      {/* Action Bar (desktop/table only, always visible above table) */}
+      <div className="hidden md:flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div className="flex gap-2">
+          <button
+            className="rounded-xl bg-white text-black px-3 py-2 text-sm font-medium hover:bg-white/90"
+            onClick={handleBuyAll}
+            disabled={toBuyStoreLinks.length === 0}
+          >
+            Buy all
+          </button>
+          <button
+            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 hover:bg-white/10"
+            onClick={handleExportCSV}
+            disabled={toBuyTracks.length === 0}
+          >
+            Export CSV
+          </button>
+          <div className="relative">
+            <button
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 hover:bg-white/10"
+              onClick={() => setOpenStoreDropdown(openStoreDropdown ? null : 'action-bar-stores')}
+              type="button"
+            >
+              Stores
+            </button>
+            {openStoreDropdown === 'action-bar-stores' && (
+              <div className="absolute left-0 mt-2 z-50 min-w-32 rounded-xl border border-white/10 bg-slate-900/95 shadow-lg">
+                {allStores.map((name) => (
+                  <div key={name} className="px-4 py-2 text-sm text-white/80 hover:bg-white/10 cursor-pointer" onClick={() => setOpenStoreDropdown(null)}>{name}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        {actionBanner && (
+          <div
+            className={[
+              "rounded-xl border p-2 text-xs ml-2",
+              actionBanner.kind === "error"
+                ? "border-red-500/30 bg-red-500/10 text-red-100"
+                : "border-white/10 bg-white/5 text-white/80",
+            ].join(" ")}
+            role={actionBanner.kind === "error" ? "alert" : "status"}
+          >
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 whitespace-pre-wrap">{actionBanner.text}</span>
+              <button
+                type="button"
+                onClick={() => setActionBanner(null)}
+                className="shrink-0 rounded-lg px-2 py-1 text-xs text-white/70 hover:bg-white/10"
+                aria-label="Dismiss"
+              >✕</button>
+            </div>
+          </div>
+        )}
+      </div>
       {/* Mobile: card list */}
       <div className="md:hidden space-y-2">
         {safeTracks.map((t) => {
-          const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
-          const trackUrl = isApplePlaylist ? t.appleUrl || t.spotifyUrl || undefined : t.spotifyUrl || t.appleUrl || undefined;
+          const trackUrl = t.spotifyUrl || undefined;
           const ownedStyle = getOwnedStatusStyle(t.owned, t.ownedReason);
           return (
             <div
@@ -57,6 +153,41 @@ export function TrackTable({
                   <div className="text-slate-400 text-[11px] truncate">{t.artist}</div>
                   <div className="text-slate-500 text-[11px] truncate">{t.album}</div>
                   {t.isrc && <div className="text-slate-500 text-[10px]">ISRC: {t.isrc}</div>}
+                  {/* Match type badge (mobile) */}
+                  {t.ownedReason && (
+                    <MatchTypeBadge ownedReason={t.ownedReason} />
+                  )}
+                // --- MatchTypeBadge: shows ≈ or ~ for canonical/guess match, cleans up reason text ---
+                function MatchTypeBadge({ ownedReason }: { ownedReason: string }) {
+                  if (!ownedReason) return null;
+                  let badge = null;
+                  let cleanReason = ownedReason;
+                  let tooltip = '';
+                  if (ownedReason.includes('canonical') || ownedReason === 'canonical') {
+                    badge = (
+                      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-400/10 px-1.5 py-0.5 text-[10px] text-blue-200" title={ownedReason}>≈</span>
+                    );
+                    cleanReason = '';
+                    tooltip = ownedReason;
+                  } else if (ownedReason.includes('guess') || ownedReason === 'guess') {
+                    badge = (
+                      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-purple-400 bg-purple-400/10 px-1.5 py-0.5 text-[10px] text-purple-200" title={ownedReason}>~</span>
+                    );
+                    cleanReason = '';
+                    tooltip = ownedReason;
+                  } else {
+                    badge = null;
+                    cleanReason = ownedReason;
+                    tooltip = ownedReason;
+                  }
+                  // Show badge with tooltip, and show cleaned reason if not empty
+                  return (
+                    <span className="flex items-center gap-1 mt-1">
+                      {badge}
+                      {cleanReason && <span className="text-slate-400 text-[10px]" title={tooltip}>{cleanReason}</span>}
+                    </span>
+                  );
+                }
                 </div>
               </div>
               <div className="mt-2 flex flex-wrap gap-1">
@@ -128,8 +259,7 @@ export function TrackTable({
                       </tr>
                     ),
                     ...section.items.map((t) => {
-                      const isApplePlaylist = currentResult.playlistUrl?.includes('music.apple.com');
-                      const trackUrl = isApplePlaylist ? t.appleUrl || t.spotifyUrl || undefined : t.spotifyUrl || t.appleUrl || undefined;
+                      const trackUrl = t.spotifyUrl || undefined;
                       const ownedStyle = getOwnedStatusStyle(t.owned, t.ownedReason);
                       const recommended = getRecommendedStore(t);
                       const others = getOtherStores(t.stores, recommended);
@@ -142,15 +272,19 @@ export function TrackTable({
                         >
                           <td className="px-3 py-1 text-slate-400">{t.index}</td>
                           <td className="px-3 py-1 text-sm text-slate-100">
-                            <a
-                              href={trackUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="block max-w-full truncate hover:underline"
-                              title={`${t.title}${ownedStyle.tooltip ? ` (${ownedStyle.tooltip})` : ''}`}
-                            >
-                              {t.title}
-                            </a>
+                            <div className="flex items-center gap-1">
+                              <a
+                                href={trackUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block max-w-full truncate hover:underline"
+                                title={`${t.title}${ownedStyle.tooltip ? ` (${ownedStyle.tooltip})` : ''}`}
+                              >
+                                {t.title}
+                              </a>
+                              {/* Match type badge (desktop) */}
+                              {t.ownedReason && <MatchTypeBadge ownedReason={t.ownedReason} />}
+                            </div>
                           </td>
                           <td className="px-3 py-1 text-sm text-slate-300">{t.artist}</td>
                           <td className="px-3 py-1 text-sm text-slate-400">{t.album}</td>

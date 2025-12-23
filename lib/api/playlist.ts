@@ -61,10 +61,7 @@ export async function matchSnapshotWithXml(snapshotJson: string, file: File): Pr
   form.append('snapshot', snapshotJson);
   form.append('file', file);
 
-  const backend = getBackendUrl();
-  if (!backend || backend === 'http://127.0.0.1:8000') {
-    throw new Error('Backend URL が設定されていません。NEXT_PUBLIC_BACKEND_URL を確認してください。');
-  }
+  const backend = getBackendUrl() ?? '';
 
   return fetchJsonWithBase<ApiPlaylistResponse>('/api/match-snapshot-with-xml', {
     method: 'POST',
