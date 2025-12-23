@@ -1,3 +1,35 @@
+// --- MatchTypeBadge: shows ≈ or ~ for canonical/guess match, cleans up reason text ---
+function MatchTypeBadge({ ownedReason }: { ownedReason: string }) {
+  if (!ownedReason) return null;
+  let badge = null;
+  let cleanReason = ownedReason;
+  let tooltip = '';
+  if (ownedReason.includes('canonical') || ownedReason === 'canonical') {
+    badge = (
+      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-400/10 px-1.5 py-0.5 text-[10px] text-blue-200" title={ownedReason}>≈</span>
+    );
+    cleanReason = '';
+    tooltip = ownedReason;
+  } else if (ownedReason.includes('guess') || ownedReason === 'guess') {
+    badge = (
+      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-purple-400 bg-purple-400/10 px-1.5 py-0.5 text-[10px] text-purple-200" title={ownedReason}>~</span>
+    );
+    cleanReason = '';
+    tooltip = ownedReason;
+  } else {
+    badge = null;
+    cleanReason = ownedReason;
+    tooltip = ownedReason;
+  }
+  // Show badge with tooltip, and show cleaned reason if not empty
+  return (
+    <span className="flex items-center gap-1 mt-1">
+      {badge}
+      {cleanReason && <span className="text-slate-400 text-[10px]" title={tooltip}>{cleanReason}</span>}
+    </span>
+  );
+}
+
 import React from 'react';
 import type { PlaylistRow, TrackCategory, ResultState } from '../../lib/types';
 
@@ -157,37 +189,6 @@ export function TrackTable({
                   {t.ownedReason && (
                     <MatchTypeBadge ownedReason={t.ownedReason} />
                   )}
-                // --- MatchTypeBadge: shows ≈ or ~ for canonical/guess match, cleans up reason text ---
-                function MatchTypeBadge({ ownedReason }: { ownedReason: string }) {
-                  if (!ownedReason) return null;
-                  let badge = null;
-                  let cleanReason = ownedReason;
-                  let tooltip = '';
-                  if (ownedReason.includes('canonical') || ownedReason === 'canonical') {
-                    badge = (
-                      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-400/10 px-1.5 py-0.5 text-[10px] text-blue-200" title={ownedReason}>≈</span>
-                    );
-                    cleanReason = '';
-                    tooltip = ownedReason;
-                  } else if (ownedReason.includes('guess') || ownedReason === 'guess') {
-                    badge = (
-                      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-purple-400 bg-purple-400/10 px-1.5 py-0.5 text-[10px] text-purple-200" title={ownedReason}>~</span>
-                    );
-                    cleanReason = '';
-                    tooltip = ownedReason;
-                  } else {
-                    badge = null;
-                    cleanReason = ownedReason;
-                    tooltip = ownedReason;
-                  }
-                  // Show badge with tooltip, and show cleaned reason if not empty
-                  return (
-                    <span className="flex items-center gap-1 mt-1">
-                      {badge}
-                      {cleanReason && <span className="text-slate-400 text-[10px]" title={tooltip}>{cleanReason}</span>}
-                    </span>
-                  );
-                }
                 </div>
               </div>
               <div className="mt-2 flex flex-wrap gap-1">

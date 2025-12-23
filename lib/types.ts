@@ -84,6 +84,7 @@ export type PlaylistRow = {
   title: string;
   artist: string;
   album: string;
+  label?: string | null;
   isrc?: string;
   spotifyUrl?: string;
   appleUrl?: string;
