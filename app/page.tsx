@@ -29,7 +29,7 @@ import ErrorAlert from './components/ErrorAlert';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 
 function PageInner() {
-  // Apple Music URLブロック: フラグOFF時は案内してreturn
+  // 未対応URLブロック: 現在はSpotifyプレイリストURLのみ対応
   const [banner, setBanner] = React.useState<null | { kind: "error" | "info"; text: string }>(null);
 
   // === HOOKS: Direct calls, no composition ===
@@ -47,7 +47,7 @@ function PageInner() {
   const handleAnalyzeWithAppleBlock = (e: React.FormEvent) => {
     const url = analyzer.playlistUrlInput.trim();
     if (!FLAGS.ENABLE_APPLE && /music\.apple\.com/i.test(url)) {
-      setBanner({ kind: "error", text: "Apple Musicは現在停止中。SpotifyプレイリストURLを貼ってください。" });
+      setBanner({ kind: "error", text: "このURLは未対応です。現在はSpotifyプレイリストURLのみ対応しています。" });
       return;
     }
     actions.handleAnalyze(e);
@@ -158,22 +158,38 @@ function PageInner() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
-        {/* Top explanation card */}
-        <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-          <h1 className="text-lg font-semibold">Spotify Playlist Shopper</h1>
-          <p className="mt-2 text-sm text-white/80">
-            SpotifyのプレイリストとRekordbox XMLを照合して、<span className="text-white">未所持曲だけ</span>を抽出。
-            そのまま購入リンクへ飛べます。
-          </p>
-          <ol className="mt-3 space-y-1 text-sm text-white/70">
-            <li>1) SpotifyプレイリストURLを貼る</li>
-            <li>2) Rekordbox XMLをアップロード</li>
-            <li>3) Owned / To Buy を見て買う</li>
-          </ol>
+        {/* Top explanation card (P1-1 spec) */}
+        <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:p-6">
+          <div className="text-base md:text-lg font-semibold text-white">
+            Spotifyプレイリストを、Rekordboxライブラリと照合して“未所持だけ”抽出します
+          </div>
+          <div className="mt-1 text-sm text-white/70">
+            貼る → XMLをアップ → To Buyから購入（CSVもOK）
+          </div>
+          <div className="mt-4 grid gap-2 md:grid-cols-3">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-start">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-white/80">1</span>
+              <span className="ml-2 text-sm text-white/80">Spotify playlist URL を貼る</span>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-start">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-white/80">2</span>
+              <span className="ml-2 text-sm text-white/80">Rekordbox XML をアップロード</span>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-start">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-white/80">3</span>
+              <span className="ml-2 text-sm text-white/80">To Buy から購入リンク or CSV出力</span>
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-white/50">
+            例: spotify:playlist:XXXX / playlist:XXXX / "skrillex remix"
+          </div>
+          <div className="mt-1 text-xs text-white/50">
+            対応: Spotify playlist URL / 非対応: それ以外のURL
+          </div>
         </div>
         <ShopperHeader
-          title="Playlist Shopper — Spotify & Apple Music"
-          subtitle="Paste a playlist URL → Match with Rekordbox → Open buy links"
+          title="Playlist Shopper — Spotify"
+          subtitle="Spotifyのプレイリストを貼る → Rekordbox XMLと照合 → 未所持だけ買える"
         />
 
         {/* Form */}
@@ -219,8 +235,8 @@ function PageInner() {
               rekordboxFile={analyzer.rekordboxFile}
               setRekordboxFile={analyzer.setRekordboxFile}
               handleRekordboxChange={analyzer.handleRekordboxChange}
-              rekordboxFilename={analyzer.rekordboxFile?.name ?? null}
-              rekordboxDate={analyzer.rekordboxDate ?? null}
+              rekordboxFilename={analyzer.rekordboxFile?.name ?? vm.currentResult?.rekordboxMeta?.filename ?? null}
+              rekordboxDate={analyzer.rekordboxDate ?? (vm.currentResult?.rekordboxMeta?.updatedAtISO ? new Date(vm.currentResult.rekordboxMeta.updatedAtISO).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : null)}
               onlyUnowned={filters.onlyUnowned}
               setOnlyUnowned={filters.setOnlyUnowned}
               loading={analyzer.loading}

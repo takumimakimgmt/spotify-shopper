@@ -1,5 +1,7 @@
 import type { PlaylistRow, TrackCategory } from '../types';
 import { categorizeTrack } from '../state/usePlaylistAnalyzer';
+import { buildSearchHaystack } from "@/lib/utils/normalize";
+import { normalizeTitle, normalizeArtist } from '../utils/normalize';
 
 export interface FilterOptions {
   categoryFilter: 'all' | 'toBuy' | 'owned';
@@ -24,24 +26,24 @@ export function selectDisplayedTracks(
     filtered = filtered.filter((t) => t.owned !== true);
   }
 
-  // Filter by search
+  // Filter by search (normalized, haystack)
   if (options.searchQuery.trim()) {
-    const q = options.searchQuery.toLowerCase();
+    const q = buildSearchHaystack([options.searchQuery]);
     filtered = filtered.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.artist.toLowerCase().includes(q) ||
-        t.album.toLowerCase().includes(q)
+      (t) => {
+        const hay = buildSearchHaystack([t.title, t.artist, t.album, t.label]);
+        return hay.includes(q);
+      }
     );
   }
 
-  // Sort
+  // Sort (normalized)
   if (options.sortKey === 'artist') {
-    filtered = [...filtered].sort((a, b) => a.artist.localeCompare(b.artist));
+    filtered = [...filtered].sort((a, b) => normalizeArtist(a.artist).localeCompare(normalizeArtist(b.artist)));
   } else if (options.sortKey === 'album') {
-    filtered = [...filtered].sort((a, b) => a.album.localeCompare(b.album));
+    filtered = [...filtered].sort((a, b) => (a.album ?? '').localeCompare(b.album ?? ''));
   } else if (options.sortKey === 'title') {
-    filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
+    filtered = [...filtered].sort((a, b) => normalizeTitle(a.title).localeCompare(normalizeTitle(b.title)));
   }
 
   // Category filter

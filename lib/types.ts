@@ -93,6 +93,7 @@ export type PlaylistRow = {
   trackKeyPrimary?: string;
   trackKeyFallback?: string;
   trackKeyPrimaryType?: 'isrc' | 'norm';
+  trackKeyGuess?: string;
 };
 
 export type ResultState = {

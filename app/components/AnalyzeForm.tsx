@@ -55,10 +55,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
     () => props.progressItems.some((p) => p.status === 'error'),
     [props.progressItems]
   );
-  const isAppleInput = useMemo(
-    () => props.playlistUrlInput.toLowerCase().includes('music.apple.com'),
-    [props.playlistUrlInput]
-  );
 
   useEffect(() => {
     if (props.errorText && errorSummaryRef.current) {
@@ -88,17 +84,28 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         )}
         {/* Persistent banner (Apple block, etc) */}
         {props.banner ? (
-          <div className="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm">
-            <div className={props.banner.kind === "error" ? "text-red-200" : "text-white/80"}>
-              {props.banner.text}
+          <div
+            className={[
+              "mt-3 rounded-xl border p-3 text-sm",
+              props.banner.kind === "error"
+                ? "border-red-500/30 bg-red-500/10 text-red-100"
+                : "border-white/10 bg-white/5 text-white/80",
+            ].join(" ")}
+            role={props.banner.kind === "error" ? "alert" : "status"}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 whitespace-pre-wrap">{props.banner.text}</div>
+              {props.onDismissBanner ? (
+                <button
+                  type="button"
+                  onClick={props.onDismissBanner}
+                  className="shrink-0 rounded-lg px-2 py-1 text-xs text-white/70 hover:bg-white/10"
+                  aria-label="Dismiss"
+                >
+                  ✕
+                </button>
+              ) : null}
             </div>
-            <button
-              type="button"
-              onClick={() => props.onDismissBanner?.()}
-              className="mt-1 text-xs text-white/50 hover:text-white/80"
-            >
-              close
-            </button>
           </div>
         ) : null}
 
@@ -107,10 +114,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <label className="text-sm font-medium" htmlFor="playlist-urls">Playlist URLs</label>
           <textarea
             id="playlist-urls"
+            data-testid="playlist-url"
             value={props.playlistUrlInput}
             onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
             className={`w-full rounded-md border ${props.errorText ? 'border-red-500' : 'border-slate-700'} bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 font-mono`}
-            placeholder="Spotify playlist URL\nApple Music URL\nPlaylist ID (optional)"
+                placeholder="例: spotify:playlist:XXXX / playlist:XXXX / 'skrillex remix'"
             rows={4}
             aria-invalid={props.errorText ? 'true' : 'false'}
             aria-describedby={props.errorText ? 'error-summary' : undefined}
@@ -118,16 +126,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <p className="text-xs text-slate-400">
             Full URL or playlist ID. Multiple playlists will be analyzed in parallel and results shown in tabs.
           </p>
-          {isAppleInput && (
-            <div className="space-y-2">
-              <p className="text-xs text-amber-200">
-                Apple Music can be slower than Spotify. If it fails, retry with a single Apple URL.
-              </p>
-              <p className="text-xs text-yellow-600/80">
-                ⚠ Beta: Apple Music support is less reliable than Spotify and may fail or take longer.
-              </p>
-            </div>
-          )}
+          {/* Spotify専用 */}
         </div>
 
         {/* Rekordbox XML upload */}
@@ -140,6 +139,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <input
               ref={rekordboxInputRef}
               id="rekordbox-file-input"
+              data-testid="rekordbox-xml"
               type="file"
               accept=".xml"
               onChange={(e) => {
@@ -202,6 +202,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <div className="flex gap-2 items-center">
               <button
                 type="submit"
+                data-testid="analyze-btn"
                 disabled={isProcessing}
                 className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
               >

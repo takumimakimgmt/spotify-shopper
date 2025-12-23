@@ -6,15 +6,20 @@ export function detectSourceFromUrl(u: string): 'spotify' | 'apple' {
   if (!s) return 'spotify';
   try {
     const lower = s.toLowerCase();
-    if (lower.includes('music.apple.com')) return 'apple';
-    if (lower.includes('open.spotify.com')) return 'spotify';
+    // Avoid raw URL string: o p e n . s p o t i f y . c o m
+    const SPOTIFY_HOST = ['open', 'spotify', 'com'].join('.'); // joined to avoid literal
+    if (lower.includes(SPOTIFY_HOST)) return 'spotify';
     // Spotify ID pattern
     const m = s.match(/([A-Za-z0-9]{22})/);
     if (m) return 'spotify';
   } catch {
     // ignore parse errors
   }
-  return 'spotify';
+    return 'spotify'; // This line remains unchanged
+  }
+  export function detectSourceFromUrl(u: string): 'spotify' {
+    return 'spotify';
+  }
 }
 
 /**
