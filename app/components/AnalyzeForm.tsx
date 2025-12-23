@@ -109,142 +109,127 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </div>
         ) : null}
 
-        {/* Playlist URLs input */}
+        {/* Playlist URL input(s) */}
         <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="playlist-urls">Playlist URLs</label>
-          <textarea
-            id="playlist-urls"
-            data-testid="playlist-url"
-            value={props.playlistUrlInput}
-            onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
-            className={`w-full rounded-md border ${props.errorText ? 'border-red-500' : 'border-slate-700'} bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 font-mono`}
-                placeholder="例: spotify:playlist:XXXX / playlist:XXXX / 'skrillex remix'"
-            rows={4}
-            aria-invalid={props.errorText ? 'true' : 'false'}
-            aria-describedby={props.errorText ? 'error-summary' : undefined}
-          />
-          <p className="text-xs text-slate-400">
-            Full URL or playlist ID. Multiple playlists will be analyzed in parallel and results shown in tabs.
-          </p>
-          {/* Spotify専用 */}
+          <label className="text-sm font-medium" htmlFor="playlist-url">Playlist URL</label>
+          {/* Dynamic URL inputs: 1 by default, add/remove up to 3 */}
+          {(props.playlistUrls || [props.playlistUrlInput]).map((url, idx) => (
+            <div key={idx} className="flex items-center gap-2 mb-2">
+              <input
+                id={`playlist-url-${idx}`}
+                type="text"
+                value={url}
+                onChange={e => props.setPlaylistUrlAt(idx, e.target.value)}
+                className={`w-full rounded-md border ${props.urlErrors?.[idx] ? 'border-red-500' : 'border-slate-700'} bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 font-mono`}
+                placeholder="o p e n . s p o t i f y . c o m / playlist / ..."
+                aria-invalid={props.urlErrors?.[idx] ? 'true' : 'false'}
+                aria-describedby={props.urlErrors?.[idx] ? `url-error-${idx}` : undefined}
+              />
+              {idx === 0 && (props.playlistUrls?.length ?? 1) < 3 && (
+                <button type="button" className="text-xs px-2 py-1 rounded bg-slate-800 text-white/80 hover:bg-slate-700" onClick={props.addPlaylistUrl}>+ Add another</button>
+              )}
+              {idx > 0 && (
+                <button type="button" className="text-xs px-2 py-1 rounded bg-red-800 text-white/80 hover:bg-red-700" onClick={() => props.removePlaylistUrl(idx)}>×</button>
+              )}
+            </div>
+          ))}
+          <p className="text-xs text-slate-400">URL or playlist ID.</p>
+          {/* Error per URL input */}
+          {(props.urlErrors || []).map((err, idx) => err && (
+            <div key={idx} id={`url-error-${idx}`} className="text-xs text-red-400 mt-1">{err}</div>
+          ))}
         </div>
 
-        {/* Rekordbox XML upload */}
+        {/* Rekordbox XML Dropzone-style input */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Rekordbox Collection XML (optional)</label>
-          {localXmlError && (
-            <ErrorAlert title="XML too large" message={localXmlError} />
-          )}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div
+            className="border-2 border-dashed border-slate-700 rounded-lg p-3 text-center cursor-pointer bg-slate-950/60 hover:bg-slate-900"
+            onClick={handleRekordboxClick}
+            onDrop={e => {
+              e.preventDefault();
+              const f = e.dataTransfer.files?.[0];
+              if (f && f.type === 'text/xml') {
+                props.setRekordboxFile(f);
+              }
+            }}
+            onDragOver={e => e.preventDefault()}
+          >
+            {props.rekordboxFilename ? (
+              <span className="font-mono text-xs text-slate-300">{props.rekordboxFilename.length > 24 ? props.rekordboxFilename.slice(0, 20) + '…' : props.rekordboxFilename}</span>
+            ) : (
+              <span className="text-xs text-slate-400">Drag & drop XML here, or choose file</span>
+            )}
             <input
               ref={rekordboxInputRef}
               id="rekordbox-file-input"
-              data-testid="rekordbox-xml"
               type="file"
               accept=".xml"
-              onChange={(e) => {
+              onChange={e => {
                 const f = e.target.files?.[0];
                 if (f && f.size > MAX_XML_BYTES) {
-                  const mb = (f.size / (1024 * 1024)).toFixed(1);
-                  setLocalXmlError(`XML is too large (${mb} MB). Please export smaller, playlist-level XML from Rekordbox and try again.`);
+                  setLocalXmlError(`XML is too large. Please export smaller, playlist-level XML from Rekordbox and try again.`);
                   e.target.value = '';
                   return;
                 }
                 setLocalXmlError(null);
-                props.handleRekordboxChange(e);
+                props.setRekordboxFile(f ?? null);
               }}
               className="hidden"
             />
-            <button
-              type="button"
-              onClick={handleRekordboxClick}
-              disabled={props.isReanalyzing}
-              className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold ${
-                props.isReanalyzing
-                  ? 'bg-slate-700 text-slate-300 pointer-events-none'
-                  : 'bg-emerald-500 text-slate-900 hover:bg-emerald-400 cursor-pointer'
-              }`}
-            >
-              Choose File
-            </button>
-            <span className="text-xs text-slate-400">
-              Rekordbox XML is used on this page for matching your library.
-            </span>
-            {/* XMLファイル名/日付は補助的に表示（source of truthはcurrentResult.rekordboxMeta） */}
-            {(props.rekordboxFilename || props.rekordboxDate) && (
-              <div className="text-xs text-slate-500 mt-1 flex flex-wrap gap-2">
-                {props.rekordboxFilename && (
-                  <span className="bg-slate-800/40 rounded px-2 py-0.5 font-medium">
-                    {props.rekordboxFilename}
-                  </span>
-                )}
-                {props.rekordboxDate && (
-                  <span>Updated: {props.rekordboxDate}</span>
-                )}
-              </div>
+            {props.rekordboxFilename && (
+              <button type="button" className="ml-2 text-xs px-2 py-1 rounded bg-slate-800 text-white/80 hover:bg-slate-700" onClick={() => props.setRekordboxFile(null)}>Change</button>
             )}
           </div>
+          {/* XML error below input */}
+          {localXmlError && (
+            <div className="text-xs text-red-400 mt-1">{localXmlError}</div>
+          )}
         </div>
-        {/* Form controls: Unowned toggle + Analyze button */}
-        <div className="flex items-center justify-between gap-3">
-          <label className="inline-flex items-center gap-2 text-sm text-slate-200">
-            <input
-              type="checkbox"
-              checked={props.onlyUnowned}
-              onChange={(e) => props.setOnlyUnowned(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-500 bg-slate-900 text-emerald-500"
-            />
-            <span>Show only unowned tracks</span>
-          </label>
+        {/* Unowned toggle below XML */}
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="checkbox"
+            checked={props.onlyUnowned}
+            onChange={e => props.setOnlyUnowned(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-500 bg-slate-900 text-emerald-500"
+            id="only-unowned"
+          />
+          <label htmlFor="only-unowned" className="text-sm text-slate-200">Show only unowned tracks</label>
+        </div>
 
-          {/* Analyze button and controls */}
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2 items-center">
-              <button
-                type="submit"
-                data-testid="analyze-btn"
-                disabled={isProcessing}
-                className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-r-transparent" />
-                    {props.isReanalyzing ? 'Re-analyzing…' : 'Analyzing…'}
-                  </>
-                ) : (
-                  'Analyze'
-                )}
-              </button>
-
-              {isProcessing && props.cancelAnalyze && (
-                <button
-                  type="button"
-                  onClick={props.cancelAnalyze}
-                  className="inline-flex items-center justify-center rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600"
-                >
-                  Cancel
-                </button>
+        {/* Analyze button right-bottom fixed in form */}
+        <div className="flex justify-end mt-4">
+          <button
+            type="submit"
+            data-testid="analyze-btn"
+            disabled={isProcessing || !(props.playlistUrls?.[0] || props.playlistUrlInput)}
+            className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-5 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
+          >
+            {isProcessing ? (
+              <>
+                <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                {'Analyzing…'}
+              </>
+            ) : (
+              'Analyze'
+            )}
+          </button>
+        </div>
+        {/* StatusRow: unified status display at bottom */}
+        <div className="mt-4">
+          {props.status && (
+            <div className="rounded bg-slate-800/60 px-3 py-2 text-sm text-slate-200 flex items-center gap-2 min-h-[32px]">
+              {props.status === 'validating' && 'Checking…'}
+              {props.status === 'analyzing' && 'Analyzing…'}
+              {props.status === 'done' && `Done • ${props.totalTracks} tracks • ${props.toBuyTracks} to buy`}
+              {props.status === 'error' && <span className="text-red-400">Couldn’t analyze • {props.statusReason}</span>}
+              {props.status === 'error' && props.retryFailed && (
+                <button type="button" className="ml-2 text-xs px-2 py-1 rounded bg-red-800 text-white/80 hover:bg-red-700" onClick={props.retryFailed}>Retry</button>
               )}
-
-              {hasFailed && props.retryFailed && (
-                <button
-                  type="button"
-                  onClick={props.retryFailed}
-                  className="inline-flex items-center justify-center rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600"
-                >
-                  Retry failed
-                </button>
-              )}
-
-              {/* Force reload removed per simplified UI */}
             </div>
-            {/* Timing hint moved to processing-only context */}
-          </div>
+          )}
         </div>
-        {/* Error display with aria-live */}
-        {props.errorText && (
-          <div className="sr-only" aria-live="polite">{props.errorText}</div>
-        )}
       </form>
     </section>
   );
