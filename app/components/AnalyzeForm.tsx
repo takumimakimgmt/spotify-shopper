@@ -33,7 +33,18 @@ export interface AnalyzeFormProps {
   setForceRefreshHint: (value: boolean) => void;
   cancelAnalyze?: () => void;
   retryFailed?: () => void;
+  // Error for first input only
+  playlistUrlError?: string | null;
 }
+const MAX_URLS = 3;
+function splitUrls(multiline: string): string[] {
+  const raw = (multiline || '').split('\n').map(s => s.trim()).filter(Boolean);
+  return raw.length ? raw.slice(0, MAX_URLS) : [''];
+}
+function joinUrls(urls: string[]): string {
+  return urls.map(s => (s || '').trim()).filter(Boolean).join('\n');
+}
+
 export default function AnalyzeForm(props: AnalyzeFormProps) {
   const [localXmlError, setLocalXmlError] = useState<string | null>(null);
   const rekordboxInputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +72,30 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
       errorSummaryRef.current.focus();
     }
   }, [props.errorText]);
+
+  // --- Apple-like URL input array ---
+  const [urls, setUrls] = useState<string[]>(() => splitUrls(props.playlistUrlInput));
+  useEffect(() => {
+    setUrls(splitUrls(props.playlistUrlInput));
+  }, [props.playlistUrlInput]);
+  function updateUrlAt(i: number, next: string) {
+    const nextUrls = urls.slice();
+    nextUrls[i] = next;
+    setUrls(nextUrls);
+    props.setPlaylistUrlInput(joinUrls(nextUrls));
+  }
+  function addUrl() {
+    if (urls.length >= MAX_URLS) return;
+    const nextUrls = urls.concat(['']);
+    setUrls(nextUrls);
+    props.setPlaylistUrlInput(joinUrls(nextUrls));
+  }
+  function removeUrl(i: number) {
+    if (urls.length <= 1) return;
+    const nextUrls = urls.filter((_, idx) => idx !== i);
+    setUrls(nextUrls);
+    props.setPlaylistUrlInput(joinUrls(nextUrls));
+  }
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
@@ -109,35 +144,54 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </div>
         ) : null}
 
-        {/* Playlist URL input(s) */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="playlist-url">Playlist URL</label>
-          {/* Dynamic URL inputs: 1 by default, add/remove up to 3 */}
-          {(props.playlistUrls || [props.playlistUrlInput]).map((url, idx) => (
-            <div key={idx} className="flex items-center gap-2 mb-2">
-              <input
-                id={`playlist-url-${idx}`}
-                type="text"
-                value={url}
-                onChange={e => props.setPlaylistUrlAt(idx, e.target.value)}
-                className={`w-full rounded-md border ${props.urlErrors?.[idx] ? 'border-red-500' : 'border-slate-700'} bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 font-mono`}
-                placeholder="o p e n . s p o t i f y . c o m / playlist / ..."
-                aria-invalid={props.urlErrors?.[idx] ? 'true' : 'false'}
-                aria-describedby={props.urlErrors?.[idx] ? `url-error-${idx}` : undefined}
-              />
-              {idx === 0 && (props.playlistUrls?.length ?? 1) < 3 && (
-                <button type="button" className="text-xs px-2 py-1 rounded bg-slate-800 text-white/80 hover:bg-slate-700" onClick={props.addPlaylistUrl}>+ Add another</button>
-              )}
-              {idx > 0 && (
-                <button type="button" className="text-xs px-2 py-1 rounded bg-red-800 text-white/80 hover:bg-red-700" onClick={() => props.removePlaylistUrl(idx)}>×</button>
-              )}
-            </div>
-          ))}
-          <p className="text-xs text-slate-400">URL or playlist ID.</p>
-          {/* Error per URL input */}
-          {(props.urlErrors || []).map((err, idx) => err && (
-            <div key={idx} id={`url-error-${idx}`} className="text-xs text-red-400 mt-1">{err}</div>
-          ))}
+        {/* Playlist URL input(s) - Apple-like */}
+        <label className="text-sm font-medium" htmlFor="playlist-url-0">Playlist URL</label>
+        <div className="mt-2 space-y-2">
+          {urls.map((url, idx) => {
+            const showRemove = urls.length > 1;
+            return (
+              <div key={idx}>
+                <div className="flex items-center gap-2">
+                  <input
+                    id={`playlist-url-${idx}`}
+                    value={url}
+                    onChange={(e) => updateUrlAt(idx, e.target.value)}
+                    className="w-full rounded-xl border px-3 py-2 text-sm"
+                    placeholder="Playlist URL…"
+                    inputMode="url"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
+                  {showRemove && (
+                    <button
+                      type="button"
+                      onClick={() => removeUrl(idx)}
+                      className="rounded-xl border px-3 py-2 text-sm"
+                      aria-label="Remove URL"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                {/* エラーは各input直下に1行固定（既存のplaylistUrlErrorは最初の入力に紐付け） */}
+                {idx === 0 && props.playlistUrlError && (
+                  <p className="mt-1 text-xs text-red-600">{props.playlistUrlError}</p>
+                )}
+              </div>
+            );
+          })}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              type="button"
+              onClick={addUrl}
+              disabled={urls.length >= MAX_URLS}
+              className="rounded-xl border px-3 py-2 text-sm disabled:opacity-50"
+            >
+              + Add another
+            </button>
+            <p className="text-xs text-neutral-500">Up to {MAX_URLS}</p>
+          </div>
         </div>
 
         {/* Rekordbox XML Dropzone-style input */}
@@ -203,7 +257,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <button
             type="submit"
             data-testid="analyze-btn"
-            disabled={isProcessing || !(props.playlistUrls?.[0] || props.playlistUrlInput)}
+            disabled={isProcessing || !urls.some((u) => (u || "").trim().length > 0)}
             className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-5 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
           >
             {isProcessing ? (
@@ -218,14 +272,25 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         </div>
         {/* StatusRow: unified status display at bottom */}
         <div className="mt-4">
-          {props.status && (
+          {(isProcessing || props.progress > 0 || props.playlistUrlError || localXmlError) && (
             <div className="rounded bg-slate-800/60 px-3 py-2 text-sm text-slate-200 flex items-center gap-2 min-h-[32px]">
-              {props.status === 'validating' && 'Checking…'}
-              {props.status === 'analyzing' && 'Analyzing…'}
-              {props.status === 'done' && `Done • ${props.totalTracks} tracks • ${props.toBuyTracks} to buy`}
-              {props.status === 'error' && <span className="text-red-400">Couldn’t analyze • {props.statusReason}</span>}
-              {props.status === 'error' && props.retryFailed && (
-                <button type="button" className="ml-2 text-xs px-2 py-1 rounded bg-red-800 text-white/80 hover:bg-red-700" onClick={props.retryFailed}>Retry</button>
+              {isProcessing ? (
+                <>
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
+                  <span>
+                    {props.progress > 0 ? `Analyzing… ${props.progress}%` : "Analyzing…"}
+                  </span>
+                </>
+              ) : (props.playlistUrlError || localXmlError) ? (
+                <>
+                  <span className="inline-block h-2 w-2 rounded-full bg-rose-400" />
+                  <span>{props.playlistUrlError || localXmlError}</span>
+                </>
+              ) : (
+                <>
+                  <span className="inline-block h-2 w-2 rounded-full bg-slate-400" />
+                  <span>Ready</span>
+                </>
               )}
             </div>
           )}
