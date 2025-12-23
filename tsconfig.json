@@ -30,5 +30,11 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "_context"]
+  "exclude": [
+    "node_modules",
+    "_context",
+    "playwright.config.ts",
+    "tests/**",
+    "playwright-report/**"
+  ]
 }
