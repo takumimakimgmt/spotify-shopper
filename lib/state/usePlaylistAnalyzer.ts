@@ -1,5 +1,6 @@
 
 "use client";
+const APPLE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_APPLE_TIMEOUT_MS ?? '120000');
 
 // --- Apple Music feature flag ---
 const ENABLE_APPLE = process.env.NEXT_PUBLIC_ENABLE_APPLE === '1';
@@ -81,7 +82,7 @@ const makeRekordboxMeta = (file: File | null): RekordboxMeta | null =>
 
 import { useEffect, useRef, useState, ChangeEvent, FormEvent } from 'react';
 import { ApiPlaylistResponse, PlaylistRow, ResultState, TrackCategory, PlaylistSnapshotV1 } from "../types";
-import { canonicalizeKey } from "@/lib/utils/normalize";
+import { canonicalizeKey, normalizeTitle, normalizeArtist } from "@/lib/utils/normalize";
 import {
   getPlaylist,
   postPlaylistWithRekordboxUpload,
@@ -420,11 +421,15 @@ export function usePlaylistAnalyzer() {
 
     for (const url of urls) {
 
-      let effectiveSource: 'spotify' = 'spotify';
+      let effectiveSource: 'spotify' | 'apple' = 'spotify';
       try {
         const t0 = performance.now();
         const t1_start = t0;
         effectiveSource = 'spotify';
+        const isApplePlaylistUrl = /music\.apple\.com\//i.test(url);
+        if (isApplePlaylistUrl) {
+          effectiveSource = 'apple';
+        }
         setPhaseLabel('Fetching Spotify');
         setProgressItems((prev) =>
           prev.map((p) =>
@@ -462,7 +467,7 @@ export function usePlaylistAnalyzer() {
           return getPlaylist({
             url,
             source: effectiveSource,
-            appleMode: appleMode ?? (effectiveSource === 'apple' ? 'auto' : undefined),
+            appleMode: effectiveSource === 'apple' ? 'auto' : undefined,
             enrichSpotify: effectiveSource === 'apple' ? false : undefined,
             refresh: isForceRefresh,
             signal: abortRef.current?.signal ?? undefined,
@@ -478,7 +483,7 @@ export function usePlaylistAnalyzer() {
           if (externalSignal?.aborted) timeoutController.abort();
           if (externalSignal) externalSignal.addEventListener('abort', () => timeoutController.abort());
           try {
-            json = await fetchOnce('auto');
+            json = await fetchOnce();
             clearTimeout(timeoutId);
           } catch (err: any) {
             clearTimeout(timeoutId);

@@ -1,22 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# URLそのものだけ禁止（"next" や ".next" を誤爆させない）
-DENY_RE='https?://|www\.|127\.0\.0\.1|nextjs\.org|open\.spotify\.com'
+# URL denylist (tight)
+DENY_RE='https?://|www\.|open\.spo|127\.0\.0\.1|nextjs\.org'
 
-# staged のテキストだけ走査（バイナリは無視）
-files="$(git diff --cached --name-only --diff-filter=ACMR)"
-[ -z "$files" ] && exit 0
+# Ignore lockfiles (they contain registry URLs by design)
+IGNORE_RE='^(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|npm-shrinkwrap\.json)$'
 
-fail=0
-while IFS= read -r f; do
-  [ -f "$f" ] || continue
-  # grep互換のため rg を使う（ヒットしたら該当行番号を出す）
-  if rg -n "$DENY_RE" "$f" >/tmp/url_hit_one.txt 2>/dev/null; then
-    echo "❌ Non-allowlisted URL in staged file: $f"
-    cat /tmp/url_hit_one.txt
-    fail=1
+has_rg() { command -v rg >/dev/null 2>&1; }
+
+scan_staged() {
+  local f="$1"
+  if has_rg; then
+    git show ":$f" | rg -n "$DENY_RE" || return 1
+  else
+    git show ":$f" | grep -nE "$DENY_RE" || return 1
   fi
-done <<<"$files"
+}
 
-exit "$fail"
+# Scan exactly what is staged (index), not working tree
+git diff --cached --name-only -z --diff-filter=ACMR |
+  while IFS= read -r -d '' f; do
+
+    case "$f" in
+      next-env.d.ts|package-lock.json|pnpm-lock.yaml|yarn.lock) continue ;;
+    esac
+    [[ "$f" =~ $IGNORE_RE ]] && continue
+
+    if scan_staged "$f"; then
+      echo "❌ Non-allowlisted URL in staged file: $f"
+      scan_staged "$f" | head -50
+      exit 1
+    fi
+  done
+
+echo "OK: uiux URL check passed"
