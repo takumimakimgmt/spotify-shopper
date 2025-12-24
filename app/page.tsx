@@ -158,39 +158,11 @@ function PageInner() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
-        {/* Top explanation card (P1-1 spec) */}
-        <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:p-6">
-          <div className="text-base md:text-lg font-semibold text-white">
-            Spotifyプレイリストを、Rekordboxライブラリと照合して“未所持だけ”抽出します
-          </div>
-          <div className="mt-1 text-sm text-white/70">
-            貼る → XMLをアップ → To Buyから購入（CSVもOK）
-          </div>
-          <div className="mt-4 grid gap-2 md:grid-cols-3">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-start">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-white/80">1</span>
-              <span className="ml-2 text-sm text-white/80">Spotify playlist URL を貼る</span>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-start">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-white/80">2</span>
-              <span className="ml-2 text-sm text-white/80">Rekordbox XML をアップロード</span>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-start">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-white/80">3</span>
-              <span className="ml-2 text-sm text-white/80">To Buy から購入リンク or CSV出力</span>
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-white/50">
-            例: spotify:playlist:XXXX / playlist:XXXX / "skrillex remix"
-          </div>
-          <div className="mt-1 text-xs text-white/50">
-            対応: Spotify playlist URL / 非対応: それ以外のURL
-          </div>
+        {/* Apple-like minimalist header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-white tracking-tight">Playlist Shopper</h1>
+          <p className="mt-2 text-base text-white/60">Match a Spotify playlist with your Rekordbox library, then open buy links.</p>
         </div>
-        <ShopperHeader
-          title="Playlist Shopper — Spotify"
-          subtitle="Spotifyのプレイリストを貼る → Rekordbox XMLと照合 → 未所持だけ買える"
-        />
 
         {/* Form */}
         <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
