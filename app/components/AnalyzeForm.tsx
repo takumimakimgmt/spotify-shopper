@@ -98,8 +98,8 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   }
 
   return (
-    <section className="ps-card p-0">
-      <form onSubmit={props.handleAnalyze} className="divide-y divide-white/10">
+    <section className="ps-card max-w-2xl mx-auto p-6">
+      <form onSubmit={props.handleAnalyze} className="">
         {/* Error summary (page-level) */}
         {props.errorText && (
           <div ref={errorSummaryRef} id="error-summary" className="ps-row">
@@ -140,64 +140,69 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         ) : null}
 
         {/* Playlist URL input(s) - Apple-like row */}
-        <div className="ps-row flex-col items-start">
-          <div className="flex w-full items-center justify-between">
-            <label className="ps-label" htmlFor="playlist-url-0">Playlist URL</label>
-            <span className="text-xs text-white/40">Up to {MAX_URLS}</span>
+        {/* Playlist URL Row */}
+        <div className="grid grid-cols-[180px,1fr] gap-6 items-start py-4">
+          <div>
+            <label className="text-sm font-medium text-white/90" htmlFor="playlist-url-0">Playlist URL</label>
+            <div className="mt-1 text-xs text-white/50">Spotify playlist or ID</div>
           </div>
-          <div className="w-full space-y-2 mt-2">
-            {urls.map((url, idx) => {
-              const showRemove = urls.length > 1;
-              return (
-                <div key={idx} className="flex items-center w-full gap-2">
-                  <input
-                    id={`playlist-url-${idx}`}
-                    value={url}
-                    onChange={(e) => updateUrlAt(idx, e.target.value)}
-                    className="ps-input flex-1"
-                    placeholder="Playlist URL…"
-                    inputMode="url"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                  />
-                  {showRemove && (
-                    <button
-                      type="button"
-                      onClick={() => removeUrl(idx)}
-                      className="ps-link !no-underline text-white/40 hover:text-white/70 px-2 py-1"
-                      aria-label="Remove URL"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-            <div className="flex w-full justify-end">
+          <div>
+            <div className="space-y-2">
+              {urls.map((url, idx) => {
+                const showRemove = urls.length > 1;
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      id={`playlist-url-${idx}`}
+                      value={url}
+                      onChange={(e) => updateUrlAt(idx, e.target.value)}
+                      className="h-11 w-full rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white/90 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-white/20 transition"
+                      placeholder="Playlist URL…"
+                      inputMode="url"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                    />
+                    {showRemove && (
+                      <button
+                        type="button"
+                        onClick={() => removeUrl(idx)}
+                        className="text-white/40 hover:text-white/70 px-2 py-1"
+                        aria-label="Remove URL"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {/* Add another/Up to 3 row */}
+            <div className="mt-2 flex items-center justify-between">
               <button
                 type="button"
                 onClick={addUrl}
                 disabled={urls.length >= MAX_URLS}
-                className="ps-link disabled:opacity-50 disabled:pointer-events-none"
+                className="text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:pointer-events-none text-sm"
               >
                 + Add another
               </button>
+              <span className="text-xs text-white/40">Up to {MAX_URLS}</span>
             </div>
             {/* エラーは各input直下に1行固定（既存のplaylistUrlErrorは最初の入力に紐付け） */}
             {props.playlistUrlError && (
-              <p className="ps-error">{props.playlistUrlError}</p>
+              <p className="mt-1 text-xs text-red-500">{props.playlistUrlError}</p>
             )}
           </div>
         </div>
 
-        {/* Rekordbox XML input row */}
-        <div className="ps-row flex-col items-start">
-          <div className="flex w-full items-center justify-between">
-            <label className="ps-label">Rekordbox Collection XML</label>
-            <span className="ps-help">(optional)</span>
+        {/* Rekordbox XML Row */}
+        <div className="grid grid-cols-[180px,1fr] gap-6 items-start py-4">
+          <div>
+            <label className="text-sm font-medium text-white/90">Rekordbox Collection XML</label>
+            <div className="mt-1 text-xs text-white/50">(optional)</div>
           </div>
-          <div className="w-full flex items-center gap-3 mt-2">
+          <div>
             <input
               ref={rekordboxInputRef}
               id="rekordbox-file-input"
@@ -213,44 +218,58 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 setLocalXmlError(null);
                 props.setRekordboxFile(f ?? null);
               }}
-              className="hidden"
+              className="sr-only"
             />
-            {props.rekordboxFilename ? (
-              <span className="font-mono text-xs text-slate-300 truncate max-w-[120px]">{props.rekordboxFilename.length > 24 ? props.rekordboxFilename.slice(0, 20) + '…' : props.rekordboxFilename}</span>
-            ) : (
-              <span className="ps-link" onClick={handleRekordboxClick}>Choose file…</span>
-            )}
-            {props.rekordboxFilename && (
-              <>
-                <button type="button" className="ps-link ml-2" onClick={handleRekordboxClick}>Change…</button>
-                <button type="button" className="ps-link ml-1 text-red-400" onClick={() => props.setRekordboxFile(null)}>Remove</button>
-              </>
+            <div className="flex items-center gap-2">
+              {!props.rekordboxFilename ? (
+                <label htmlFor="rekordbox-file-input" className="h-11 px-4 rounded-xl bg-white/10 border border-white/20 text-white/80 text-sm flex items-center cursor-pointer hover:bg-white/20 transition">
+                  Choose file…
+                </label>
+              ) : (
+                <>
+                  <span className="font-mono text-xs text-slate-300 truncate max-w-[120px]">{props.rekordboxFilename.length > 24 ? props.rekordboxFilename.slice(0, 20) + '…' : props.rekordboxFilename}</span>
+                  <label htmlFor="rekordbox-file-input" className="ps-link ml-2 cursor-pointer">Change</label>
+                  <button type="button" className="ps-link ml-1 text-red-400" onClick={() => props.setRekordboxFile(null)}>Remove</button>
+                </>
+              )}
+            </div>
+            {localXmlError && (
+              <div className="mt-1 text-xs text-red-500">{localXmlError}</div>
             )}
           </div>
-          {localXmlError && (
-            <div className="ps-error">{localXmlError}</div>
-          )}
         </div>
 
-        {/* Unowned toggle row (checkbox for now) */}
-        <div className="ps-row">
-          <label htmlFor="only-unowned" className="ps-label">Show only unowned tracks</label>
-          <input
-            type="checkbox"
-            checked={props.onlyUnowned}
-            onChange={e => props.setOnlyUnowned(e.target.checked)}
-            className="h-5 w-5 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
-            id="only-unowned"
-          />
+        {/* Unowned toggle row (Switch) */}
+        <div className="grid grid-cols-[180px,1fr] gap-6 items-start py-4">
+          <div>
+            <label htmlFor="only-unowned" className="text-sm font-medium text-white/90">Show only unowned</label>
+          </div>
+          <div>
+            <div className="flex items-center justify-between w-full">
+              <span className="text-sm text-white/80">Show only unowned tracks</span>
+              {/* Custom Switch */}
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={props.onlyUnowned}
+                  onChange={e => props.setOnlyUnowned(e.target.checked)}
+                  className="sr-only peer"
+                  id="only-unowned"
+                />
+                <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/40 rounded-full peer peer-checked:bg-blue-500 transition-all"></div>
+                <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full shadow-md transition-all peer-checked:translate-x-5"></div>
+              </label>
+            </div>
+          </div>
         </div>
 
-        {/* Action row */}
-        <div className="ps-row justify-end">
+        {/* Analyze button row */}
+        <div className="pt-4 flex items-center justify-end">
           <button
             type="submit"
             data-testid="analyze-btn"
             disabled={isProcessing || !urls.some((u) => (u || "").trim().length > 0)}
-            className="ps-input bg-blue-500 hover:bg-blue-400 text-white font-semibold w-auto px-8 py-2 h-auto disabled:opacity-50 disabled:cursor-not-allowed border-0"
+            className="h-11 px-5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed border-0"
           >
             {isProcessing ? (
               <>
