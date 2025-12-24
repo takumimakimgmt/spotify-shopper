@@ -98,18 +98,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   }
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
-      <form onSubmit={props.handleAnalyze} className="space-y-4">
-        {/* Processing indicator */}
-        <ProcessingBar
-          analyzing={props.loading}
-          reanalyzing={props.isReanalyzing}
-          progress={props.progress}
-        />
-
+    <section className="ps-card p-0">
+      <form onSubmit={props.handleAnalyze} className="divide-y divide-white/10">
         {/* Error summary (page-level) */}
         {props.errorText && (
-          <div ref={errorSummaryRef} id="error-summary">
+          <div ref={errorSummaryRef} id="error-summary" className="ps-row">
             <ErrorAlert
               title="There was a problem"
               message={props.errorText}
@@ -119,44 +112,49 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         )}
         {/* Persistent banner (Apple block, etc) */}
         {props.banner ? (
-          <div
-            className={[
-              "mt-3 rounded-xl border p-3 text-sm",
-              props.banner.kind === "error"
-                ? "border-red-500/30 bg-red-500/10 text-red-100"
-                : "border-white/10 bg-white/5 text-white/80",
-            ].join(" ")}
-            role={props.banner.kind === "error" ? "alert" : "status"}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 whitespace-pre-wrap">{props.banner.text}</div>
-              {props.onDismissBanner ? (
-                <button
-                  type="button"
-                  onClick={props.onDismissBanner}
-                  className="shrink-0 rounded-lg px-2 py-1 text-xs text-white/70 hover:bg-white/10"
-                  aria-label="Dismiss"
-                >
-                  ✕
-                </button>
-              ) : null}
+          <div className="ps-row">
+            <div
+              className={[
+                "w-full rounded-xl border p-3 text-sm",
+                props.banner.kind === "error"
+                  ? "border-red-500/30 bg-red-500/10 text-red-100"
+                  : "border-white/10 bg-white/5 text-white/80",
+              ].join(" ")}
+              role={props.banner.kind === "error" ? "alert" : "status"}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 whitespace-pre-wrap">{props.banner.text}</div>
+                {props.onDismissBanner ? (
+                  <button
+                    type="button"
+                    onClick={props.onDismissBanner}
+                    className="shrink-0 rounded-lg px-2 py-1 text-xs text-white/70 hover:bg-white/10"
+                    aria-label="Dismiss"
+                  >
+                    ✕
+                  </button>
+                ) : null}
+              </div>
             </div>
           </div>
         ) : null}
 
-        {/* Playlist URL input(s) - Apple-like */}
-        <label className="text-sm font-medium" htmlFor="playlist-url-0">Playlist URL</label>
-        <div className="mt-2 space-y-2">
-          {urls.map((url, idx) => {
-            const showRemove = urls.length > 1;
-            return (
-              <div key={idx}>
-                <div className="flex items-center gap-2">
+        {/* Playlist URL input(s) - Apple-like row */}
+        <div className="ps-row flex-col items-start">
+          <div className="flex w-full items-center justify-between">
+            <label className="ps-label" htmlFor="playlist-url-0">Playlist URL</label>
+            <span className="text-xs text-white/40">Up to {MAX_URLS}</span>
+          </div>
+          <div className="w-full space-y-2 mt-2">
+            {urls.map((url, idx) => {
+              const showRemove = urls.length > 1;
+              return (
+                <div key={idx} className="flex items-center w-full gap-2">
                   <input
                     id={`playlist-url-${idx}`}
                     value={url}
                     onChange={(e) => updateUrlAt(idx, e.target.value)}
-                    className="w-full rounded-xl border px-3 py-2 text-sm"
+                    className="ps-input flex-1"
                     placeholder="Playlist URL…"
                     inputMode="url"
                     autoCapitalize="none"
@@ -167,53 +165,39 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                     <button
                       type="button"
                       onClick={() => removeUrl(idx)}
-                      className="rounded-xl border px-3 py-2 text-sm"
+                      className="ps-link !no-underline text-white/40 hover:text-white/70 px-2 py-1"
                       aria-label="Remove URL"
                     >
-                      Remove
+                      ×
                     </button>
                   )}
                 </div>
-                {/* エラーは各input直下に1行固定（既存のplaylistUrlErrorは最初の入力に紐付け） */}
-                {idx === 0 && props.playlistUrlError && (
-                  <p className="mt-1 text-xs text-red-600">{props.playlistUrlError}</p>
-                )}
-              </div>
-            );
-          })}
-          <div className="flex items-center justify-between pt-1">
-            <button
-              type="button"
-              onClick={addUrl}
-              disabled={urls.length >= MAX_URLS}
-              className="rounded-xl border px-3 py-2 text-sm disabled:opacity-50"
-            >
-              + Add another
-            </button>
-            <p className="text-xs text-neutral-500">Up to {MAX_URLS}</p>
+              );
+            })}
+            <div className="flex w-full justify-end">
+              <button
+                type="button"
+                onClick={addUrl}
+                disabled={urls.length >= MAX_URLS}
+                className="ps-link disabled:opacity-50 disabled:pointer-events-none"
+              >
+                + Add another
+              </button>
+            </div>
+            {/* エラーは各input直下に1行固定（既存のplaylistUrlErrorは最初の入力に紐付け） */}
+            {props.playlistUrlError && (
+              <p className="ps-error">{props.playlistUrlError}</p>
+            )}
           </div>
         </div>
 
-        {/* Rekordbox XML Dropzone-style input */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Rekordbox Collection XML (optional)</label>
-          <div
-            className="border-2 border-dashed border-slate-700 rounded-lg p-3 text-center cursor-pointer bg-slate-950/60 hover:bg-slate-900"
-            onClick={handleRekordboxClick}
-            onDrop={e => {
-              e.preventDefault();
-              const f = e.dataTransfer.files?.[0];
-              if (f && f.type === 'text/xml') {
-                props.setRekordboxFile(f);
-              }
-            }}
-            onDragOver={e => e.preventDefault()}
-          >
-            {props.rekordboxFilename ? (
-              <span className="font-mono text-xs text-slate-300">{props.rekordboxFilename.length > 24 ? props.rekordboxFilename.slice(0, 20) + '…' : props.rekordboxFilename}</span>
-            ) : (
-              <span className="text-xs text-slate-400">Drag & drop XML here, or choose file</span>
-            )}
+        {/* Rekordbox XML input row */}
+        <div className="ps-row flex-col items-start">
+          <div className="flex w-full items-center justify-between">
+            <label className="ps-label">Rekordbox Collection XML</label>
+            <span className="ps-help">(optional)</span>
+          </div>
+          <div className="w-full flex items-center gap-3 mt-2">
             <input
               ref={rekordboxInputRef}
               id="rekordbox-file-input"
@@ -231,34 +215,42 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               }}
               className="hidden"
             />
+            {props.rekordboxFilename ? (
+              <span className="font-mono text-xs text-slate-300 truncate max-w-[120px]">{props.rekordboxFilename.length > 24 ? props.rekordboxFilename.slice(0, 20) + '…' : props.rekordboxFilename}</span>
+            ) : (
+              <span className="ps-link" onClick={handleRekordboxClick}>Choose file…</span>
+            )}
             {props.rekordboxFilename && (
-              <button type="button" className="ml-2 text-xs px-2 py-1 rounded bg-slate-800 text-white/80 hover:bg-slate-700" onClick={() => props.setRekordboxFile(null)}>Change</button>
+              <>
+                <button type="button" className="ps-link ml-2" onClick={handleRekordboxClick}>Change…</button>
+                <button type="button" className="ps-link ml-1 text-red-400" onClick={() => props.setRekordboxFile(null)}>Remove</button>
+              </>
             )}
           </div>
-          {/* XML error below input */}
           {localXmlError && (
-            <div className="text-xs text-red-400 mt-1">{localXmlError}</div>
+            <div className="ps-error">{localXmlError}</div>
           )}
         </div>
-        {/* Unowned toggle below XML */}
-        <div className="flex items-center gap-2 mt-2">
+
+        {/* Unowned toggle row (checkbox for now) */}
+        <div className="ps-row">
+          <label htmlFor="only-unowned" className="ps-label">Show only unowned tracks</label>
           <input
             type="checkbox"
             checked={props.onlyUnowned}
             onChange={e => props.setOnlyUnowned(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-500 bg-slate-900 text-emerald-500"
+            className="h-5 w-5 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
             id="only-unowned"
           />
-          <label htmlFor="only-unowned" className="text-sm text-slate-200">Show only unowned tracks</label>
         </div>
 
-        {/* Analyze button right-bottom fixed in form */}
-        <div className="flex justify-end mt-4">
+        {/* Action row */}
+        <div className="ps-row justify-end">
           <button
             type="submit"
             data-testid="analyze-btn"
             disabled={isProcessing || !urls.some((u) => (u || "").trim().length > 0)}
-            className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-5 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-60"
+            className="ps-input bg-blue-500 hover:bg-blue-400 text-white font-semibold w-auto px-8 py-2 h-auto disabled:opacity-50 disabled:cursor-not-allowed border-0"
           >
             {isProcessing ? (
               <>
@@ -270,13 +262,14 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             )}
           </button>
         </div>
+
         {/* StatusRow: unified status display at bottom */}
-        <div className="mt-4">
+        <div className="ps-row mt-2">
           {(isProcessing || props.progress > 0 || props.playlistUrlError || localXmlError) && (
-            <div className="rounded bg-slate-800/60 px-3 py-2 text-sm text-slate-200 flex items-center gap-2 min-h-[32px]">
+            <div className="rounded bg-slate-800/60 px-3 py-2 text-sm text-slate-200 flex items-center gap-2 min-h-[32px] w-full">
               {isProcessing ? (
                 <>
-                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />
                   <span>
                     {props.progress > 0 ? `Analyzing… ${props.progress}%` : "Analyzing…"}
                   </span>
