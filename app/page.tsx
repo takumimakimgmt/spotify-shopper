@@ -28,25 +28,85 @@ const SidePanels = dynamic(
 import ErrorAlert from './components/ErrorAlert';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 
-
-
 function PageInner() {
-  // All hooks and logic must be inside the component function
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // 未対応URLブロック: 現在はSpotifyプレイリストURLのみ対応
+  const [banner, setBanner] = React.useState<null | { kind: "error" | "info"; text: string }>(null);
+
+  // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
   const selection = useSelectionState(null, false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    setBanner(null);
+  }, [analyzer.playlistUrlInput]);
+
+  const handleAnalyzeWithAppleBlock = (e: React.FormEvent) => {
+    const url = analyzer.playlistUrlInput.trim();
+    if (!FLAGS.ENABLE_APPLE && /music\.apple\.com/i.test(url)) {
+      setBanner({ kind: "error", text: "このURLは未対応です。現在はSpotifyプレイリストURLのみ対応しています。" });
+      return;
+    }
+    actions.handleAnalyze(e);
+  };
+    // --- clean-first-then-sync: 初回ロードはクリーン、以降は同期 ---
+    const initialTabRef = useRef<string | null>(null);
+    const allowUrlSyncRef = useRef(false);
+  // Vercel / backend cold start warmup
+  useEffect(() => {
+    fetch("/api/health", { cache: "no-store" }).catch(() => {});
+  }, []);
+
+
+  // === DERIVED DATA: Pure calculations ===
   const vm = useViewModel(analyzer, filters, selection.activeTab);
-  const actions = useActions(analyzer, selection);
-  const { setFormCollapsed } = selection;
-  const prevResultRef = useRef<any>(null);
-  const allowUrlSyncRef = useRef(false);
-  const initialTabRef = useRef(selection.activeTab);
-  const TAB_QS_KEY = "tab";
-  const encodeTab = (tab: string) => tab;
-  const [banner, setBanner] = React.useState<{ kind: "error" | "info"; text: string } | null>(null);
+  const hasResult = Boolean(vm.currentResult);
+
+  const TAB_QS_KEY = "t";
+  // URL(ASCII)を短く安全にクエリ化（base64url）
+  const encodeTab = (url: string) =>
+    btoa(url).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+
+  const decodeTab = (s: string) => {
+    try {
+      const padded = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+      return atob(padded);
+    } catch {
+      return null;
+    }
+  };
+
+  // (1) 初期タブ決定：URL(t) → なければ先頭
+  useEffect(() => {
+    if (vm.multiResults.length === 0) return;
+
+    const t = searchParams.get(TAB_QS_KEY);
+    const decoded = t ? decodeTab(t) : null;
+
+    let next: string | null = null;
+    if (decoded && vm.multiResults.some(([u]) => u === decoded)) {
+      next = decoded;
+    } else {
+      next = vm.multiResults[0][0];
+    }
+
+    // 初期タブを確定（最初の1回だけ）
+    if (!initialTabRef.current) initialTabRef.current = next;
+
+    // activeTabが未設定 or URL指定が有効ならセット
+    if (!selection.activeTab || (decoded && next === decoded)) {
+      selection.setActiveTab(next);
+    }
+
+    // URLに t が付いて入ってきた場合は、復元後すぐクリーンに戻す
+    if (t) {
+      router.replace(pathname, { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vm.multiResults.length, pathname, searchParams]);
 
   // (2) タブ変更をURLへ同期（リロード耐性）
   useEffect(() => {
@@ -68,15 +128,21 @@ function PageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection.activeTab, router, pathname, searchParams]);
 
-  useEffect(() => {
-    const r = vm.currentResult;
-    const hasTracks = (r?.tracks?.length ?? 0) > 0;
-    if (!hasTracks) return;
-    if (r !== prevResultRef.current) {
-      setFormCollapsed(true);
-      prevResultRef.current = r;
-    }
-  }, [vm.currentResult]);
+  // === ACTIONS: All operations ===
+  const actions = useActions(analyzer, selection);
+
+  // === SIDE EFFECTS ===
+    const { setFormCollapsed } = selection;
+    const prevResultRef = useRef<any>(null);
+    useEffect(() => {
+      const r = vm.currentResult;
+      const hasTracks = (r?.tracks?.length ?? 0) > 0;
+      if (!hasTracks) return;
+      if (r !== prevResultRef.current) {
+        setFormCollapsed(true);
+        prevResultRef.current = r;
+      }
+    }, [vm.currentResult]);
 
   // タブ切替時にtracksが空ならensureHydratedで埋める
   useEffect(() => {
@@ -88,8 +154,6 @@ function PageInner() {
       analyzer.ensureHydrated?.(tab);
     }
   }, [selection.activeTab]);
-
-  const handleAnalyzeWithAppleBlock = analyzer.handleAnalyze;
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
