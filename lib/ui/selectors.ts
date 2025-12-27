@@ -7,7 +7,6 @@ export interface FilterOptions {
   categoryFilter: 'all' | 'toBuy' | 'owned';
   searchQuery: string;
   sortKey: 'none' | 'artist' | 'album' | 'title';
-  onlyUnowned: boolean;
 }
 
 /**
@@ -20,12 +19,6 @@ export function selectDisplayedTracks(
 ): PlaylistRow[] {
   const safeTracks = Array.isArray(tracks) ? tracks : [];
   let filtered = safeTracks;
-
-  // Filter by owned status when "only unowned" is toggled
-  if (options.onlyUnowned) {
-    filtered = filtered.filter((t) => t.owned !== true);
-  }
-
   // Filter by search (normalized, haystack)
   if (options.searchQuery.trim()) {
     const q = buildSearchHaystack([options.searchQuery]);
