@@ -1,3 +1,26 @@
+/**
+HOTFIX SPEC (Playlist Shopper)
+- Separate concerns:
+  - uiTab: "all" | "toBuy" | "owned" (table filter tab)
+  - activeTab: string | null (selected analyzed playlist key)
+  - persistedResults: MultiResult[] (saved analyses)
+- Hydrate rules:
+  1) Load persistedResults on mount
+  2) If activeTab is null OR not found in persistedResults, set activeTab = first key or null
+  3) If persistedResults empty, show empty state (no table)
+- Never persist uiTab. Persist only:
+  - activeTab
+  - persistedResults (capped)
+- Error routing:
+  - xmlError is shown ONLY under XML input
+  - playlistUrlError is shown ONLY under playlist input
+- XML size:
+  - MAX_XML_BYTES = 50 * 1024 * 1024
+  - If exceeded, set xmlError and DO NOT set playlistUrlError
+TODO:
+- Implement guard + fallback for activeTab
+- Implement XML max size and correct error message
+*/
 
 "use client";
 import { FLAGS } from "@/lib/config/flags";
@@ -28,25 +51,92 @@ const SidePanels = dynamic(
 import ErrorAlert from './components/ErrorAlert';
 import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
 
-
-
 function PageInner() {
-  // All hooks and logic must be inside the component function
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // 未対応URLブロック: 現在はSpotifyプレイリストURLのみ対応
+  const [banner, setBanner] = React.useState<null | { kind: "error" | "info"; text: string }>(null);
+
+  // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
   const selection = useSelectionState(null, false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    setBanner(null);
+  }, [analyzer.playlistUrlInput]);
+
+  const handleAnalyzeWithAppleBlock = (e: React.FormEvent) => {
+    const url = analyzer.playlistUrlInput.trim();
+    if (!FLAGS.ENABLE_APPLE && /music\.apple\.com/i.test(url)) {
+      setBanner({ kind: "error", text: "このURLは未対応です。現在はSpotifyプレイリストURLのみ対応しています。" });
+      return;
+    }
+    actions.handleAnalyze(e);
+  };
+    // --- clean-first-then-sync: 初回ロードはクリーン、以降は同期 ---
+    const initialTabRef = useRef<string | null>(null);
+    const allowUrlSyncRef = useRef(false);
+  // Vercel / backend cold start warmup
+  useEffect(() => {
+    fetch("/api/health", { cache: "no-store" }).catch(() => {});
+  }, []);
+
+
+  // === DERIVED DATA: Pure calculations ===
+  // activeTab fallback logic after hydration
+  useEffect(() => {
+    if (!analyzer.multiResults || analyzer.multiResults.length === 0) {
+      selection.setActiveTab(null);
+      return;
+    }
+    const keys = analyzer.multiResults.map(([key]) => key);
+    if (!selection.activeTab || !keys.includes(selection.activeTab)) {
+      selection.setActiveTab(keys[keys.length - 1]);
+    }
+  }, [analyzer.multiResults]);
+
   const vm = useViewModel(analyzer, filters, selection.activeTab);
-  const actions = useActions(analyzer, selection);
-  const { setFormCollapsed } = selection;
-  const prevResultRef = useRef<any>(null);
-  const allowUrlSyncRef = useRef(false);
-  const initialTabRef = useRef(selection.activeTab);
-  const TAB_QS_KEY = "tab";
-  const encodeTab = (tab: string) => tab;
-  const [banner, setBanner] = React.useState<{ kind: "error" | "info"; text: string } | null>(null);
+  const hasResult = Boolean(vm.currentResult);
+
+  const TAB_QS_KEY = "t";
+  // URL(ASCII)を短く安全にクエリ化（base64url）
+  const encodeTab = (url: string) =>
+    btoa(url).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+
+  const decodeTab = (s: string) => {
+    try {
+      const padded = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+      return atob(padded);
+    } catch {
+      return null;
+    }
+  };
+
+  // (1) 初期タブ決定：URL(t) → なければ先頭
+  useEffect(() => {
+    if (vm.multiResults.length === 0) return;
+
+    const t = searchParams.get(TAB_QS_KEY);
+    const decoded = t ? decodeTab(t) : null;
+
+    let next: string | null = null;
+    if (decoded && vm.multiResults.some(([u]) => u === decoded)) {
+      next = decoded;
+    } else {
+      next = vm.multiResults[vm.multiResults.length - 1][0];
+    }
+
+    if (!selection.activeTab || (decoded && next === decoded)) {
+      selection.setActiveTab(next);
+    }
+
+    if (t) {
+      router.replace(pathname, { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vm.multiResults.length, pathname, searchParams]);
 
   // (2) タブ変更をURLへ同期（リロード耐性）
   useEffect(() => {
@@ -68,15 +158,21 @@ function PageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection.activeTab, router, pathname, searchParams]);
 
-  useEffect(() => {
-    const r = vm.currentResult;
-    const hasTracks = (r?.tracks?.length ?? 0) > 0;
-    if (!hasTracks) return;
-    if (r !== prevResultRef.current) {
-      setFormCollapsed(true);
-      prevResultRef.current = r;
-    }
-  }, [vm.currentResult]);
+  // === ACTIONS: All operations ===
+  const actions = useActions(analyzer, selection);
+
+  // === SIDE EFFECTS ===
+    const { setFormCollapsed } = selection;
+    const prevResultRef = useRef<any>(null);
+    useEffect(() => {
+      const r = vm.currentResult;
+      const hasTracks = (r?.tracks?.length ?? 0) > 0;
+      if (!hasTracks) return;
+      if (r !== prevResultRef.current) {
+        setFormCollapsed(true);
+        prevResultRef.current = r;
+      }
+    }, [vm.currentResult]);
 
   // タブ切替時にtracksが空ならensureHydratedで埋める
   useEffect(() => {
@@ -88,8 +184,6 @@ function PageInner() {
       analyzer.ensureHydrated?.(tab);
     }
   }, [selection.activeTab]);
-
-  const handleAnalyzeWithAppleBlock = analyzer.handleAnalyze;
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
@@ -145,8 +239,6 @@ function PageInner() {
               handleRekordboxChange={analyzer.handleRekordboxChange}
               rekordboxFilename={analyzer.rekordboxFile?.name ?? vm.currentResult?.rekordboxMeta?.filename ?? null}
               rekordboxDate={analyzer.rekordboxDate ?? (vm.currentResult?.rekordboxMeta?.updatedAtISO ? new Date(vm.currentResult.rekordboxMeta.updatedAtISO).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : null)}
-              onlyUnowned={filters.onlyUnowned}
-              setOnlyUnowned={filters.setOnlyUnowned}
               loading={analyzer.loading}
               isReanalyzing={analyzer.isReanalyzing}
               progress={analyzer.progress}
@@ -210,8 +302,6 @@ function PageInner() {
                   setSearchQuery={filters.setSearchQuery}
                   sortKey={filters.sortKey}
                   setSortKey={filters.setSortKey}
-                  onlyUnowned={filters.onlyUnowned}
-                  setOnlyUnowned={filters.setOnlyUnowned}
                 />
                 <ResultsTable
                   currentResult={vm.currentResult}

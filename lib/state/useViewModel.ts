@@ -40,7 +40,7 @@ export interface ViewModel {
 export function useViewModel(
   analyzer: ReturnType<typeof usePlaylistAnalyzer>,
   filters: FiltersState,
-  activeTab: string | null
+  selectedKey: string | null
 ): ViewModel {
   const multiResults = useMemo(
     () => analyzer.multiResults || [],
@@ -52,11 +52,11 @@ export function useViewModel(
     [analyzer.storageWarning]
   );
 
-  // Compute currentResult from activeTab and multiResults
+  // Compute currentResult from selectedKey and multiResults
   const currentResult = useMemo(() => {
-    if (!activeTab) return null;
-    return multiResults.find(([url]) => url === activeTab)?.[1] ?? null;
-  }, [activeTab, multiResults]);
+    if (!selectedKey) return null;
+    return multiResults.find(([url]) => url === selectedKey)?.[1] ?? null;
+  }, [selectedKey, multiResults]);
 
   // Derive displayed tracks based on current result + filter options
   const displayedTracks = useMemo(() => {
@@ -65,14 +65,12 @@ export function useViewModel(
       categoryFilter: filters.categoryFilter,
       searchQuery: filters.searchQuery,
       sortKey: filters.sortKey,
-      onlyUnowned: filters.onlyUnowned,
     });
   }, [
     currentResult,
     filters.categoryFilter,
     filters.searchQuery,
     filters.sortKey,
-    filters.onlyUnowned,
   ]);
 
   // Derive counts
