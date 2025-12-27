@@ -91,7 +91,6 @@ import {
 import { detectSourceFromUrl, sanitizeUrl } from '../utils/playlistUrl';
 
 const STORAGE_RESULTS = 'spotify-shopper-results';
-const STORAGE_ACTIVE_TAB = 'spotify-shopper-active-tab';
 const MAX_STORAGE_BYTES = 300 * 1024; // ~300KB guard
 
 export function categorizeTrack(track: PlaylistRow): TrackCategory {
@@ -268,7 +267,6 @@ export function usePlaylistAnalyzer() {
   const clearLocalData = () => {
     try {
       localStorage.removeItem(STORAGE_RESULTS);
-      localStorage.removeItem(STORAGE_ACTIVE_TAB);
       setMultiResults([]);
       setPlaylistUrlInput('');
       applyRekordboxFile(null);
@@ -279,12 +277,34 @@ export function usePlaylistAnalyzer() {
     }
   };
 
-  // activeTab is now managed by selection, not analyzer
+  // selectedKey is managed by selection, not analyzer
   // currentResult is now derived in viewModel
 
   // (formCollapsed is now managed only by selection)
 
-  const isProcessing = loading || isReanalyzing;
+  
+const isProcessing = loading || isReanalyzing;
+
+  useEffect(() => {
+    if (!isProcessing || progressItems.length === 0) {
+      setProgress(0);
+      return;
+    }
+
+    const weights: Record<string, number> = {
+      pending: 0,
+      fetching: 0.35,
+      parsing: 0.75,
+      done: 1,
+      error: 1,
+    };
+
+    const avg =
+      progressItems.reduce((acc, item) => acc + (weights[item.status] ?? 0), 0) /
+      progressItems.length;
+
+    setProgress(Math.max(0, Math.min(100, Math.round(avg * 100))));
+  }, [isProcessing, progressItems]);
 
   const handleRekordboxChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
@@ -408,15 +428,12 @@ export function usePlaylistAnalyzer() {
     requestIdRef.current = localRequestId;
 
     setLoading(true);
-    setProgress(2);
+    setProgress(0);
     if (progressTimer.current) {
       window.clearInterval(progressTimer.current);
+      progressTimer.current = null;
     }
-    progressTimer.current = window.setInterval(() => {
-      setProgress((p) => Math.min(98, p + Math.random() * 12 + 3));
-    }, 300) as unknown as number;
-
-    const newResults: Array<[string, ResultState]> = [];
+const newResults: Array<[string, ResultState]> = [];
     let hasError = false;
 
     for (const url of urls) {

@@ -1,3 +1,26 @@
+/**
+HOTFIX SPEC (Playlist Shopper)
+- Separate concerns:
+  - uiTab: "all" | "toBuy" | "owned" (table filter tab)
+  - selectedKey: string | null (selected analyzed playlist key)
+  - persistedResults: MultiResult[] (saved analyses)
+- Hydrate rules:
+  1) Load persistedResults on mount
+  2) If selectedKey is null OR not found in persistedResults, set selectedKey = first key or null
+  3) If persistedResults empty, show empty state (no table)
+- Never persist uiTab. Persist only:
+  - selectedKey
+  - persistedResults (capped)
+- Error routing:
+  - xmlError is shown ONLY under XML input
+  - playlistUrlError is shown ONLY under playlist input
+- XML size:
+  - MAX_XML_BYTES = 50 * 1024 * 1024
+  - If exceeded, set xmlError and DO NOT set playlistUrlError
+TODO:
+- Implement guard + fallback for selectedKey
+- Implement XML max size and correct error message
+*/
 
 "use client";
 import { FLAGS } from "@/lib/config/flags";
@@ -62,7 +85,19 @@ function PageInner() {
 
 
   // === DERIVED DATA: Pure calculations ===
-  const vm = useViewModel(analyzer, filters, selection.activeTab);
+  // selectedKey fallback logic after hydration
+  useEffect(() => {
+    if (!analyzer.multiResults || analyzer.multiResults.length === 0) {
+      selection.setSelectedKey(null);
+      return;
+    }
+    const keys = analyzer.multiResults.map(([key]) => key);
+    if (!selection.selectedKey || !keys.includes(selection.selectedKey)) {
+      selection.setSelectedKey(keys[keys.length - 1]);
+    }
+  }, [analyzer.multiResults]);
+
+  const vm = useViewModel(analyzer, filters, selection.selectedKey);
   const hasResult = Boolean(vm.currentResult);
 
   const TAB_QS_KEY = "t";
@@ -90,18 +125,13 @@ function PageInner() {
     if (decoded && vm.multiResults.some(([u]) => u === decoded)) {
       next = decoded;
     } else {
-      next = vm.multiResults[0][0];
+      next = vm.multiResults[vm.multiResults.length - 1][0];
     }
 
-    // 初期タブを確定（最初の1回だけ）
-    if (!initialTabRef.current) initialTabRef.current = next;
-
-    // activeTabが未設定 or URL指定が有効ならセット
-    if (!selection.activeTab || (decoded && next === decoded)) {
-      selection.setActiveTab(next);
+    if (!selection.selectedKey || (decoded && next === decoded)) {
+      selection.setSelectedKey(next);
     }
 
-    // URLに t が付いて入ってきた場合は、復元後すぐクリーンに戻す
     if (t) {
       router.replace(pathname, { scroll: false });
     }
@@ -110,7 +140,7 @@ function PageInner() {
 
   // (2) タブ変更をURLへ同期（リロード耐性）
   useEffect(() => {
-    const tab = selection.activeTab;
+    const tab = selection.selectedKey;
     if (!tab) return;
 
     // 初回はクリーン維持：initialTabから変わるまでURL同期を許可しない
@@ -126,7 +156,7 @@ function PageInner() {
     params.set(TAB_QS_KEY, encodeTab(tab));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selection.activeTab, router, pathname, searchParams]);
+  }, [selection.selectedKey, router, pathname, searchParams]);
 
   // === ACTIONS: All operations ===
   const actions = useActions(analyzer, selection);
@@ -146,14 +176,14 @@ function PageInner() {
 
   // タブ切替時にtracksが空ならensureHydratedで埋める
   useEffect(() => {
-    const tab = selection.activeTab;
+    const tab = selection.selectedKey;
     if (!tab) return;
     const result = analyzer.multiResults.find(([url]) => url === tab)?.[1];
     if (result && result.tracks.length === 0) {
       // @ts-ignore
       analyzer.ensureHydrated?.(tab);
     }
-  }, [selection.activeTab]);
+  }, [selection.selectedKey]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
@@ -209,8 +239,6 @@ function PageInner() {
               handleRekordboxChange={analyzer.handleRekordboxChange}
               rekordboxFilename={analyzer.rekordboxFile?.name ?? vm.currentResult?.rekordboxMeta?.filename ?? null}
               rekordboxDate={analyzer.rekordboxDate ?? (vm.currentResult?.rekordboxMeta?.updatedAtISO ? new Date(vm.currentResult.rekordboxMeta.updatedAtISO).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : null)}
-              onlyUnowned={filters.onlyUnowned}
-              setOnlyUnowned={filters.setOnlyUnowned}
               loading={analyzer.loading}
               isReanalyzing={analyzer.isReanalyzing}
               progress={analyzer.progress}
@@ -248,8 +276,8 @@ function PageInner() {
             {/* Tabs */}
             <ResultsTabs
               multiResults={vm.multiResults}
-              activeTab={selection.activeTab}
-              onSelectTab={selection.setActiveTab}
+              selectedKey={selection.selectedKey}
+              onSelectTab={selection.setSelectedKey}
               onRemoveTab={actions.handleRemoveTab}
               onClearAll={actions.handleClearAllTabs}
             />
@@ -274,8 +302,6 @@ function PageInner() {
                   setSearchQuery={filters.setSearchQuery}
                   sortKey={filters.sortKey}
                   setSortKey={filters.setSortKey}
-                  onlyUnowned={filters.onlyUnowned}
-                  setOnlyUnowned={filters.setOnlyUnowned}
                 />
                 <ResultsTable
                   currentResult={vm.currentResult}
