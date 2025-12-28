@@ -80,7 +80,6 @@ function PageInner() {
     const allowUrlSyncRef = useRef(false);
   // Vercel / backend cold start warmup
   useEffect(() => {
-    fetch("/api/health", { cache: "no-store" }).catch(() => {});
   }, []);
 
 
