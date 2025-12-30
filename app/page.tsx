@@ -187,7 +187,6 @@ function PageInner() {
               activeTab={selection.activeTab}
               onSelectTab={selection.setActiveTab}
               onRemoveTab={actions.handleRemoveTab}
-              onClearAll={actions.handleClearAllTabs}
             />
             {vm.currentResult && (
               <div className="space-y-4">
