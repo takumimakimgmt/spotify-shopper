@@ -3,6 +3,9 @@
 import React from "react";
 import type { PlaylistRow, StoreLinks } from "../../lib/types";
 import { getRecommendedStore, getOtherStores } from "../../lib/playlist/stores";
+import { withBeatportAid } from "../../lib/affiliates/beatport";
+
+const BEATPORT_A_AID = process.env.NEXT_PUBLIC_BEATPORT_A_AID;
 
 type Props = {
   currentResult: unknown | null;
@@ -20,7 +23,17 @@ function firstStoreUrl(stores?: StoreLinks): string {
 
 function beatportSearchUrl(track: PlaylistRow): string {
   const q = `${track.artist ?? ""} ${track.title ?? ""}`.trim();
-  return "";
+  if (!q) return "";
+
+  try {
+    const u = new URL("https:");
+    u.hostname = "beatport.com";
+    u.pathname = "/search";
+    u.searchParams.set("q", q);
+    return withBeatportAid(u.toString(), BEATPORT_A_AID);
+  } catch {
+    return "";
+  }
 }
 
 function StoreLinksInline({ track }: { track: PlaylistRow }) {
@@ -34,11 +47,17 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <a
-        href={primaryUrl || "#"}
+        href={primaryUrl || fallback || "#"}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] text-white hover:bg-white/15"
-        title={primaryUrl ? "Open store" : "No store link"}
+        aria-disabled={!primaryUrl && !fallback}
+        onClick={(e) => {
+          if (!primaryUrl && !fallback) e.preventDefault();
+        }}
+        className={`inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] text-white ${
+          primaryUrl || fallback ? "hover:bg-white/15" : "opacity-50 cursor-not-allowed"
+        }`}
+        title={primaryUrl || fallback ? "Open store" : "No store link"}
       >
         {mainLabel}
       </a>

@@ -162,7 +162,7 @@ function PageInner() {
 
   // === SIDE EFFECTS ===
     const { setFormCollapsed } = selection;
-    const prevResultRef = useRef<any>(null);
+    const prevResultRef = useRef<unknown>(null);
     useEffect(() => {
       const r = vm.currentResult;
       const hasTracks = (r?.tracks?.length ?? 0) > 0;
@@ -178,10 +178,10 @@ function PageInner() {
     const tab = selection.activeTab;
     if (!tab) return;
     const result = analyzer.multiResults.find(([url]) => url === tab)?.[1];
-    if (result && result.tracks.length === 0) {
-      // @ts-ignore
-      analyzer.ensureHydrated?.(tab);
-    }
+    if (!result || result.tracks.length !== 0) return;
+
+    const ensureHydrated = (analyzer as Partial<{ ensureHydrated: (t: string) => void }>).ensureHydrated;
+    if (typeof ensureHydrated === "function") ensureHydrated(tab);
   }, [selection.activeTab]);
 
   return (

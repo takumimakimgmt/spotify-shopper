@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import ProcessingBar from './ProcessingBar';
 import ErrorAlert from './ErrorAlert';
 import type { ProgressItem } from './ProgressList';
@@ -40,8 +40,6 @@ export interface AnalyzeFormProps {
 const MAX_XML_BYTES = 50 * 1024 * 1024;
 
 export default function AnalyzeForm(props: AnalyzeFormProps) {
-  const [localXmlError, setLocalXmlError] = useState<string | null>(null);
-  const [playlistUrlError, setPlaylistUrlError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -50,48 +48,26 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
     return typeof m === 'string' && m.trim() ? m : null;
   }, [props.errorMeta]);
 
-  useEffect(() => {
-    const meta = props.errorMeta;
-    if (!meta) {
-      setLocalXmlError(null);
-      setPlaylistUrlError(null);
-      return;
-    }
-
-    const code = meta.error_code;
-
-    if (code === 'XML_TOO_LARGE' || code === 'XML_PARSE_FAILED') {
-      setLocalXmlError(messageFromMeta ?? 'XML error');
-      setPlaylistUrlError(null);
-      return;
-    }
-
-    if (code === 'PLAYLIST_INVALID') {
-      setPlaylistUrlError(messageFromMeta ?? 'Invalid playlist URL');
-      setLocalXmlError(null);
-      return;
-    }
-
-    setLocalXmlError(null);
-    setPlaylistUrlError(null);
+  const playlistUrlError = useMemo(() => {
+    const code = props.errorMeta?.error_code;
+    if (code === 'PLAYLIST_INVALID') return messageFromMeta ?? 'Invalid playlist URL';
+    return null;
   }, [props.errorMeta, messageFromMeta]);
 
-  useEffect(() => {
-    if (!props.rekordboxFile) {
-      setLocalXmlError(null);
-      return;
-    }
-    if (props.rekordboxFile.size > MAX_XML_BYTES) {
-      setLocalXmlError('XML file too large (max 50MB)');
-    } else if (props.errorMeta?.error_code !== 'XML_PARSE_FAILED') {
-      setLocalXmlError(null);
-    }
-  }, [props.rekordboxFile, props.errorMeta]);
+  const localXmlError = useMemo(() => {
+    const file = props.rekordboxFile;
+    if (!file) return null;
+    if (file.size > MAX_XML_BYTES) return 'XML file too large (max 50MB)';
 
+    const code = props.errorMeta?.error_code;
+    if (code === 'XML_TOO_LARGE' || code === 'XML_PARSE_FAILED') {
+      return messageFromMeta ?? 'XML error';
+    }
+    return null;
+  }, [props.rekordboxFile, props.errorMeta, messageFromMeta]);
   const clearXml = () => {
     props.setRekordboxFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    setLocalXmlError(null);
   };
 
   return (
