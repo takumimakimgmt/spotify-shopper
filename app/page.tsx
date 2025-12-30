@@ -84,7 +84,7 @@ function PageInner() {
     if (!tab) return;
     const result = analyzer.multiResults.find(([url]) => url === tab)?.[1];
     if (result && result.tracks.length === 0) {
-      // @ts-ignore
+      // @ts-expect-error
       analyzer.ensureHydrated?.(tab);
     }
   }, [selection.activeTab]);

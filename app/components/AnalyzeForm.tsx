@@ -76,8 +76,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   // --- Apple-like URL input array ---
   const [urls, setUrls] = useState<string[]>(() => splitUrls(props.playlistUrlInput));
   useEffect(() => {
+  const id = setTimeout(() => {
     setUrls(splitUrls(props.playlistUrlInput));
-  }, [props.playlistUrlInput]);
+  }, 0);
+  return () => clearTimeout(id);
+}, [props.playlistUrlInput]);
   function updateUrlAt(i: number, next: string) {
     const nextUrls = urls.slice();
     nextUrls[i] = next;
