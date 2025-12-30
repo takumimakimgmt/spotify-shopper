@@ -32,3 +32,6 @@ _context/
 app/*.bak.*
 
 *.bak.*
+
+# local artifacts
+playlist-shopper-safe.tgz
