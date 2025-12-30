@@ -41,7 +41,7 @@ function PageInner() {
   const vm = useViewModel(analyzer, filters, selection.activeTab);
   const actions = useActions(analyzer, selection);
   const { setFormCollapsed } = selection;
-  const prevResultRef = useRef<any>(null);
+  const prevResultRef = useRef<unknown>(null);
   const allowUrlSyncRef = useRef(false);
   const initialTabRef = useRef(selection.activeTab);
   const TAB_QS_KEY = "tab";
