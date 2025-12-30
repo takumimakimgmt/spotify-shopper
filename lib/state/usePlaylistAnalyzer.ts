@@ -1,6 +1,6 @@
+"use client";
 import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
 
-"use client";
 const APPLE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_APPLE_TIMEOUT_MS ?? '120000');
 
 // --- Apple Music feature flag ---
