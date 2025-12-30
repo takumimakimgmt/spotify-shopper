@@ -1,3 +1,4 @@
+import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
 
 "use client";
 const APPLE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_APPLE_TIMEOUT_MS ?? '120000');
@@ -730,7 +731,7 @@ const newResults: Array<[string, ResultState]> = [];
       version: 1,
       created_at: new Date().toISOString(),
       playlist: {
-        source: currentResult.playlistUrl?.includes('music.apple.com') ? 'apple' : 'spotify',
+        source: (ENABLE_APPLE_MUSIC && currentResult.playlistUrl?.includes('music.apple.com')) ? 'apple' : 'spotify',
         url: currentResult.playlistUrl || '',
         id: currentResult.playlist_id,
         name: currentResult.playlist_name,
@@ -807,7 +808,8 @@ const newResults: Array<[string, ResultState]> = [];
       alert('No tracks to export.');
       return;
     }
-    const headers = ['#', 'Title', 'Artist', 'Album', 'ISRC', 'Owned', 'Beatport', 'Bandcamp', 'iTunes'];
+    const headers = ['#', 'Title', 'Artist', 'Album', 'ISRC', 'Owned', 'Beatport', 'Bandcamp'];
+    if (ENABLE_APPLE_MUSIC) headers.push('iTunes');
     const rows = tracks.map((t) => [
       t.index,
       t.title,
@@ -817,7 +819,7 @@ const newResults: Array<[string, ResultState]> = [];
       t.owned === true ? 'Yes' : 'No',
       t.stores.beatport,
       t.stores.bandcamp,
-      t.stores.itunes,
+      ...(ENABLE_APPLE_MUSIC ? [t.stores.itunes] : []),
     ]);
     const csv = [headers, ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))

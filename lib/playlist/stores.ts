@@ -1,5 +1,6 @@
 import type { StoreLinks, PlaylistRow } from '../types';
 import { withBeatportAid } from '../affiliates/beatport';
+import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
 
 const BEATPORT_A_AID = process.env.NEXT_PUBLIC_BEATPORT_A_AID;
 
@@ -7,7 +8,7 @@ export function normalizeStores(stores: StoreLinks, beatportAid: string | undefi
   return {
     beatport: withBeatportAid(stores?.beatport ?? '', beatportAid),
     bandcamp: stores?.bandcamp ?? '',
-    itunes: stores?.itunes ?? '',
+    itunes: ENABLE_APPLE_MUSIC ? (stores?.itunes ?? '') : '',
   };
 }
 

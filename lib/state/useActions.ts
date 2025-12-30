@@ -1,3 +1,4 @@
+import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
 
 "use client";
 type SelectionLike = {
@@ -85,7 +86,7 @@ export function useActions(
         "Owned",
         "Beatport",
         "Bandcamp",
-        "iTunes",
+        ...(ENABLE_APPLE_MUSIC ? ["iTunes"] : []),
       ];
       const rows = safeTracks.map((t) => {
         const stores = normalizeStores(t.stores);
@@ -98,7 +99,7 @@ export function useActions(
           sanitizeForCsvCell(t.owned === true ? "Yes" : "No"),
           sanitizeForCsvCell(stores.beatport),
           sanitizeForCsvCell(stores.bandcamp),
-          sanitizeForCsvCell(stores.itunes),
+          ...(ENABLE_APPLE_MUSIC ? [sanitizeForCsvCell(stores.itunes)] : []),
         ];
       });
 

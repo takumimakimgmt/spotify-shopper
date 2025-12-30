@@ -18,7 +18,7 @@ type Props = {
 
 function firstStoreUrl(stores?: StoreLinks): string {
   const s = stores ?? ({} as StoreLinks);
-  return (s.beatport ?? "") || (s.bandcamp ?? "") || (s.itunes ?? "") || "";
+  return (s.beatport ?? "") || (s.bandcamp ?? "") || "";
 }
 
 function beatportSearchUrl(track: PlaylistRow): string {
