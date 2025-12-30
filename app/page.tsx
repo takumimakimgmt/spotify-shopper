@@ -84,7 +84,7 @@ function PageInner() {
     if (!tab) return;
     const result = analyzer.multiResults.find(([url]) => url === tab)?.[1];
     if (result && result.tracks.length === 0) {
-      // @ts-expect-error
+      // @ts-expect-error legacy typing mismatch
       analyzer.ensureHydrated?.(tab);
     }
   }, [selection.activeTab]);
