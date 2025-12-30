@@ -32,7 +32,7 @@ import { useSelectionState } from '../lib/state/useSelectionState';
 import { useViewModel } from '../lib/state/useViewModel';
 import { useActions } from '../lib/state/useActions';
 import { categoryLabels } from '../lib/ui/selectors';
-import { getRecommendedStore, getOtherStores } from '../lib/playlist/stores';
+import { getOtherStores } from '../lib/playlist/stores';
 import AnalyzeForm from './components/AnalyzeForm';
 import ProgressList from './components/ProgressList';
 import { ShopperHeader } from './components/ShopperHeader';
@@ -97,8 +97,6 @@ function PageInner() {
   }, [analyzer.multiResults]);
 
   const vm = useViewModel(analyzer, filters, selection.activeTab);
-  const hasResult = Boolean(vm.currentResult);
-
   const TAB_QS_KEY = "t";
   // URL(ASCII)を短く安全にクエリ化（base64url）
   const encodeTab = (url: string) =>
@@ -154,7 +152,7 @@ function PageInner() {
     const params = new URLSearchParams(searchParams.toString());
     params.set(TAB_QS_KEY, encodeTab(tab));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [selection.activeTab, router, pathname, searchParams]);
 
   // === ACTIONS: All operations ===
@@ -278,7 +276,6 @@ function PageInner() {
               activeTab={selection.activeTab}
               onSelectTab={selection.setActiveTab}
               onRemoveTab={actions.handleRemoveTab}
-              onClearAll={actions.handleClearAllTabs}
             />
             {vm.currentResult && (
               <div className="space-y-4">
