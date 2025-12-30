@@ -22,7 +22,12 @@ function firstStoreUrl(stores?: StoreLinks): string {
 }
 
 function beatportSearchUrl(track: PlaylistRow): string {
-  const q = `${track.artist ?? ""} ${track.title ?? ""}`.trim();
+  const isrc = (track as { isrc?: string }).isrc ?? "";
+  const artist = track.artist ?? "";
+  const title = track.title ?? "";
+
+  // ISRC があれば最優先（最もブレが少ない）
+  const q = (isrc || `${artist} ${title}` || title || artist).trim();
   if (!q) return "";
 
   try {
@@ -30,7 +35,28 @@ function beatportSearchUrl(track: PlaylistRow): string {
     u.hostname = "beatport.com";
     u.pathname = "/search";
     u.searchParams.set("q", q);
+    // 可能なら tracks に寄せる（Beatport側で無視されても害なし）
+    u.searchParams.set("type", "tracks");
     return withBeatportAid(u.toString(), BEATPORT_A_AID);
+  } catch {
+    return "";
+  }
+}
+
+function bandcampSearchUrl(track: PlaylistRow): string {
+  const artist = track.artist ?? "";
+  const title = track.title ?? "";
+  const q = (`${artist} ${title}`.trim() || title || artist).trim();
+  if (!q) return "";
+
+  try {
+    const u = new URL("https:");
+    u.hostname = "bandcamp.com";
+    u.pathname = "/search";
+    u.searchParams.set("q", q);
+    // track検索に寄せる（Bandcamp側で無視されても害なし）
+    u.searchParams.set("item_type", "t");
+    return u.toString();
   } catch {
     return "";
   }
@@ -40,7 +66,7 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
   const recommended = getRecommendedStore(track);
   const others = getOtherStores(track.stores, recommended);
   const primaryUrl = recommended?.url || firstStoreUrl(track.stores);
-  const fallback = beatportSearchUrl(track);
+  const fallback = beatportSearchUrl(track) || bandcampSearchUrl(track);
 
   const mainLabel = primaryUrl ? (recommended?.name ?? "Buy") : "Search";
 
