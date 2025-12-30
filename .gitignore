@@ -32,3 +32,5 @@ _context/
 app/*.bak.*
 
 *.bak.*
+
+playlist-shopper-safe.tgz
