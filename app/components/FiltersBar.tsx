@@ -8,8 +8,6 @@ interface FiltersBarProps {
   setSearchQuery: (value: string) => void;
   sortKey: SortKey;
   setSortKey: (value: SortKey) => void;
-  onlyUnowned: boolean;
-  setOnlyUnowned: (value: boolean) => void;
 }
 
 export function FiltersBar({
@@ -19,9 +17,7 @@ export function FiltersBar({
   setSearchQuery,
   sortKey,
   setSortKey,
-  onlyUnowned,
-  setOnlyUnowned,
-}: FiltersBarProps) {
+  }: FiltersBarProps) {
   return (
     <div className="space-y-3">
       <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-xl p-4">
