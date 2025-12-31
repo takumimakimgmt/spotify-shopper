@@ -21,7 +21,6 @@ This project uses optimized web fonts via Next.js.
 
 ## Design Decisions
 
-- Filters single-source-of-truth: `useFiltersState` owns `categoryFilter`, `searchQuery`, `sortKey`, `onlyUnowned`. Derived track lists and counts computed via `lib/ui/selectors.ts`.
 - Analyzer stores only core domain + progress; localStorage persists slim summaries with a ~300KB cap, exposing warnings via `storageWarning` and reset via `clearLocalData`.
 - URL utils centralized in `lib/utils/playlistUrl.ts` (`detectSourceFromUrl`, `sanitizeUrl`).
 - CSV injection mitigation: `lib/utils/csvSanitize.ts` prefixes cells starting with = + - @ with `'`.

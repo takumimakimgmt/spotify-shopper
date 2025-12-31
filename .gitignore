@@ -34,3 +34,4 @@ app/*.bak.*
 *.bak.*
 
 playlist-shopper-safe.tgz
+tsconfig.tsbuildinfo
