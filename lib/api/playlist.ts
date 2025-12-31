@@ -64,7 +64,7 @@ export async function matchSnapshotWithXml(snapshotJson: string, file: File): Pr
   form.append('snapshot', snapshotJson);
   form.append('file', file);
 
-  const backend = getBackendUrl() ?? '';
+  const _backend = getBackendUrl() ?? '';
 
   await warmupBackend();
   return fetchJsonWithBase<ApiPlaylistResponse>('/api/match-snapshot-with-xml', {

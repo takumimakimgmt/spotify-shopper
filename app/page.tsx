@@ -32,10 +32,10 @@ import { useSelectionState } from '../lib/state/useSelectionState';
 import { useViewModel } from '../lib/state/useViewModel';
 import { useActions } from '../lib/state/useActions';
 import { categoryLabels } from '../lib/ui/selectors';
-import { getOtherStores } from '../lib/playlist/stores';
+import { getOtherStores as _getOtherStores } from '../lib/playlist/stores';
 import AnalyzeForm from './components/AnalyzeForm';
-import ProgressList from './components/ProgressList';
-import { ShopperHeader } from './components/ShopperHeader';
+import _ProgressList from './components/ProgressList';
+import { ShopperHeader as _ShopperHeader } from './components/ShopperHeader';
 import { ResultsTabs } from './components/ResultsTabs';
 import { FiltersBar } from './components/FiltersBar';
 import dynamic from 'next/dynamic';
@@ -94,7 +94,7 @@ function PageInner() {
     if (!selection.activeTab || !keys.includes(selection.activeTab)) {
       selection.setActiveTab(keys[keys.length - 1]);
     }
-  }, [analyzer.multiResults]);
+  }, [analyzer.multiResults, selection]);
 
   const vm = useViewModel(analyzer, filters, selection.activeTab);
   const TAB_QS_KEY = "t";
@@ -132,8 +132,7 @@ function PageInner() {
     if (t) {
       router.replace(pathname, { scroll: false });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vm.multiResults.length, pathname, searchParams]);
+  }, [vm.multiResults.length, pathname, searchParams, selection, router]);
 
   // (2) タブ変更をURLへ同期（リロード耐性）
   useEffect(() => {
@@ -169,7 +168,7 @@ function PageInner() {
         setFormCollapsed(true);
         prevResultRef.current = r;
       }
-    }, [vm.currentResult]);
+    }, [vm.currentResult, setFormCollapsed]);
 
   // タブ切替時にtracksが空ならensureHydratedで埋める
   useEffect(() => {
@@ -180,7 +179,7 @@ function PageInner() {
 
     const ensureHydrated = (analyzer as Partial<{ ensureHydrated: (t: string) => void }>).ensureHydrated;
     if (typeof ensureHydrated === "function") ensureHydrated(tab);
-  }, [selection.activeTab]);
+  }, [selection.activeTab, analyzer]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">

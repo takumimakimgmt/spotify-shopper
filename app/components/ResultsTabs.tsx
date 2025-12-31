@@ -9,7 +9,7 @@ interface ResultsTabsProps {
   onClearAll?: () => void;
 }
 
-export function ResultsTabs({ multiResults, activeTab, onSelectTab, onRemoveTab, onClearAll }: ResultsTabsProps) {
+export function ResultsTabs({ multiResults, activeTab, onSelectTab, onRemoveTab, onClearAll: _onClearAll }: ResultsTabsProps) {
   // タブはtracks未定義でも必ず表示。UIで「未解析」表示はtracks未定義または空の場合。
   if (multiResults.length === 0) return null;
 
