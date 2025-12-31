@@ -1,0 +1,928 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Spotify Playlist Shopper",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/playlist": {
+      "get": {
+        "summary": "Get Playlist",
+        "operationId": "get_playlist_api_playlist_get",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Playlist URL or ID or URL",
+              "title": "Url"
+            },
+            "description": "Playlist URL or ID or URL"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "spotify or apple",
+              "default": "spotify",
+              "title": "Source"
+            },
+            "description": "spotify or apple"
+          },
+          {
+            "name": "apple_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "auto|fast|legacy (Apple only)",
+              "default": "auto",
+              "title": "Apple Mode"
+            },
+            "description": "auto|fast|legacy (Apple only)"
+          },
+          {
+            "name": "enrich_isrc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Fill missing ISRCs via MusicBrainz",
+              "default": false,
+              "title": "Enrich Isrc"
+            },
+            "description": "Fill missing ISRCs via MusicBrainz"
+          },
+          {
+            "name": "isrc_limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Max items to try enriching ISRC",
+              "title": "Isrc Limit"
+            },
+            "description": "Max items to try enriching ISRC"
+          },
+          {
+            "name": "enrich_spotify",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "For Apple: 1 to enrich via Spotify, 0 to skip (default 0 for apple)",
+              "title": "Enrich Spotify"
+            },
+            "description": "For Apple: 1 to enrich via Spotify, 0 to skip (default 0 for apple)"
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bypass cache when set to 1",
+              "title": "Refresh"
+            },
+            "description": "Bypass cache when set to 1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/playlist-with-rekordbox": {
+      "post": {
+        "summary": "Playlist With Rekordbox",
+        "description": "JSON で Rekordbox XML のパスを受け取る版（ローカル用）。\n{\n  \"url\": \"...\",\n  \"rekordbox_xml_path\": \"/Users/xxx/Desktop/rekordbox_collection.xml\"\n}",
+        "operationId": "playlist_with_rekordbox_api_playlist_with_rekordbox_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaylistWithRekordboxBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/match-snapshot-with-xml": {
+      "post": {
+        "summary": "Match Snapshot With Xml",
+        "description": "与えられた PlaylistSnapshotV1（JSON）に対して、Rekordbox XML を用いて owned/owned_reason を付与して返す。\nURL の再入力は不要。\n\n制限：\n- snapshot: 最大 1MB\n- XML: MAX_UPLOAD_SIZE（環境変数、デフォルト 50MB）",
+        "operationId": "match_snapshot_with_xml_api_match_snapshot_with_xml_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_match_snapshot_with_xml_api_match_snapshot_with_xml_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/playlist-with-rekordbox-upload": {
+      "post": {
+        "summary": "Playlist With Rekordbox Upload",
+        "description": "フロントからの XML ファイルアップロード版。\n- フロントは multipart/form-data で url と file を送る。\n- アップロードされた XML を一時ファイルに保存し、Rekordbox 突き合わせ。",
+        "operationId": "playlist_with_rekordbox_upload_api_playlist_with_rekordbox_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_playlist_with_rekordbox_upload_api_playlist_with_rekordbox_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_match_snapshot_with_xml_api_match_snapshot_with_xml_post": {
+        "properties": {
+          "snapshot": {
+            "type": "string",
+            "title": "Snapshot",
+            "description": "PlaylistSnapshotV1 JSON string"
+          },
+          "file": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File",
+            "description": "Rekordbox collection XML"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshot",
+          "file"
+        ],
+        "title": "Body_match_snapshot_with_xml_api_match_snapshot_with_xml_post"
+      },
+      "Body_playlist_with_rekordbox_upload_api_playlist_with_rekordbox_upload_post": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "Playlist URL or ID or URL"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "spotify or apple",
+            "default": "spotify"
+          },
+          "apple_mode": {
+            "type": "string",
+            "title": "Apple Mode",
+            "description": "auto|fast|legacy (Apple only)",
+            "default": "auto"
+          },
+          "file": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File",
+            "description": "Rekordbox collection XML"
+          },
+          "enrich_spotify": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enrich Spotify",
+            "description": "For Apple: 1 to enrich via Spotify, 0 to skip (default 0 for apple)"
+          },
+          "refresh": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh",
+            "description": "Bypass cache when set to 1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "Body_playlist_with_rekordbox_upload_api_playlist_with_rekordbox_upload_post"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "PlaylistMetaModel": {
+        "properties": {
+          "cache_hit": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cache Hit"
+          },
+          "cache_ttl_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cache Ttl S"
+          },
+          "refresh": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh"
+          },
+          "fetch_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fetch Ms"
+          },
+          "enrich_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enrich Ms"
+          },
+          "total_backend_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Backend Ms"
+          },
+          "total_api_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Api Ms"
+          },
+          "apple_strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Strategy"
+          },
+          "apple_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Mode"
+          },
+          "apple_legacy_used": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Legacy Used"
+          },
+          "apple_enrich_skipped": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Enrich Skipped"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "seen_catalog_playlist_api": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seen Catalog Playlist Api"
+          },
+          "apple_api_candidates": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Api Candidates"
+          },
+          "apple_response_candidates": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Response Candidates"
+          },
+          "apple_request_candidates": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Request Candidates"
+          },
+          "apple_xhr_fetch_requests": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Xhr Fetch Requests"
+          },
+          "json_responses_any_domain": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Json Responses Any Domain"
+          },
+          "apple_console_errors": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Console Errors"
+          },
+          "apple_page_errors": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Page Errors"
+          },
+          "apple_page_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Page Title"
+          },
+          "apple_html_snippet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Html Snippet"
+          },
+          "blocked_hint": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked Hint"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PlaylistMetaModel"
+      },
+      "PlaylistResponse": {
+        "properties": {
+          "playlist_id": {
+            "type": "string",
+            "title": "Playlist Id"
+          },
+          "playlist_name": {
+            "type": "string",
+            "title": "Playlist Name"
+          },
+          "playlist_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playlist Url"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/TrackModel"
+            },
+            "type": "array",
+            "title": "Tracks"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlaylistMetaModel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "playlist_id",
+          "playlist_name",
+          "tracks"
+        ],
+        "title": "PlaylistResponse"
+      },
+      "PlaylistWithRekordboxBody": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "rekordbox_xml_path": {
+            "type": "string",
+            "title": "Rekordbox Xml Path"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source",
+            "default": "spotify"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "rekordbox_xml_path"
+        ],
+        "title": "PlaylistWithRekordboxBody"
+      },
+      "StoreLinksModel": {
+        "properties": {
+          "beatport": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Beatport"
+          },
+          "bandcamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bandcamp"
+          },
+          "itunes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itunes"
+          }
+        },
+        "type": "object",
+        "title": "StoreLinksModel"
+      },
+      "TrackModel": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "album": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album"
+          },
+          "isrc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isrc"
+          },
+          "spotify_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spotify Url"
+          },
+          "apple_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Url"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoreLinksModel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "owned": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owned"
+          },
+          "owned_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owned Reason"
+          },
+          "track_key_primary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track Key Primary"
+          },
+          "track_key_fallback": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track Key Fallback"
+          },
+          "track_key_primary_type": {
+            "type": "string",
+            "title": "Track Key Primary Type",
+            "default": "norm"
+          },
+          "track_key_version": {
+            "type": "string",
+            "title": "Track Key Version",
+            "default": "v1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "artist"
+        ],
+        "title": "TrackModel"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
