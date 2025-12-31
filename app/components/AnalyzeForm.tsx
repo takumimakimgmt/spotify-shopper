@@ -11,7 +11,6 @@ export interface AnalyzeFormProps {
   // State
   playlistUrlInput: string;
   rekordboxFile: File | null;
-  onlyUnowned?: boolean;
   rekordboxDate?: string | null;
   rekordboxFilename?: string | null;
   loading: boolean;
@@ -25,7 +24,6 @@ export interface AnalyzeFormProps {
   // Setters
   setPlaylistUrlInput: (value: string) => void;
   setRekordboxFile: (file: File | null) => void;
-  setOnlyUnowned?: (value: boolean) => void;
   // Handlers
   handleAnalyze: (e: React.FormEvent) => void;
   handleRekordboxChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -238,31 +236,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             {localXmlError && (
               <div className="mt-1 text-xs text-red-500">{localXmlError}</div>
             )}
-          </div>
-        </div>
-
-        {/* Unowned toggle row (Switch) */}
-        <div className="grid grid-cols-[180px,1fr] gap-6 items-start py-4">
-          <div>
-            <label htmlFor="only-unowned" className="text-sm font-medium text-white/90">Show only unowned</label>
-          </div>
-          <div>
-            <div className="flex items-center justify-between w-full">
-              <span className="text-sm text-white/80">Show only unowned tracks</span>
-              {/* Custom Switch */}
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!!props.onlyUnowned}
-                  onChange={(e) => props.setOnlyUnowned?.(e.target.checked)}
-                  className="sr-only peer"
-
-                  id="only-unowned"
-                />
-                <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/40 rounded-full peer peer-checked:bg-blue-500 transition-all"></div>
-                <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full shadow-md transition-all peer-checked:translate-x-5"></div>
-              </label>
-            </div>
           </div>
         </div>
 

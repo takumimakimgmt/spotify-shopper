@@ -108,7 +108,7 @@ app/
 ### Current displayedTracks
 ```typescript
 const displayedTracks = currentResult.tracks
-  .filter(t => !onlyUnowned || t.owned === false)
+  .filter(t => categoryFilter !== 'toBuy' || t.owned === false)
   .filter(t => search filter)
   .sort(sortKey);
 // Result: Mixed owned/missing/unavailable
@@ -229,7 +229,6 @@ const unavailableTracks = useMemo(() => {
   - **Decision**: Delete for MVP, add back in Phase 2 if needed
 
 ### 3. "Only unowned" checkbox → Always-on for Missing
-- **Current**: Explicit checkbox → `onlyUnowned` state
 - **New**: Missing section is inherently unowned, checkbox removed
 - **Impact**: CSV export changes behavior (see Phase C)
 
