@@ -65,14 +65,12 @@ export function useViewModel(
       categoryFilter: filters.categoryFilter,
       searchQuery: filters.searchQuery,
       sortKey: filters.sortKey,
-      onlyUnowned: filters.onlyUnowned,
     });
   }, [
     currentResult,
     filters.categoryFilter,
     filters.searchQuery,
     filters.sortKey,
-    filters.onlyUnowned,
   ]);
 
   // Derive counts

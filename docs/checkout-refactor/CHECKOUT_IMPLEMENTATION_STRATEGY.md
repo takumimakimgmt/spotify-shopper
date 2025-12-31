@@ -108,7 +108,7 @@ app/
 ### Current displayedTracks
 ```typescript
 const displayedTracks = currentResult.tracks
-  .filter(t => !onlyUnowned || t.owned === false)
+  .filter(t => categoryFilter !== 'toBuy' || t.owned === false)
   .filter(t => search filter)
   .sort(sortKey);
 // Result: Mixed owned/missing/unavailable
