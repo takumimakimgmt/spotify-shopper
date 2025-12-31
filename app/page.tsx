@@ -1,6 +1,6 @@
 
 "use client";
-import { FLAGS } from "@/lib/config/flags";
+import { _FLAGS } from "@/lib/config/flags";
 import React, { useEffect, useRef, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
@@ -9,10 +9,10 @@ import { useSelectionState } from '../lib/state/useSelectionState';
 import { useViewModel } from '../lib/state/useViewModel';
 import { useActions } from '../lib/state/useActions';
 import { categoryLabels } from '../lib/ui/selectors';
-import { getOtherStores } from '../lib/playlist/stores';
+import { _getOtherStores } from '../lib/playlist/stores';
 import AnalyzeForm from './components/AnalyzeForm';
-import ProgressList from './components/ProgressList';
-import { ShopperHeader } from './components/ShopperHeader';
+import _ProgressList from './components/_ProgressList';
+import { _ShopperHeader } from './components/_ShopperHeader';
 import { ResultsTabs } from './components/ResultsTabs';
 import { FiltersBar } from './components/FiltersBar';
 import dynamic from 'next/dynamic';
@@ -65,7 +65,6 @@ function PageInner() {
     const params = new URLSearchParams(searchParams.toString());
     params.set(TAB_QS_KEY, encodeTab(tab));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection.activeTab, router, pathname, searchParams]);
 
   useEffect(() => {
@@ -76,7 +75,7 @@ function PageInner() {
       setFormCollapsed(true);
       prevResultRef.current = r;
     }
-  }, [vm.currentResult]);
+  }, [vm.currentResult, setFormCollapsed]);
 
   // タブ切替時にtracksが空ならensureHydratedで埋める
   useEffect(() => {
@@ -87,7 +86,7 @@ function PageInner() {
       // @ts-expect-error legacy typing mismatch
       analyzer.ensureHydrated?.(tab);
     }
-  }, [selection.activeTab]);
+  }, [selection.activeTab, analyzer]);
 
   const handleAnalyzeWithAppleBlock = analyzer.handleAnalyze;
 
