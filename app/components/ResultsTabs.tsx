@@ -6,7 +6,7 @@ interface ResultsTabsProps {
   activeTab: string | null;
   onSelectTab: (url: string) => void;
   onRemoveTab: (url: string) => void;
-  onClearAll: () => void;
+  onClearAll?: () => void;
 }
 
 export function ResultsTabs({ multiResults, activeTab, onSelectTab, onRemoveTab, onClearAll }: ResultsTabsProps) {
