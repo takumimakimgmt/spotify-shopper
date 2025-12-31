@@ -65,7 +65,7 @@ function PageInner() {
     const params = new URLSearchParams(searchParams.toString());
     params.set(TAB_QS_KEY, encodeTab(tab));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [selection.activeTab, router, pathname, searchParams]);
 
   useEffect(() => {
