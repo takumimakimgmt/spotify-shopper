@@ -6,10 +6,10 @@ export type PlaylistTabsProps = {
   activeTab: string | null;
   setActiveTab: (tab: string | null) => void;
   onRemoveTab: (tab: string) => void;
-  _onClearAll: () => void;
+  onClearAll: () => void;
 };
 
-export function PlaylistTabs({ multiResults, activeTab, setActiveTab, onRemoveTab, _onClearAll: _onClearAll }: PlaylistTabsProps) {
+export function PlaylistTabs({ multiResults, activeTab, setActiveTab, onRemoveTab }: PlaylistTabsProps) {
   if (multiResults.length === 0) return null;
 
   return (

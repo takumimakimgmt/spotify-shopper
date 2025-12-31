@@ -34,7 +34,7 @@ import React from 'react';
 import type { PlaylistRow, TrackCategory, ResultState } from '../../lib/types';
 
 export type TrackTableProps = {
-  _currentResult: ResultState;
+  currentResult: ResultState;
   tracks: PlaylistRow[];
   categoryLabels: Record<'all' | TrackCategory, string>;
   categorizeTrack: (t: PlaylistRow) => TrackCategory;
@@ -48,8 +48,7 @@ export type TrackTableProps = {
   getOtherStores: (stores: PlaylistRow['stores'], recommended: { name: string; url: string } | null) => Array<{ name: string; url: string }>;
 };
 
-export function TrackTable({
-  _currentResult,
+export function TrackTable({ currentResult: _currentResult,
   tracks,
   categoryLabels,
   categorizeTrack,

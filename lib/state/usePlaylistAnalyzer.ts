@@ -136,7 +136,7 @@ export function usePlaylistAnalyzer() {
         const _ensureHydrated = async (url: string) => {
           const idx = multiResults.findIndex(([u]) => u === url);
           if (idx === -1) return;
-          const [_, result] = multiResults[idx];
+          const [, result] = multiResults[idx];
           if (result.tracks && result.tracks.length > 0) return;
           try {
             setMultiResults((prev) =>
@@ -152,7 +152,7 @@ export function usePlaylistAnalyzer() {
                 u === url ? [u, { ...r, tracks: rows, analyzedAt: Date.now() }] : [u, r]
               )
             );
-          } catch (_err) {
+          } catch {
             setMultiResults((prev) =>
               prev.map(([u, r]) =>
                 u === url ? [u, { ...r, errorText: 'トラックの取得に失敗しました', tracks: [] }] : [u, r]
@@ -274,8 +274,8 @@ export function usePlaylistAnalyzer() {
       setPlaylistUrlInput('');
       applyRekordboxFile(null);
       setStorageWarning(null);
-    } catch (_err) {
-      console.error('[Storage] Failed to clear local data:', _err);
+    } catch (err) {
+      console.error('[Storage] Failed to clear local data:', err);
       setStorageWarning('Failed to clear local data.');
     }
   };
@@ -323,8 +323,7 @@ export function usePlaylistAnalyzer() {
               url,
               { ...result, tracks: rows, analyzedAt: Date.now(), hasRekordboxData: true, rekordboxMeta: makeRekordboxMeta(file) },
             ]);
-          } catch (_err) {
-            console.error(`[Bulk Re-analyze] Error for ${url}:`, _err);
+          } catch (err) {            console.error(`[Bulk Re-analyze] Error for ${url}:`, err);
             updatedResults.push([url, result]);
           }
         }
@@ -368,8 +367,7 @@ export function usePlaylistAnalyzer() {
         )
       );
       setErrorText(null);
-    } catch (_err) {
-      console.error('[Re-analyze] Error:', _err);
+    } catch (err) {      console.error('[Re-analyze] Error:', err);
       setErrorText('XML照合中にエラーが発生しました');
     } finally {
       setIsReanalyzing(false);
@@ -486,10 +484,10 @@ export function usePlaylistAnalyzer() {
           try {
             json = await fetchOnce();
             clearTimeout(timeoutId);
-          } catch (_err: any) {
+          } catch (err: any) {
             clearTimeout(timeoutId);
             // UI向けエラー文言を具体化
-            const reasonTag = classifyAppleError(_err?.message);
+            const reasonTag = classifyAppleError(err?.message);
             let errorMsg = '';
             switch (reasonTag) {
               case 'timeout':
@@ -508,7 +506,7 @@ export function usePlaylistAnalyzer() {
                 errorMsg = '取得に失敗しました。';
             }
             setErrorText(errorMsg);
-            throw _err;
+            throw err;
           }
         } else {
           json = await fetchOnce();
@@ -584,12 +582,12 @@ export function usePlaylistAnalyzer() {
             );
           });
         });
-      } catch (_err: any) {
+      } catch (err: any) {
         hasError = true;
         // Short error message for progress list
-        const errShort = typeof _err?.message === 'string' ? _err.message : 'request failed';
+        const errShort = typeof err?.message === 'string' ? err.message : 'request failed';
         const reasonTag = effectiveSource === 'apple'
-          ? classifyAppleError(_err?.data?.detail?.error || errShort)
+          ? classifyAppleError(err?.data?.detail?.error || errShort)
           : null;
         setProgressItems((prev) =>
           prev.map((p) =>
@@ -598,8 +596,8 @@ export function usePlaylistAnalyzer() {
               : p
           )
         );
-        if (_err?.data?.detail) {
-          const detail = _err.data.detail;
+        if (err?.data?.detail) {
+          const detail = err.data.detail;
           const usedSource = typeof detail?.used_source === 'string' ? detail.used_source : undefined;
           const errText = typeof detail?.error === 'string' ? detail.error : undefined;
           const metaFromApi = detail?.meta;

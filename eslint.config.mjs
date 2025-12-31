@@ -18,15 +18,6 @@ const eslintConfig = defineConfig([
   ]),
   // Loosen strictness for legacy state files without large refactors
   {
-  rules: {
-    'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': ['warn', {
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_',
-      caughtErrorsIgnorePattern: '^_',
-      ignoreRestSiblings: true,
-    }],
-  },
     files: ["lib/state/**", "lib/types.ts"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
@@ -44,4 +35,22 @@ const eslintConfig = defineConfig([
   },
 ]);
 
-export default eslintConfig;
+const __cc_base = eslintConfig;
+
+
+/* cc-unused-underscore-override */
+const __cc_override = {
+  files: ["**/*.{js,jsx,ts,tsx}"],
+  ignores: ["**/.DS_Store", "**/*.bak.*", "**/*.tsbuildinfo"],
+  rules: {
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", {
+      argsIgnorePattern: "^_",
+      varsIgnorePattern: "^_",
+      caughtErrorsIgnorePattern: "^_",
+      ignoreRestSiblings: true,
+    }],
+  },
+};
+
+export default (Array.isArray(__cc_base) ? [...__cc_base, __cc_override] : [__cc_base, __cc_override]);
