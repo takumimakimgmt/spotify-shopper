@@ -16,7 +16,6 @@ export function detectSourceFromUrl(u: string): PlaylistSource {
   // Spotify URL / URI
   if (lower.includes(SPOTIFY_HOST) || lower.includes(SPOTIFY_URI_PREFIX)) return 'spotify';
 
-  // Apple Music URL
   // 22文字IDっぽいものは Spotify 扱い（既存挙動の互換）
   if (/[A-Za-z0-9]{22}/.test(s)) return 'spotify';
 
