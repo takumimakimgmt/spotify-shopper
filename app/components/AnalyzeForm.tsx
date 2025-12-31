@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import ProcessingBar from './ProcessingBar';
 import ErrorAlert from './ErrorAlert';
 import { ProgressItem } from './ProgressList';
 import { MAX_XML_BYTES } from '@/lib/constants';
@@ -12,7 +11,7 @@ export interface AnalyzeFormProps {
   // State
   playlistUrlInput: string;
   rekordboxFile: File | null;
-  onlyUnowned: boolean;
+  onlyUnowned?: boolean;
   rekordboxDate?: string | null;
   rekordboxFilename?: string | null;
   loading: boolean;
@@ -26,7 +25,7 @@ export interface AnalyzeFormProps {
   // Setters
   setPlaylistUrlInput: (value: string) => void;
   setRekordboxFile: (file: File | null) => void;
-  setOnlyUnowned: (value: boolean) => void;
+  setOnlyUnowned?: (value: boolean) => void;
   // Handlers
   handleAnalyze: (e: React.FormEvent) => void;
   handleRekordboxChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -76,8 +75,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   // --- Apple-like URL input array ---
   const [urls, setUrls] = useState<string[]>(() => splitUrls(props.playlistUrlInput));
   useEffect(() => {
+  const id = setTimeout(() => {
     setUrls(splitUrls(props.playlistUrlInput));
-  }, [props.playlistUrlInput]);
+  }, 0);
+  return () => clearTimeout(id);
+}, [props.playlistUrlInput]);
   function updateUrlAt(i: number, next: string) {
     const nextUrls = urls.slice();
     nextUrls[i] = next;
@@ -251,9 +253,10 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={props.onlyUnowned}
-                  onChange={e => props.setOnlyUnowned(e.target.checked)}
+                  checked={!!props.onlyUnowned}
+                  onChange={(e) => props.setOnlyUnowned?.(e.target.checked)}
                   className="sr-only peer"
+
                   id="only-unowned"
                 />
                 <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/40 rounded-full peer peer-checked:bg-blue-500 transition-all"></div>

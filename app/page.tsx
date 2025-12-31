@@ -9,7 +9,7 @@ import { useSelectionState } from '../lib/state/useSelectionState';
 import { useViewModel } from '../lib/state/useViewModel';
 import { useActions } from '../lib/state/useActions';
 import { categoryLabels } from '../lib/ui/selectors';
-import { getRecommendedStore, getOtherStores } from '../lib/playlist/stores';
+import { getOtherStores } from '../lib/playlist/stores';
 import AnalyzeForm from './components/AnalyzeForm';
 import ProgressList from './components/ProgressList';
 import { ShopperHeader } from './components/ShopperHeader';
@@ -41,7 +41,7 @@ function PageInner() {
   const vm = useViewModel(analyzer, filters, selection.activeTab);
   const actions = useActions(analyzer, selection);
   const { setFormCollapsed } = selection;
-  const prevResultRef = useRef<any>(null);
+  const prevResultRef = useRef<unknown>(null);
   const allowUrlSyncRef = useRef(false);
   const initialTabRef = useRef(selection.activeTab);
   const TAB_QS_KEY = "tab";
@@ -84,7 +84,7 @@ function PageInner() {
     if (!tab) return;
     const result = analyzer.multiResults.find(([url]) => url === tab)?.[1];
     if (result && result.tracks.length === 0) {
-      // @ts-ignore
+      // @ts-expect-error legacy typing mismatch
       analyzer.ensureHydrated?.(tab);
     }
   }, [selection.activeTab]);
@@ -145,8 +145,6 @@ function PageInner() {
               handleRekordboxChange={analyzer.handleRekordboxChange}
               rekordboxFilename={analyzer.rekordboxFile?.name ?? vm.currentResult?.rekordboxMeta?.filename ?? null}
               rekordboxDate={analyzer.rekordboxDate ?? (vm.currentResult?.rekordboxMeta?.updatedAtISO ? new Date(vm.currentResult.rekordboxMeta.updatedAtISO).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : null)}
-              onlyUnowned={filters.onlyUnowned}
-              setOnlyUnowned={filters.setOnlyUnowned}
               loading={analyzer.loading}
               isReanalyzing={analyzer.isReanalyzing}
               progress={analyzer.progress}
@@ -209,8 +207,6 @@ function PageInner() {
                   setSearchQuery={filters.setSearchQuery}
                   sortKey={filters.sortKey}
                   setSortKey={filters.setSortKey}
-                  onlyUnowned={filters.onlyUnowned}
-                  setOnlyUnowned={filters.setOnlyUnowned}
                 />
                 <ResultsTable
                   currentResult={vm.currentResult}

@@ -27,7 +27,7 @@ function beatportSearchUrl(track: PlaylistRow): string {
   const title = track.title ?? "";
 
   // ISRC があれば最優先（最もブレが少ない）
-  const q = (isrc || `${artist} ${title}` || title || artist).trim();
+  const q = (isrc || "").trim() || `${artist} ${title}`.trim() || title.trim() || artist.trim();
   if (!q) return "";
 
   try {
@@ -46,7 +46,8 @@ function beatportSearchUrl(track: PlaylistRow): string {
 function bandcampSearchUrl(track: PlaylistRow): string {
   const artist = track.artist ?? "";
   const title = track.title ?? "";
-  const q = (`${artist} ${title}`.trim() || title || artist).trim();
+  const isrc = (track as { isrc?: string }).isrc ?? "";
+  const q = (isrc || "").trim() || `${artist} ${title}`.trim() || title.trim() || artist.trim();
   if (!q) return "";
 
   try {
@@ -66,29 +67,57 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
   const recommended = getRecommendedStore(track);
   const others = getOtherStores(track.stores, recommended);
   const primaryUrl = recommended?.url || firstStoreUrl(track.stores);
-  const fallback = beatportSearchUrl(track) || bandcampSearchUrl(track);
+  const fallbackBeatport = beatportSearchUrl(track);
+  const fallbackBandcamp = bandcampSearchUrl(track);
 
   const mainLabel = primaryUrl ? (recommended?.name ?? "Buy") : "Search";
+  const fallbackPrimary = fallbackBeatport || fallbackBandcamp;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <a
-        href={primaryUrl || fallback || "#"}
+        href={primaryUrl || fallbackPrimary || "#"}
         target="_blank"
         rel="noreferrer"
-        aria-disabled={!primaryUrl && !fallback}
+        aria-disabled={!primaryUrl && !fallbackPrimary}
         onClick={(e) => {
-          if (!primaryUrl && !fallback) e.preventDefault();
+          if (!primaryUrl && !fallbackPrimary) e.preventDefault();
         }}
         className={`inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] text-white ${
-          primaryUrl || fallback ? "hover:bg-white/15" : "opacity-50 cursor-not-allowed"
+          primaryUrl || fallbackPrimary ? "hover:bg-white/15" : "opacity-50 cursor-not-allowed"
         }`}
-        title={primaryUrl || fallback ? "Open store" : "No store link"}
+        title={primaryUrl || fallbackPrimary ? "Open store" : "No store link"}
       >
         {mainLabel}
       </a>
 
-      {others.map((s) => (
+      
+      {!primaryUrl && (fallbackBeatport || fallbackBandcamp) && (
+        <>
+          {fallbackBeatport && (
+            <a
+              href={fallbackBeatport}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] text-white/60 hover:text-white"
+            >
+              Beatport Search
+            </a>
+          )}
+          {fallbackBandcamp && (
+            <a
+              href={fallbackBandcamp}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] text-white/60 hover:text-white"
+            >
+              Bandcamp Search
+            </a>
+          )}
+        </>
+      )}
+
+{others.map((s) => (
         <a
           key={s.name}
           href={s.url}

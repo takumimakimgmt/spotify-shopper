@@ -651,8 +651,8 @@ export function usePlaylistAnalyzer() {
             }
           } else {
             // 2-3: Apple Musicエラー詳細化
-            let base = errText || 'プレイリストの取得に失敗しました';
-            let reasonSuffix = usedSource === 'apple' && reasonTag ? ` (${reasonTag})` : '';
+  const base = errText || 'プレイリストの取得に失敗しました';
+  const reasonSuffix = usedSource === 'apple' && reasonTag ? ` (${reasonTag})` : '';
             let hint = '';
             if (usedSource === 'apple') {
               if (reasonTag === 'timeout') {
