@@ -35,4 +35,39 @@ const eslintConfig = defineConfig([
   },
 ]);
 
-export default eslintConfig;
+/* cc-flatconfig-patch */
+const __cc_base = (eslintConfig);
+
+const __cc_config = [
+  {
+    ignores: [
+      "**/.DS_Store",
+      "**/*.md",
+      "**/*.svg",
+      "**/*.css",
+      "**/*.ico",
+      "**/*.json",
+      "docs/**",
+      "public/**",
+      "scripts/**",
+      "**/*.tsbuildinfo",
+      "package-lock.json",
+    ],
+  },
+  ...(Array.isArray(__cc_base) ? __cc_base : [__cc_base]),
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+        ignoreRestSiblings: true,
+      }],
+    },
+  },
+];
+
+export default __cc_config;
+
+

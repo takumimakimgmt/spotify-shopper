@@ -46,7 +46,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const [localXmlError, setLocalXmlError] = useState<string | null>(null);
   const rekordboxInputRef = useRef<HTMLInputElement>(null);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
-  const handleRekordboxClick = () => {
+  const _handleRekordboxClick = () => {
     rekordboxInputRef.current?.click();
   };
 
@@ -59,7 +59,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const hasMeta = metaJson.length > 0;
 
   const isProcessing = props.loading || props.isReanalyzing;
-  const hasFailed = useMemo(
+  const _hasFailed = useMemo(
     () => props.progressItems.some((p) => p.status === 'error'),
     [props.progressItems]
   );

@@ -49,7 +49,7 @@ export type TrackTableProps = {
 };
 
 export function TrackTable({
-  currentResult,
+  currentResult: _currentResult,
   tracks,
   categoryLabels,
   categorizeTrack,
@@ -64,7 +64,7 @@ export function TrackTable({
   const [actionBanner, setActionBanner] = React.useState<null | { kind: "info" | "error"; text: string }>(null);
   // Only To Buy (checkout) tracks, unowned
   const toBuyTracks = safeTracks.filter((t) => categorizeTrack(t) === 'checkout');
-  const toBuyLinks = toBuyTracks.map((t) => t.spotifyUrl).filter(Boolean);
+  const _toBuyLinks = toBuyTracks.map((t) => t.spotifyUrl).filter(Boolean);
   // All store links for To Buy
   const toBuyStoreLinks = toBuyTracks.flatMap((t) => {
     const rec = getRecommendedStore(t);
