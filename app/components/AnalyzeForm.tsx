@@ -256,12 +256,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   checked={!!props.onlyUnowned}
                   onChange={(e) => props.setOnlyUnowned?.(e.target.checked)}
                   className="sr-only peer"
-{props.setOnlyUnowned && (
+
                   id="only-unowned"
                 />
                 <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/40 rounded-full peer peer-checked:bg-blue-500 transition-all"></div>
-
-)}                <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full shadow-md transition-all peer-checked:translate-x-5"></div>
+                <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full shadow-md transition-all peer-checked:translate-x-5"></div>
               </label>
             </div>
           </div>
