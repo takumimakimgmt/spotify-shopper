@@ -161,7 +161,7 @@ Results
 const displayedTracks = useMemo(() => {
   // search + sort filter
   return filtered;
-}, [currentResult, onlyUnowned, searchQuery, sortKey]);
+}, [currentResult, searchQuery, sortKey]);
 
 // 新規
 const ownedTracks = useMemo(() => {
