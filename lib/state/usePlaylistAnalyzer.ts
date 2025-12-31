@@ -437,7 +437,7 @@ const newResults: Array<[string, ResultState]> = [];
 
     for (const url of urls) {
 
-      let effectiveSource: 'spotify' | 'apple' = 'spotify';
+      let effectiveSource = 'spotify' as const;
       try {
         const t0 = performance.now();
         const t1_start = t0;

@@ -4,7 +4,7 @@ export type PlaylistSource = 'spotify';
 
 export type GetPlaylistParams = {
   url: string;
-  source?: 'spotify' | 'apple'; // legacy (apple ignored)
+  source?: 'spotify'; // legacy placeholder (Apple will return via official API)
   appleMode?: 'auto' | 'fast' | 'legacy'; // legacy (ignored)
   enrichSpotify?: boolean; // legacy (ignored)
   refresh?: boolean;
@@ -17,7 +17,7 @@ export type PostPlaylistWithRekordboxUploadParams = {
   refresh?: boolean;
   url: string;
   rekordboxXmlPath?: string;
-  source?: 'spotify' | 'apple'; // legacy (apple ignored)
+  source?: 'spotify'; // legacy placeholder (Apple will return via official API)
   appleMode?: 'auto' | 'fast' | 'legacy'; // legacy (ignored)
   enrichSpotify?: boolean; // legacy (ignored)
   signal?: AbortSignal;
