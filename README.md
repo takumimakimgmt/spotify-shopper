@@ -1,3 +1,5 @@
+> NOTE: Apple Music support is currently disabled (backend Playwright removed). Re-enable will require restoring Apple scraping strategy.
+
 Spotify Shopper Web — Next.js frontend.
 
 ## Getting Started
