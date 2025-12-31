@@ -112,6 +112,7 @@ function PageInner() {
   };
 
   // (1) 初期タブ決定：URL(t) → なければ先頭
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (vm.multiResults.length === 0) return;
 
