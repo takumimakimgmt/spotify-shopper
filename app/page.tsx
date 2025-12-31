@@ -23,7 +23,6 @@ TODO:
 */
 
 "use client";
-import { FLAGS } from "@/lib/config/flags";
 import React, { useEffect, useRef, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
@@ -69,7 +68,7 @@ function PageInner() {
 
   const handleAnalyzeWithAppleBlock = (e: React.FormEvent) => {
     const url = analyzer.playlistUrlInput.trim();
-    if (!FLAGS.ENABLE_APPLE && /music\.apple\.com/i.test(url)) {
+    if (/music\.apple\.com/i.test(url)) {
       setBanner({ kind: "error", text: "このURLは未対応です。現在はSpotifyプレイリストURLのみ対応しています。" });
       return;
     }

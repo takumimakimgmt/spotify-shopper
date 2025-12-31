@@ -28,7 +28,7 @@ export type ApiMeta = {
   total_api_ms?: number;
   apple_mode?: 'auto' | 'fast' | 'legacy';
   apple_legacy_used?: boolean;
-  apple_strategy?: 'html' | 'playwright';
+  apple_strategy?: 'html';
   apple_enrich_skipped?: boolean;
   reason?: string;
   seen_catalog_playlist_api?: boolean;
@@ -120,7 +120,7 @@ export type PlaylistSnapshotV1 = {
   version: 1;
   created_at: string; // ISO
   playlist: {
-    source: "spotify" | "apple";
+    source: "spotify";
     url: string;
     id?: string;
     name?: string;
