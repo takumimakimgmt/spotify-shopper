@@ -112,7 +112,6 @@ function PageInner() {
   };
 
   // (1) 初期タブ決定：URL(t) → なければ先頭
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (vm.multiResults.length === 0) return;
 
@@ -133,7 +132,7 @@ function PageInner() {
     if (t) {
       router.replace(pathname, { scroll: false });
     }
-  }, [vm.multiResults.length, pathname, searchParams, selection, router]);
+  }, [vm.multiResults, pathname, searchParams, selection, router]);
 
   // (2) タブ変更をURLへ同期（リロード耐性）
   useEffect(() => {
