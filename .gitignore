@@ -35,3 +35,8 @@ app/*.bak.*
 
 playlist-shopper-safe.tgz
 tsconfig.tsbuildinfo
+
+# temp / backup
+*.bak
+*.bak2
+*.patch
