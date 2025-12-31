@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "api:update-openapi": "node scripts/update-openapi.mjs",
+    "api:gen-types": "node scripts/gen-openapi-types.mjs",
+    "api:sync": "npm run api:update-openapi && npm run api:gen-types"
   },
   "dependencies": {
     "@vercel/analytics": "^1.0.0",
@@ -21,10 +24,11 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
+    "openapi-typescript": "^7.10.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=20 <21"
+    "node": ">=22 <23"
   }
 }
