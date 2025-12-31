@@ -1,0 +1,58 @@
+import type { ApiPlaylistResponse } from '../types';
+
+export type PlaylistSource = 'spotify';
+
+export type ApiPlaylistParams = {
+  url: string;
+  source: PlaylistSource; // spotify only
+  signal?: AbortSignal;
+  market?: string;
+};
+
+export type ApiPlaylistWithRekordboxParams = {
+  url: string;
+  rekordboxXmlPath: string;
+  source: PlaylistSource; // spotify only
+  signal?: AbortSignal;
+};
+
+async function warmupBackend(): Promise<void> {
+  // no-op (kept for compatibility)
+}
+
+async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
+  const res = await fetch(input, init);
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return text ? (JSON.parse(text) as T) : ({} as T);
+}
+
+export async function fetchPlaylist(params: ApiPlaylistParams): Promise<ApiPlaylistResponse> {
+  const search = new URLSearchParams();
+  search.set('url', params.url);
+  search.set('source', 'spotify');
+  if (params.market) search.set('market', params.market);
+
+  await warmupBackend();
+  return fetchJson<ApiPlaylistResponse>(`/api/playlist?${search.toString()}`, {
+    signal: params.signal,
+  });
+}
+
+export async function fetchPlaylistWithRekordbox(
+  params: ApiPlaylistWithRekordboxParams
+): Promise<ApiPlaylistResponse> {
+  const form = new FormData();
+  form.append('url', params.url);
+  form.append('rekordbox_xml_path', params.rekordboxXmlPath);
+  form.append('source', 'spotify');
+
+  await warmupBackend();
+  return fetchJson<ApiPlaylistResponse>(`/api/playlist_with_rekordbox`, {
+    method: 'POST',
+    body: form,
+    signal: params.signal,
+  });
+}

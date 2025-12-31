@@ -3,7 +3,7 @@ import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
 
 const APPLE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_APPLE_TIMEOUT_MS ?? '120000');
 
-// --- Apple Music feature flag ---
+// --- Music feature flag ---
 const _ENABLE_APPLE = process.env.NEXT_PUBLIC_ENABLE_APPLE === '1';
 
 // --- Robust localStorage restore utilities ---
@@ -336,7 +336,6 @@ const isProcessing = loading || isReanalyzing;
               url,
               source: detectedSource,
               file,
-              appleMode: detectedSource === 'apple' ? 'auto' : undefined,
             });
             const rows = mapTracks(json);
             updatedResults.push([
@@ -368,7 +367,6 @@ const isProcessing = loading || isReanalyzing;
         url: reAnalyzeUrl,
         source: detectedSource,
         file,
-        appleMode: detectedSource === 'apple' ? 'auto' : undefined,
       });
       const rows = mapTracks(json);
       setMultiResults((prev) =>
@@ -446,7 +444,7 @@ const newResults: Array<[string, ResultState]> = [];
         effectiveSource = 'spotify';
         const isApplePlaylistUrl = /music\.apple\.com\//i.test(url);
         if (isApplePlaylistUrl) {
-          effectiveSource = 'apple';
+          effectiveSource = 'spotify';
         }
         setPhaseLabel('Fetching Spotify');
         setProgressItems((prev) =>
@@ -485,22 +483,17 @@ const newResults: Array<[string, ResultState]> = [];
           return getPlaylist({
             url,
             source: effectiveSource,
-            appleMode: effectiveSource === 'apple' ? 'auto' : undefined,
-            enrichSpotify: effectiveSource === 'apple' ? false : undefined,
             refresh: isForceRefresh,
             signal: abortRef.current?.signal ?? undefined,
           });
         };
 
-        // Apple Musicはautoモード1回のみ（backendでfast/legacy自動フォールバック）
-        if (effectiveSource === 'apple') {
+        // Musicはautoモード1回のみ（backendでfast/legacy自動フォールバック）
+        if (false /* apple disabled */) {
           setPhaseLabel('Fetching playlist (auto)');
           const timeoutController = new AbortController();
           const timeoutId = setTimeout(() => timeoutController.abort(), APPLE_TIMEOUT_MS);
-          const externalSignal = abortRef.current?.signal;
-          if (externalSignal?.aborted) timeoutController.abort();
-          if (externalSignal) externalSignal.addEventListener('abort', () => timeoutController.abort());
-          try {
+try {
             json = await fetchOnce();
             clearTimeout(timeoutId);
           } catch (_err: any) {
@@ -605,13 +598,13 @@ const newResults: Array<[string, ResultState]> = [];
         hasError = true;
         // Short error message for progress list
         const errShort = typeof _err?.message === 'string' ? _err.message : 'request failed';
-        const reasonTag = effectiveSource === 'apple'
+        const reasonTag = false /* apple disabled */
           ? classifyAppleError(_err?.data?.detail?.error || errShort)
           : null;
         setProgressItems((prev) =>
           prev.map((p) =>
             p.url === url
-              ? { ...p, status: 'error', message: reasonTag ? `Apple ${reasonTag}` : errShort }
+              ? { ...p, status: 'error', message: reasonTag ? `${reasonTag}` : errShort }
               : p
           )
         );
@@ -667,11 +660,11 @@ const newResults: Array<[string, ResultState]> = [];
               setErrorText('Spotifyの取得に失敗しました（詳細不明）');
             }
           } else {
-            // 2-3: Apple Musicエラー詳細化
+            // 2-3: Musicエラー詳細化
             const base = errText || 'プレイリストの取得に失敗しました';
-            const reasonSuffix = usedSource === 'apple' && reasonTag ? ` (${reasonTag})` : '';
+            const reasonSuffix = false /* apple disabled */ && reasonTag ? ` (${reasonTag})` : '';
             let hint = '';
-            if (usedSource === 'apple') {
+            if (false /* apple disabled */) {
               if (reasonTag === 'timeout') {
                 hint = '\n取得元が遅い/失敗しやすい場合があります。単体URLでRetry推奨。時間をおいて再試行してください。';
               } else if (reasonTag === 'region') {
@@ -731,7 +724,7 @@ const newResults: Array<[string, ResultState]> = [];
       version: 1,
       created_at: new Date().toISOString(),
       playlist: {
-        source: (ENABLE_APPLE_MUSIC && currentResult.playlistUrl?.includes('music.apple.com')) ? 'apple' : 'spotify',
+        source: 'spotify',
         url: currentResult.playlistUrl || '',
         id: currentResult.playlist_id,
         name: currentResult.playlist_name,

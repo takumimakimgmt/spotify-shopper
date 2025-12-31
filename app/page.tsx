@@ -69,7 +69,7 @@ function PageInner() {
 
   const handleAnalyzeWithAppleBlock = (e: React.FormEvent) => {
     const url = analyzer.playlistUrlInput.trim();
-    if (!FLAGS.ENABLE_APPLE && /music\.apple\.com/i.test(url)) {
+    if (/music\.apple\.com/i.test(url)) {
       setBanner({ kind: "error", text: "このURLは未対応です。現在はSpotifyプレイリストURLのみ対応しています。" });
       return;
     }
