@@ -12,7 +12,7 @@ export interface FiltersState {
 }
 
 /**
- * Encapsulates all filtering/sorting UI state (category, search, sort).
+ * UI-only filter state for results view.
  * Consumed by FiltersBar and ResultsTable filtering logic.
  */
 export function useFiltersState() {

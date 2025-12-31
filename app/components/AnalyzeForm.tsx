@@ -1,288 +1,212 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
+import ProcessingBar from './ProcessingBar';
 import ErrorAlert from './ErrorAlert';
-import { ProgressItem } from './ProgressList';
-import { MAX_XML_BYTES } from '@/lib/constants';
+import type { ProgressItem } from './ProgressList';
 
-type ErrorMeta = Record<string, unknown>;
+type ErrorMeta = { error_code: string; message?: string | null; [key: string]: unknown };
 
 export interface AnalyzeFormProps {
-  // State
   playlistUrlInput: string;
   rekordboxFile: File | null;
   rekordboxDate?: string | null;
   rekordboxFilename?: string | null;
+
   loading: boolean;
   isReanalyzing: boolean;
   progress: number;
+
   errorText: string | null;
-  banner?: { kind: "error" | "info"; text: string } | null;
-  onDismissBanner?: () => void;
   errorMeta?: ErrorMeta;
+
+  banner?: { kind: 'error' | 'info'; text: string } | null;
+  onDismissBanner?: () => void;
+
   progressItems: ProgressItem[];
-  // Setters
+
   setPlaylistUrlInput: (value: string) => void;
   setRekordboxFile: (file: File | null) => void;
-  // Handlers
   handleAnalyze: (e: React.FormEvent) => void;
   handleRekordboxChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   setForceRefreshHint: (value: boolean) => void;
+
   cancelAnalyze?: () => void;
   retryFailed?: () => void;
-  // Error for first input only
+
   playlistUrlError?: string | null;
 }
-const MAX_URLS = 3;
-function splitUrls(multiline: string): string[] {
-  const raw = (multiline || '').split('\n').map(s => s.trim()).filter(Boolean);
-  return raw.length ? raw.slice(0, MAX_URLS) : [''];
-}
-function joinUrls(urls: string[]): string {
-  return urls.map(s => (s || '').trim()).filter(Boolean).join('\n');
-}
+
+const MAX_XML_BYTES = 50 * 1024 * 1024;
 
 export default function AnalyzeForm(props: AnalyzeFormProps) {
-  const [localXmlError, setLocalXmlError] = useState<string | null>(null);
-  const rekordboxInputRef = useRef<HTMLInputElement>(null);
-  const errorSummaryRef = useRef<HTMLDivElement>(null);
-  const _handleRekordboxClick = () => {
-    rekordboxInputRef.current?.click();
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const messageFromMeta = useMemo(() => {
+    const m = props.errorMeta?.message;
+    return typeof m === 'string' && m.trim() ? m : null;
+  }, [props.errorMeta]);
+
+  const playlistUrlError = useMemo(() => {
+    const code = props.errorMeta?.error_code;
+    if (code === 'PLAYLIST_INVALID') return messageFromMeta ?? 'Invalid playlist URL';
+    return null;
+  }, [props.errorMeta, messageFromMeta]);
+
+  const localXmlError = useMemo(() => {
+    const file = props.rekordboxFile;
+    if (!file) return null;
+    if (file.size > MAX_XML_BYTES) return 'XML file too large (max 50MB)';
+
+    const code = props.errorMeta?.error_code;
+    if (code === 'XML_TOO_LARGE' || code === 'XML_PARSE_FAILED') {
+      return messageFromMeta ?? 'XML error';
+    }
+    return null;
+  }, [props.rekordboxFile, props.errorMeta, messageFromMeta]);
+  const clearXml = () => {
+    props.setRekordboxFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Check if errorMeta has actual content
-  const meta = props.errorMeta ?? null;
-  const metaJson =
-    meta && typeof meta === 'object' && Object.keys(meta).length > 0
-      ? JSON.stringify(meta, null, 2)
-      : '';
-  const hasMeta = metaJson.length > 0;
-
-  const isProcessing = props.loading || props.isReanalyzing;
-  const _hasFailed = useMemo(
-    () => props.progressItems.some((p) => p.status === 'error'),
-    [props.progressItems]
-  );
-
-  useEffect(() => {
-    if (props.errorText && errorSummaryRef.current) {
-      errorSummaryRef.current.focus();
-    }
-  }, [props.errorText]);
-
-  // --- Apple-like URL input array ---
-  const [urls, setUrls] = useState<string[]>(() => splitUrls(props.playlistUrlInput));
-  useEffect(() => {
-  const id = setTimeout(() => {
-    setUrls(splitUrls(props.playlistUrlInput));
-  }, 0);
-  return () => clearTimeout(id);
-}, [props.playlistUrlInput]);
-  function updateUrlAt(i: number, next: string) {
-    const nextUrls = urls.slice();
-    nextUrls[i] = next;
-    setUrls(nextUrls);
-    props.setPlaylistUrlInput(joinUrls(nextUrls));
-  }
-  function addUrl() {
-    if (urls.length >= MAX_URLS) return;
-    const nextUrls = urls.concat(['']);
-    setUrls(nextUrls);
-    props.setPlaylistUrlInput(joinUrls(nextUrls));
-  }
-  function removeUrl(i: number) {
-    if (urls.length <= 1) return;
-    const nextUrls = urls.filter((_, idx) => idx !== i);
-    setUrls(nextUrls);
-    props.setPlaylistUrlInput(joinUrls(nextUrls));
-  }
-
   return (
-    <section className="ps-card max-w-2xl mx-auto p-6">
-      <form onSubmit={props.handleAnalyze} className="">
-        {/* Error summary (page-level) */}
-        {props.errorText && (
-          <div ref={errorSummaryRef} id="error-summary" className="ps-row">
-            <ErrorAlert
-              title="There was a problem"
-              message={props.errorText}
-              details={hasMeta ? metaJson : undefined}
-            />
+    <section className="w-full max-w-4xl mx-auto p-4 space-y-4">
+      {props.banner?.text ? (
+        <div
+          className={`rounded-lg p-3 text-sm ${
+            props.banner.kind === 'error'
+              ? 'bg-rose-950/50 border border-rose-800'
+              : 'bg-slate-900/50 border border-slate-800'
+          }`}
+        >
+          <div className="flex items-start gap-2">
+            <div className="flex-1">{props.banner.text}</div>
+            {props.onDismissBanner ? (
+              <button
+                type="button"
+                onClick={props.onDismissBanner}
+                className="text-slate-300 hover:text-white"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            ) : null}
           </div>
-        )}
-        {/* Persistent banner (Apple block, etc) */}
-        {props.banner ? (
-          <div className="ps-row">
-            <div
-              className={[
-                "w-full rounded-xl border p-3 text-sm",
-                props.banner.kind === "error"
-                  ? "border-red-500/30 bg-red-500/10 text-red-100"
-                  : "border-white/10 bg-white/5 text-white/80",
-              ].join(" ")}
-              role={props.banner.kind === "error" ? "alert" : "status"}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 whitespace-pre-wrap">{props.banner.text}</div>
-                {props.onDismissBanner ? (
-                  <button
-                    type="button"
-                    onClick={props.onDismissBanner}
-                    className="shrink-0 rounded-lg px-2 py-1 text-xs text-white/70 hover:bg-white/10"
-                    aria-label="Dismiss"
-                  >
-                    ✕
-                  </button>
-                ) : null}
-              </div>
+        </div>
+      ) : null}
+
+      <form onSubmit={props.handleAnalyze} className="space-y-4">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-200">Playlist URL(s)</label>
+          <textarea
+            value={props.playlistUrlInput}
+            onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
+            rows={3}
+            placeholder="Spotify playlist URL"
+            className={`w-full rounded-md bg-slate-900 border px-3 py-2 text-sm outline-none ${
+              (props.playlistUrlError || playlistUrlError) ? 'border-rose-500/60' : 'border-slate-700'
+            }`}
+          />
+          {(props.playlistUrlError || playlistUrlError) ? (
+            <div className="text-xs text-rose-300">{props.playlistUrlError || playlistUrlError}</div>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-200">Rekordbox XML (optional)</label>
+          <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xml"
+              onChange={props.handleRekordboxChange}
+              className="block w-full text-sm text-slate-200 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-800 file:text-slate-100 hover:file:bg-slate-700"
+            />
+            {props.rekordboxFile ? (
+              <button
+                type="button"
+                onClick={clearXml}
+                className="text-xs px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white"
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
+
+          {props.rekordboxFilename ? (
+            <div className="text-xs text-slate-400">
+              {props.rekordboxFilename}
+              {props.rekordboxDate ? ` · ${props.rekordboxDate}` : ''}
             </div>
+          ) : null}
+
+          {localXmlError ? <div className="text-xs text-rose-300">{localXmlError}</div> : null}
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-slate-200">
+          <input
+            type="checkbox"
+            className="rounded border-slate-700 bg-slate-900"
+          />
+          Only unowned
+        </label>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="submit"
+            disabled={props.loading || !!localXmlError}
+            className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40"
+          >
+            {props.isReanalyzing ? 'Reanalyze' : 'Analyze'}
+          </button>
+
+          {props.cancelAnalyze && props.loading ? (
+            <button
+              type="button"
+              onClick={() => props.cancelAnalyze?.()}
+              className="px-3 py-2 rounded-md border border-slate-700 text-slate-200 hover:text-white"
+            >
+              Cancel
+            </button>
+          ) : null}
+
+          {props.retryFailed && !props.loading && props.errorText ? (
+            <button
+              type="button"
+              onClick={() => props.retryFailed?.()}
+              className="px-3 py-2 rounded-md border border-slate-700 text-slate-200 hover:text-white"
+            >
+              Retry
+            </button>
+          ) : null}
+        </div>
+
+        {props.loading ? (
+          <div className="pt-2">
+            <ProcessingBar analyzing={props.loading} reanalyzing={props.isReanalyzing} progress={props.progress} />
           </div>
         ) : null}
 
-        {/* Playlist URL input(s) - Apple-like row */}
-        {/* Playlist URL Row */}
-        <div className="grid grid-cols-[180px,1fr] gap-6 items-start py-4">
-          <div>
-            <label className="text-sm font-medium text-white/90" htmlFor="playlist-url-0">Playlist URL</label>
-            <div className="mt-1 text-xs text-white/50">Spotify playlist or ID</div>
-          </div>
-          <div>
-            <div className="space-y-2">
-              {urls.map((url, idx) => {
-                const showRemove = urls.length > 1;
-                return (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input
-                      id={`playlist-url-${idx}`}
-                      value={url}
-                      onChange={(e) => updateUrlAt(idx, e.target.value)}
-                      className="h-11 w-full rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white/90 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-white/20 transition"
-                      placeholder="Playlist URL…"
-                      inputMode="url"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      spellCheck={false}
-                    />
-                    {showRemove && (
-                      <button
-                        type="button"
-                        onClick={() => removeUrl(idx)}
-                        className="text-white/40 hover:text-white/70 px-2 py-1"
-                        aria-label="Remove URL"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            {/* Add another/Up to 3 row */}
-            <div className="mt-2 flex items-center justify-between">
+        {props.errorText ? (
+          <div className="pt-2">
+            <ErrorAlert
+              title="Error"
+              message={props.errorText}
+              details={props.errorMeta ? JSON.stringify(props.errorMeta, null, 2) : undefined}
+              hint="If this looks stale, try a hard refresh."
+            />
+            <div className="pt-2">
               <button
                 type="button"
-                onClick={addUrl}
-                disabled={urls.length >= MAX_URLS}
-                className="text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:pointer-events-none text-sm"
+                onClick={() => props.setForceRefreshHint(true)}
+                className="text-xs px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white"
               >
-                + Add another
+                Show refresh tips
               </button>
-              <span className="text-xs text-white/40">Up to {MAX_URLS}</span>
             </div>
-            {/* エラーは各input直下に1行固定（既存のplaylistUrlErrorは最初の入力に紐付け） */}
-            {props.playlistUrlError && (
-              <p className="mt-1 text-xs text-red-500">{props.playlistUrlError}</p>
-            )}
           </div>
-        </div>
-
-        {/* Rekordbox XML Row */}
-        <div className="grid grid-cols-[180px,1fr] gap-6 items-start py-4">
-          <div>
-            <label className="text-sm font-medium text-white/90">Rekordbox Collection XML</label>
-            <div className="mt-1 text-xs text-white/50">(optional)</div>
-          </div>
-          <div>
-            <input
-              ref={rekordboxInputRef}
-              id="rekordbox-file-input"
-              type="file"
-              accept=".xml"
-              onChange={e => {
-                const f = e.target.files?.[0];
-                if (f && f.size > MAX_XML_BYTES) {
-                  setLocalXmlError(`XML is too large. Please export smaller, playlist-level XML from Rekordbox and try again.`);
-                  e.target.value = '';
-                  return;
-                }
-                setLocalXmlError(null);
-                props.setRekordboxFile(f ?? null);
-              }}
-              className="sr-only"
-            />
-            <div className="flex items-center gap-2">
-              {!props.rekordboxFilename ? (
-                <label htmlFor="rekordbox-file-input" className="h-11 px-4 rounded-xl bg-white/10 border border-white/20 text-white/80 text-sm flex items-center cursor-pointer hover:bg-white/20 transition">
-                  Choose file…
-                </label>
-              ) : (
-                <>
-                  <span className="font-mono text-xs text-slate-300 truncate max-w-[120px]">{props.rekordboxFilename.length > 24 ? props.rekordboxFilename.slice(0, 20) + '…' : props.rekordboxFilename}</span>
-                  <label htmlFor="rekordbox-file-input" className="ps-link ml-2 cursor-pointer">Change</label>
-                  <button type="button" className="ps-link ml-1 text-red-400" onClick={() => props.setRekordboxFile(null)}>Remove</button>
-                </>
-              )}
-            </div>
-            {localXmlError && (
-              <div className="mt-1 text-xs text-red-500">{localXmlError}</div>
-            )}
-          </div>
-        </div>
-
-        {/* Analyze button row */}
-        <div className="pt-4 flex items-center justify-end">
-          <button
-            type="submit"
-            data-testid="analyze-btn"
-            disabled={isProcessing || !urls.some((u) => (u || "").trim().length > 0)}
-            className="h-11 px-5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed border-0"
-          >
-            {isProcessing ? (
-              <>
-                <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-r-transparent" />
-                {'Analyzing…'}
-              </>
-            ) : (
-              'Analyze'
-            )}
-          </button>
-        </div>
-
-        {/* StatusRow: unified status display at bottom */}
-        <div className="ps-row mt-2">
-          {(isProcessing || props.progress > 0 || props.playlistUrlError || localXmlError) && (
-            <div className="rounded bg-slate-800/60 px-3 py-2 text-sm text-slate-200 flex items-center gap-2 min-h-[32px] w-full">
-              {isProcessing ? (
-                <>
-                  <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />
-                  <span>
-                    {props.progress > 0 ? `Analyzing… ${props.progress}%` : "Analyzing…"}
-                  </span>
-                </>
-              ) : (props.playlistUrlError || localXmlError) ? (
-                <>
-                  <span className="inline-block h-2 w-2 rounded-full bg-rose-400" />
-                  <span>{props.playlistUrlError || localXmlError}</span>
-                </>
-              ) : (
-                <>
-                  <span className="inline-block h-2 w-2 rounded-full bg-slate-400" />
-                  <span>Ready</span>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+        ) : null}
       </form>
     </section>
   );

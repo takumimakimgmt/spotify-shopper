@@ -17,7 +17,7 @@ export function FiltersBar({
   setSearchQuery,
   sortKey,
   setSortKey,
-  }: FiltersBarProps) {
+}: FiltersBarProps) {
   return (
     <div className="space-y-3">
       <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-xl p-4">

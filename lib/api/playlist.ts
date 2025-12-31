@@ -1,4 +1,5 @@
 import { ApiPlaylistResponse } from '../types';
+import { warmupBackend } from './client';
 import { fetchJsonWithBase, getBackendUrl } from './client';
 
 export async function getPlaylist(params: {
@@ -20,6 +21,7 @@ export async function getPlaylist(params: {
     const val = params.enrichSpotify === true ? '1' : '0';
     search.set('enrich_spotify', val);
   }
+  await warmupBackend();
   return fetchJsonWithBase<ApiPlaylistResponse>(`/api/playlist?${search.toString()}`, {
     signal: params.signal,
   });
@@ -49,6 +51,7 @@ export async function postPlaylistWithRekordboxUpload(params: {
     form.append('enrich_spotify', params.enrichSpotify === true ? '1' : '0');
   }
 
+  await warmupBackend();
   return fetchJsonWithBase<ApiPlaylistResponse>('/api/playlist-with-rekordbox-upload', {
     method: 'POST',
     body: form,
@@ -63,6 +66,7 @@ export async function matchSnapshotWithXml(snapshotJson: string, file: File): Pr
 
   const _backend = getBackendUrl() ?? '';
 
+  await warmupBackend();
   return fetchJsonWithBase<ApiPlaylistResponse>('/api/match-snapshot-with-xml', {
     method: 'POST',
     body: form,

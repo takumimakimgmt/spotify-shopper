@@ -1,6 +1,6 @@
 "use client";
-
 import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
+
 const APPLE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_APPLE_TIMEOUT_MS ?? '120000');
 
 // --- Apple Music feature flag ---
@@ -92,7 +92,6 @@ import {
 import { detectSourceFromUrl, sanitizeUrl } from '../utils/playlistUrl';
 
 const STORAGE_RESULTS = 'spotify-shopper-results';
-const STORAGE_ACTIVE_TAB = 'spotify-shopper-active-tab';
 const MAX_STORAGE_BYTES = 300 * 1024; // ~300KB guard
 
 export function categorizeTrack(track: PlaylistRow): TrackCategory {
@@ -269,7 +268,6 @@ export function usePlaylistAnalyzer() {
   const clearLocalData = () => {
     try {
       localStorage.removeItem(STORAGE_RESULTS);
-      localStorage.removeItem(STORAGE_ACTIVE_TAB);
       setMultiResults([]);
       setPlaylistUrlInput('');
       applyRekordboxFile(null);
@@ -280,12 +278,34 @@ export function usePlaylistAnalyzer() {
     }
   };
 
-  // activeTab is now managed by selection, not analyzer
+  // selectedKey is managed by selection, not analyzer
   // currentResult is now derived in viewModel
 
   // (formCollapsed is now managed only by selection)
 
-  const isProcessing = loading || isReanalyzing;
+  
+const isProcessing = loading || isReanalyzing;
+
+  useEffect(() => {
+    if (!isProcessing || progressItems.length === 0) {
+      setProgress(0);
+      return;
+    }
+
+    const weights: Record<string, number> = {
+      pending: 0,
+      fetching: 0.35,
+      parsing: 0.75,
+      done: 1,
+      error: 1,
+    };
+
+    const avg =
+      progressItems.reduce((acc, item) => acc + (weights[item.status] ?? 0), 0) /
+      progressItems.length;
+
+    setProgress(Math.max(0, Math.min(100, Math.round(avg * 100))));
+  }, [isProcessing, progressItems]);
 
   const handleRekordboxChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
@@ -409,15 +429,12 @@ export function usePlaylistAnalyzer() {
     requestIdRef.current = localRequestId;
 
     setLoading(true);
-    setProgress(2);
+    setProgress(0);
     if (progressTimer.current) {
       window.clearInterval(progressTimer.current);
+      progressTimer.current = null;
     }
-    progressTimer.current = window.setInterval(() => {
-      setProgress((p) => Math.min(98, p + Math.random() * 12 + 3));
-    }, 300) as unknown as number;
-
-    const newResults: Array<[string, ResultState]> = [];
+const newResults: Array<[string, ResultState]> = [];
     let hasError = false;
 
     for (const url of urls) {
@@ -486,10 +503,10 @@ export function usePlaylistAnalyzer() {
           try {
             json = await fetchOnce();
             clearTimeout(timeoutId);
-          } catch (err: any) {
+          } catch (_err: any) {
             clearTimeout(timeoutId);
             // UI向けエラー文言を具体化
-            const reasonTag = classifyAppleError(err?.message);
+            const reasonTag = classifyAppleError(_err?.message);
             let errorMsg = '';
             switch (reasonTag) {
               case 'timeout':
@@ -508,7 +525,7 @@ export function usePlaylistAnalyzer() {
                 errorMsg = '取得に失敗しました。';
             }
             setErrorText(errorMsg);
-            throw err;
+            throw _err;
           }
         } else {
           json = await fetchOnce();
@@ -584,12 +601,12 @@ export function usePlaylistAnalyzer() {
             );
           });
         });
-      } catch (err: any) {
+      } catch (_err: any) {
         hasError = true;
         // Short error message for progress list
-        const errShort = typeof err?.message === 'string' ? err.message : 'request failed';
+        const errShort = typeof _err?.message === 'string' ? _err.message : 'request failed';
         const reasonTag = effectiveSource === 'apple'
-          ? classifyAppleError(err?.data?.detail?.error || errShort)
+          ? classifyAppleError(_err?.data?.detail?.error || errShort)
           : null;
         setProgressItems((prev) =>
           prev.map((p) =>
@@ -598,8 +615,8 @@ export function usePlaylistAnalyzer() {
               : p
           )
         );
-        if (err?.data?.detail) {
-          const detail = err.data.detail;
+        if (_err?.data?.detail) {
+          const detail = _err.data.detail;
           const usedSource = typeof detail?.used_source === 'string' ? detail.used_source : undefined;
           const errText = typeof detail?.error === 'string' ? detail.error : undefined;
           const metaFromApi = detail?.meta;
@@ -651,8 +668,8 @@ export function usePlaylistAnalyzer() {
             }
           } else {
             // 2-3: Apple Musicエラー詳細化
-  const base = errText || 'プレイリストの取得に失敗しました';
-  const reasonSuffix = usedSource === 'apple' && reasonTag ? ` (${reasonTag})` : '';
+            const base = errText || 'プレイリストの取得に失敗しました';
+            const reasonSuffix = usedSource === 'apple' && reasonTag ? ` (${reasonTag})` : '';
             let hint = '';
             if (usedSource === 'apple') {
               if (reasonTag === 'timeout') {
