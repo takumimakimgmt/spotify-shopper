@@ -1,6 +1,20 @@
 "use client";
 import { normalizeMeta, normalizeTracks } from "../api/normalize";
 import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
+
+function getProp(obj: unknown, key: string): unknown {
+  return isRecord(obj) ? obj[key] : undefined;
+}
+
+function getStringProp(obj: unknown, key: string): string | undefined {
+  const v = getProp(obj, key);
+  return typeof v === "string" ? v : undefined;
+}
+
 const APPLE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_APPLE_TIMEOUT_MS ?? '120000');
 
 
@@ -537,7 +551,7 @@ try {
         const overhead_ms = Math.max(0, total_ms - api_ms - map_ms);
         const payload_bytes = new Blob([JSON.stringify(json)]).size;
         const metaWithTiming: ApiMeta = {
-          ...((normalizeMeta((json as any)?.meta) ?? {})),
+          ...((normalizeMeta(getProp(json, "meta")) ?? {})),
           client_total_ms: total_ms,
           client_api_ms: api_ms,
           client_map_ms: map_ms,
@@ -547,11 +561,11 @@ try {
         newResults.push([
           url,
           {
-            title: ((json as any)?.playlist_name ?? "(unknown)"),
+            title: (getStringProp(json, "playlist_name") ?? "(unknown)"),
             total: rows.length,
-            playlistUrl: ((json as any)?.playlist_url) ?? url,
-            playlist_id: ((json as any)?.playlist_id ?? ""),
-            playlist_name: ((json as any)?.playlist_name ?? "(unknown)"),
+            playlistUrl: (getStringProp(json, "playlist_url")) ?? url,
+            playlist_id: (getStringProp(json, "playlist_id") ?? ""),
+            playlist_name: (getStringProp(json, "playlist_name") ?? "(unknown)"),
             tracks: rows,
             analyzedAt: Date.now(),
             hasRekordboxData: !!rekordboxFile,
@@ -740,11 +754,13 @@ try {
     };
 
     const json = await matchSnapshotWithXml(JSON.stringify(snapshot), file);
-    const byKey: Record<string, Record<string, unknown>> = {};
-    const byKeyCanonical = new Map<string, any>();
-    for (const t of json.tracks || []) {
-      const key = (t as any).track_key_primary || (t as any).track_key_fallback;
-      if (key) byKey[key] = t as any;
+    const byKey: Record<string, unknown> = {};
+    const byKeyCanonical = new Map<string, unknown>();
+    const tracksValue = getProp(json, "tracks");
+    const tracks: unknown[] = Array.isArray(tracksValue) ? tracksValue : [];
+    for (const t of tracks) {
+      const key = getStringProp(t, "track_key_primary") ?? getStringProp(t, "track_key_fallback");
+      if (typeof key === "string" && key) byKey[key] = t;
       const ck = canonicalizeKey(String(key ?? ""));
       if (ck && !byKeyCanonical.has(ck)) byKeyCanonical.set(ck, t);
     }
