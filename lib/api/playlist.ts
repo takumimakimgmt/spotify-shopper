@@ -1,4 +1,5 @@
-import type { ApiPlaylistResponse, PlaylistSnapshotV1 } from '../types';
+import type { PlaylistSnapshotV1 } from '../types';
+import type { PlaylistResponse } from './schema';
 
 export type PlaylistSource = 'spotify';
 
@@ -43,7 +44,7 @@ async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit): Promi
 /**
  * New API (spotify-only)
  */
-export async function fetchPlaylist(params: GetPlaylistParams): Promise<ApiPlaylistResponse> {
+export async function fetchPlaylist(params: GetPlaylistParams): Promise<PlaylistResponse> {
   const search = new URLSearchParams();
   search.set('url', params.url);
   search.set('source', 'spotify');
@@ -51,12 +52,12 @@ export async function fetchPlaylist(params: GetPlaylistParams): Promise<ApiPlayl
   if (params.refresh !== undefined) search.set('refresh', String(params.refresh));
 
   await warmupBackend();
-  return fetchJson<ApiPlaylistResponse>(`/api/playlist?${search.toString()}`, { signal: params.signal });
+  return fetchJson<PlaylistResponse>(`/api/playlist?${search.toString()}`, { signal: params.signal });
 }
 
 export async function fetchPlaylistWithRekordbox(
   params: PostPlaylistWithRekordboxUploadParams
-): Promise<ApiPlaylistResponse> {
+): Promise<PlaylistResponse> {
   const form = new FormData();
   form.append('url', params.url);
   form.append('source', 'spotify');
@@ -65,7 +66,7 @@ export async function fetchPlaylistWithRekordbox(
   if (params.refresh !== undefined) form.append('refresh', String(params.refresh));
 
   await warmupBackend();
-  return fetchJson<ApiPlaylistResponse>(`/api/playlist_with_rekordbox`, {
+  return fetchJson<PlaylistResponse>(`/api/playlist_with_rekordbox`, {
     method: 'POST',
     body: form,
     signal: params.signal,
@@ -75,13 +76,13 @@ export async function fetchPlaylistWithRekordbox(
 /**
  * Legacy exports expected by usePlaylistAnalyzer.ts
  */
-export async function getPlaylist(params: GetPlaylistParams): Promise<ApiPlaylistResponse> {
+export async function getPlaylist(params: GetPlaylistParams): Promise<PlaylistResponse> {
   return fetchPlaylist(params);
 }
 
 export async function postPlaylistWithRekordboxUpload(
   params: PostPlaylistWithRekordboxUploadParams
-): Promise<ApiPlaylistResponse> {
+): Promise<PlaylistResponse> {
   return fetchPlaylistWithRekordbox(params);
 }
 

@@ -271,8 +271,9 @@ export interface components {
             /**
              * Track Key Primary Type
              * @default norm
+             * @enum {string}
              */
-            track_key_primary_type: string;
+            track_key_primary_type: "isrc" | "norm";
             /**
              * Track Key Version
              * @default v1

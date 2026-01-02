@@ -1,3 +1,10 @@
+import type { PlaylistResponse, TrackModel, StoreLinksModel } from "./api/schema";
+
+/** API transport types are derived from OpenAPI (single source of truth). */
+export type ApiStoreLinks = StoreLinksModel;
+export type ApiTrack = TrackModel;
+export type ApiPlaylistResponse = PlaylistResponse;
+
 // --- RekordboxMeta for XML meta info ---
 
 // 軽量保存用: tracksを除外したResultState
@@ -17,6 +24,7 @@ export type StoreLinks = {
   spotify?: string;
   apple?: string;
 };
+
 
 export type ApiMeta = {
   cache_hit?: boolean;
@@ -55,29 +63,7 @@ export type ApiMeta = {
   };
 };
 
-export type ApiTrack = {
-  title: string;
-  artist: string;
-  album: string;
-  isrc?: string | null;
-  spotify_url?: string | null;
-  apple_url?: string | null;
-  links: StoreLinks;
-  owned?: boolean | null;
-  owned_reason?: string | null;
-  track_key_primary?: string;
-  track_key_fallback?: string;
-  track_key_primary_type?: 'isrc' | 'norm';
-  track_key_version?: string;
-};
 
-export type ApiPlaylistResponse = {
-  playlist_id: string;
-  playlist_name: string;
-  playlist_url: string;
-  tracks: ApiTrack[];
-  meta?: ApiMeta;
-};
 
 export type PlaylistRow = {
   index: number;
