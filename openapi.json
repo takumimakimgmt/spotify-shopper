@@ -874,6 +874,10 @@
           },
           "track_key_primary_type": {
             "type": "string",
+            "enum": [
+              "isrc",
+              "norm"
+            ],
             "title": "Track Key Primary Type",
             "default": "norm"
           },
