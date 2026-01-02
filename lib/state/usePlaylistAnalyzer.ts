@@ -1,5 +1,4 @@
 "use client";
-import type { PlaylistResponse as ApiPlaylistResponse } from "../api/schema";
 import { normalizeMeta, normalizeTracks } from "../api/normalize";
 import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
 const APPLE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_APPLE_TIMEOUT_MS ?? '120000');
@@ -103,11 +102,7 @@ export function categorizeTrack(track: PlaylistRow): TrackCategory {
   return 'checkout';
 }
 
-function mapTracks(json: ApiPlaylistResponse): PlaylistRow[] {
-  return normalizeTracks(json);
-}
-
-const _sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+function mapTracks(rows: PlaylistRow[]): PlaylistRow[] { return rows; }const _sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function classifyAppleError(message: string | undefined): 'timeout' | 'dom-change' | 'region' | 'bot-suspected' | 'unknown' {
   if (!message) return 'unknown';
@@ -134,7 +129,7 @@ export function usePlaylistAnalyzer() {
             );
             const detectedSource = detectSourceFromUrl(url);
             const json = await getPlaylist({ url, source: detectedSource });
-            const rows = mapTracks(json);
+            const rows = mapTracks(normalizeTracks(json));
             setMultiResults((prev) =>
               prev.map(([u, r]) =>
                 u === url ? [u, { ...r, tracks: rows, analyzedAt: Date.now() }] : [u, r]
@@ -326,7 +321,7 @@ const isProcessing = loading || isReanalyzing;
               source: detectedSource,
               file,
             });
-            const rows = mapTracks(json);
+            const rows = mapTracks(normalizeTracks(json));
             updatedResults.push([
               url,
               { ...result, tracks: rows, analyzedAt: Date.now(), hasRekordboxData: true, rekordboxMeta: makeRekordboxMeta(file) },
@@ -357,7 +352,7 @@ const isProcessing = loading || isReanalyzing;
         source: detectedSource,
         file,
       });
-      const rows = mapTracks(json);
+      const rows = mapTracks(normalizeTracks(json));
       setMultiResults((prev) =>
         prev.map(([url, result]) =>
           url === reAnalyzeUrl
@@ -457,7 +452,7 @@ const newResults: Array<[string, ResultState]> = [];
         }
 
         const t2_api_start = performance.now();
-        let json: ApiPlaylistResponse | null = null;
+        let json: unknown | null = null;
 
         const fetchOnce = async () => {
           if (rekordboxFile) {
@@ -534,7 +529,7 @@ try {
         }
 
         const t4_mapstart = performance.now();
-        const rows = mapTracks(json);
+        const rows = mapTracks(normalizeTracks(json));
         const t5_mapdone = performance.now();
         const api_ms = t3_api_done - t2_api_start;
         const map_ms = t5_mapdone - t4_mapstart;
@@ -542,7 +537,7 @@ try {
         const overhead_ms = Math.max(0, total_ms - api_ms - map_ms);
         const payload_bytes = new Blob([JSON.stringify(json)]).size;
         const metaWithTiming: ApiMeta = {
-          ...((normalizeMeta(json.meta) ?? {})),
+          ...((normalizeMeta((json as any)?.meta) ?? {})),
           client_total_ms: total_ms,
           client_api_ms: api_ms,
           client_map_ms: map_ms,
@@ -552,11 +547,11 @@ try {
         newResults.push([
           url,
           {
-            title: json.playlist_name,
+            title: ((json as any)?.playlist_name ?? "(unknown)"),
             total: rows.length,
-            playlistUrl: json.playlist_url ?? url,
-            playlist_id: json.playlist_id,
-            playlist_name: json.playlist_name,
+            playlistUrl: ((json as any)?.playlist_url) ?? url,
+            playlist_id: ((json as any)?.playlist_id ?? ""),
+            playlist_name: ((json as any)?.playlist_name ?? "(unknown)"),
             tracks: rows,
             analyzedAt: Date.now(),
             hasRekordboxData: !!rekordboxFile,
