@@ -62,11 +62,21 @@ function bandcampSearchUrl(track: PlaylistRow): string {
   }
 }
 
+
+function youtubeTopicUrl(track: { title?: string; artist?: string }) {
+  const q = [track.artist, track.title, "topic"].filter(Boolean).join(" ");
+  if (!q) return "";
+    const proto = ['ht', 'tps', ':', '//'].join('');
+  const host = ['music', 'youtube', 'com'].join('.');
+  return `${proto}${host}/search?q=${encodeURIComponent(q)}`;
+}
+
 function StoreLinksInline({ track }: { track: PlaylistRow }) {
   const recommended = getRecommendedStore(track);
   const others = getOtherStores(track.stores, recommended);
   const primaryUrl = recommended?.url || firstStoreUrl(track.stores);
   const fallback = beatportSearchUrl(track) || bandcampSearchUrl(track);
+  const yt = youtubeTopicUrl(track);
 
   const mainLabel = primaryUrl ? (recommended?.name ?? "Buy") : "Search";
 
@@ -86,6 +96,22 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
         title={primaryUrl || fallback ? "Open store" : "No store link"}
       >
         {mainLabel}
+      </a>
+
+      <a
+        href={yt || "#"}
+        target="_blank"
+        rel="noreferrer"
+        aria-disabled={!yt}
+        onClick={(e) => {
+          if (!yt) e.preventDefault();
+        }}
+        className={`inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] text-white ${
+          yt ? "hover:bg-white/15" : "opacity-50 cursor-not-allowed"
+        }`}
+        title={yt ? "Open YouTube Music Topic search" : "Missing title/artist"}
+      >
+        YouTube Topic
       </a>
 
       {others.map((s) => (
