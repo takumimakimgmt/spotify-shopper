@@ -40,3 +40,6 @@ tsconfig.tsbuildinfo
 *.bak
 *.bak2
 *.patch
+
+# local vercel artifacts
+.vercel/
