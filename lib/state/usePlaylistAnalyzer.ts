@@ -111,6 +111,18 @@ import { detectSourceFromUrl, sanitizeUrl } from '../utils/playlistUrl';
 const STORAGE_RESULTS = 'spotify-shopper-results';
 const MAX_STORAGE_BYTES = 300 * 1024; // ~300KB guard
 
+const ENABLE_LOCAL_PERSIST = false;
+type StorageLike = {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+};
+const safeStorage: StorageLike = {
+  getItem: (k) => (ENABLE_LOCAL_PERSIST ? safeStorage.getItem(k) : null),
+  setItem: (k, v) => { if (ENABLE_LOCAL_PERSIST) safeStorage.setItem(k, v); },
+  removeItem: (k) => { if (ENABLE_LOCAL_PERSIST) safeStorage.removeItem(k); },
+};
+
 export function categorizeTrack(track: PlaylistRow): TrackCategory {
   if (track.owned === true) return 'owned';
   return 'checkout';
@@ -162,7 +174,7 @@ export function usePlaylistAnalyzer() {
       useEffect(() => {
         try {
           if (typeof window === 'undefined') return;
-          const saved = localStorage.getItem(STORAGE_RESULTS);
+          const saved = safeStorage.getItem(STORAGE_RESULTS);
           if (!saved) return;
           const parsed = safeJsonParse<any>(saved);
           const restored = normalizeStoredResults(parsed);
@@ -170,7 +182,7 @@ export function usePlaylistAnalyzer() {
             setMultiResults(restored);
           } else {
             // Broken or unrecognized format: auto-discard
-            localStorage.removeItem(STORAGE_RESULTS);
+            safeStorage.removeItem(STORAGE_RESULTS);
           }
         } finally {
         }
@@ -195,7 +207,7 @@ export function usePlaylistAnalyzer() {
             // tracksは絶対に保存しない
           }
         ]);
-        localStorage.setItem(STORAGE_RESULTS, JSON.stringify({ results: lightResults }));
+        safeStorage.setItem(STORAGE_RESULTS, JSON.stringify({ results: lightResults }));
       }
 
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
@@ -231,7 +243,7 @@ export function usePlaylistAnalyzer() {
         setStorageWarning('保存容量上限を超えました');
         return;
       }
-      localStorage.setItem(STORAGE_RESULTS, payload);
+      safeStorage.setItem(STORAGE_RESULTS, payload);
     }, 500);
   }, [multiResults]);
 
@@ -265,7 +277,7 @@ export function usePlaylistAnalyzer() {
 
   const clearLocalData = () => {
     try {
-      localStorage.removeItem(STORAGE_RESULTS);
+      safeStorage.removeItem(STORAGE_RESULTS);
       setMultiResults([]);
       setPlaylistUrlInput('');
       applyRekordboxFile(null);

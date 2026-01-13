@@ -215,59 +215,7 @@ function PageInner() {
                   </span>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => selection.setFormCollapsed(false)}
-                className="px-3 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 text-emerald-200 flex items-center gap-2"
-              >
-                <span className="text-base leading-none">＋</span>
-                <span>Add playlist</span>
-              </button>
-            </div>
-          ) : (
-            <AnalyzeForm
-              playlistUrlInput={analyzer.playlistUrlInput}
-              setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
-              handleAnalyze={handleAnalyzeWithAppleBlock}
-              rekordboxFile={analyzer.rekordboxFile}
-              setRekordboxFile={analyzer.setRekordboxFile}
-              handleRekordboxChange={analyzer.handleRekordboxChange}
-              rekordboxFilename={analyzer.rekordboxFile?.name ?? vm.currentResult?.rekordboxMeta?.filename ?? null}
-              rekordboxDate={analyzer.rekordboxDate ?? (vm.currentResult?.rekordboxMeta?.updatedAtISO ? new Date(vm.currentResult.rekordboxMeta.updatedAtISO).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : null)}
-              loading={analyzer.loading}
-              isReanalyzing={analyzer.isReanalyzing}
-              progress={analyzer.progress}
-              errorText={analyzer.errorText}
-              errorMeta={analyzer.errorMeta}
-              progressItems={analyzer.progressItems}
-              setForceRefreshHint={analyzer.setForceRefreshHint}
-              cancelAnalyze={actions.cancelAnalyze}
-              retryFailed={actions.retryFailed}
-              banner={banner}
-              onDismissBanner={() => setBanner(null)}
-            />
-          )}
-        </section>
-        {/* Results */}
-        {vm.multiResults.length > 0 && (
-          <section className="space-y-4" id="results-top">
-            {vm.storageWarning && (
-              <ErrorAlert
-                title="Local data warning"
-                message={vm.storageWarning}
-                hint="Use Clear saved data to reset local storage, then re-run analysis."
-              />
-            )}
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-400">Results are saved locally (~300KB cap). Clear to free space.</p>
-              <button
-                type="button"
-                onClick={() => actions.clearLocalData()}
-                className="self-start sm:self-auto inline-flex items-center gap-2 rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-700 border border-slate-700"
-              >
-                Clear saved data
-              </button>
-            </div>
+              </div>
             {/* Tabs */}
             <ResultsTabs
               multiResults={vm.multiResults}
