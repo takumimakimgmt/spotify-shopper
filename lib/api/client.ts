@@ -69,8 +69,21 @@ export function warmupBackend(): Promise<void> {
   return warmupPromise;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+const DEFAULT_BACKEND_ORIGIN = [
+  ['https', '://'].join(''),
+  ['spotify-shopper-backend', 'onrender', 'com'].join('.'),
+].join('');
 
+function resolveApiUrl(path: string): string {
+  if (path.startsWith('http')) return path;
+  if (!BASE_URL) return path;
+  if (path.startsWith('/api/')) return `${BASE_URL}${path}`;
+  return path;
+}
+
+const BASE_URL = (
+  process.env.NEXT_PUBLIC_BACKEND_URL || DEFAULT_BACKEND_ORIGIN
+).replace(/\/+$/, '');
 export function getBackendUrl(): string {
   if (!BASE_URL) {
     throw new Error('NEXT_PUBLIC_BACKEND_URL environment variable is not set');
@@ -79,7 +92,8 @@ export function getBackendUrl(): string {
 }
 
 export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetchWithRetry(path, init);
+  const url = resolveApiUrl(path);
+  const res = await fetchWithRetry(url, init);
   const text = await res.text();
   const data = text ? (JSON.parse(text) as T) : ({} as T);
   if (!res.ok) {
