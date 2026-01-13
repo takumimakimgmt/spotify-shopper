@@ -81,7 +81,7 @@ export async function fetchPlaylistWithRekordbox(
     form.append('source', 'spotify');
     if (params.rekordboxXmlPath) form.append('rekordbox_xml_path', params.rekordboxXmlPath);
     form.append('file', params.file);
-    if (params.refresh !== undefined) form.append('refresh', String(params.refresh));
+    if (params.refresh) form.append('refresh', '1');
 
     return fetchJson<PlaylistResponse>(directApi(`/api/playlist-with-rekordbox-upload`), {
       method: 'POST',
