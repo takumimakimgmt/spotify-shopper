@@ -120,9 +120,9 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
           href={s.url}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1 rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700 transition"
+          className="inline-flex items-center gap-1 rounded-full border border-slate-600 px-3 py-1 hover:bg-slate-700 transition text-xs"
         >
-          <span className="text-[10px]">{s.name}</span>
+          {s.name}
         </a>
       ))}
     </div>
