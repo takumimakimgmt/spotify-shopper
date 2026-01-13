@@ -58,17 +58,34 @@ export async function fetchPlaylist(params: GetPlaylistParams): Promise<Playlist
 export async function fetchPlaylistWithRekordbox(
   params: PostPlaylistWithRekordboxUploadParams
 ): Promise<PlaylistResponse> {
-  const form = new FormData();
-  form.append('url', params.url);
-  form.append('source', 'spotify');
-  if (params.rekordboxXmlPath) form.append('rekordbox_xml_path', params.rekordboxXmlPath);
-  if (params.file) form.append('file', params.file);
-  if (params.refresh !== undefined) form.append('refresh', String(params.refresh));
-
   await warmupBackend();
-  return fetchJson<PlaylistResponse>(`/api/playlist_with_rekordbox`, {
+
+  // file があるときだけ upload エンドポイント（multipart）
+  if (params.file) {
+    const form = new FormData();
+    form.append('url', params.url);
+    form.append('source', 'spotify');
+    if (params.rekordboxXmlPath) form.append('rekordbox_xml_path', params.rekordboxXmlPath);
+    form.append('file', params.file);
+    if (params.refresh !== undefined) form.append('refresh', String(params.refresh));
+
+    return fetchJson<PlaylistResponse>(`/api/playlist-with-rekordbox-upload`, {
+      method: 'POST',
+      body: form,
+      signal: params.signal,
+    });
+  }
+
+  // file がないときは JSON エンドポイント（軽い・確実）
+  return fetchJson<PlaylistResponse>(`/api/playlist-with-rekordbox`, {
     method: 'POST',
-    body: form,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      url: params.url,
+      source: 'spotify',
+      rekordbox_xml_path: params.rekordboxXmlPath,
+      refresh: params.refresh,
+    }),
     signal: params.signal,
   });
 }
@@ -126,7 +143,7 @@ export async function matchSnapshotWithXml(
   if (file) form.append('file', file);
 
   await warmupBackend();
-  return fetchJson<MatchSnapshotWithXmlResponse>(`/api/match_snapshot_with_xml`, {
+  return fetchJson<MatchSnapshotWithXmlResponse>(`/api/match-snapshot-with-xml`, {
     method: 'POST',
     body: form,
     signal,
