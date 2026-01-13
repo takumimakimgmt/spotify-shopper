@@ -34,6 +34,20 @@ async function warmupBackend(): Promise<void> {
   // no-op (kept for compatibility)
 }
 
+const DIRECT_BACKEND_ORIGIN = (
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  [
+    ['https', '://'].join(''),
+    ['spotify-shopper-backend', 'onrender', 'com'].join('.'),
+  ].join('')
+).replace(/\/+$/, '');
+
+function directApi(path: string): string {
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/api/')) return `${DIRECT_BACKEND_ORIGIN}${path}`;
+  return path;
+}
+
 async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
   const res = await fetch(input, init);
   const text = await res.text();
@@ -52,7 +66,7 @@ export async function fetchPlaylist(params: GetPlaylistParams): Promise<Playlist
   if (params.refresh !== undefined) search.set('refresh', String(params.refresh));
 
   await warmupBackend();
-  return fetchJson<PlaylistResponse>(`/api/playlist?${search.toString()}`, { signal: params.signal });
+  return fetchJson<PlaylistResponse>(directApi(`/api/playlist?${search.toString()}`), { signal: params.signal });
 }
 
 export async function fetchPlaylistWithRekordbox(
@@ -69,7 +83,7 @@ export async function fetchPlaylistWithRekordbox(
     form.append('file', params.file);
     if (params.refresh !== undefined) form.append('refresh', String(params.refresh));
 
-    return fetchJson<PlaylistResponse>(`/api/playlist-with-rekordbox-upload`, {
+    return fetchJson<PlaylistResponse>(directApi(`/api/playlist-with-rekordbox-upload`), {
       method: 'POST',
       body: form,
       signal: params.signal,
@@ -77,7 +91,7 @@ export async function fetchPlaylistWithRekordbox(
   }
 
   // file がないときは JSON エンドポイント（軽い・確実）
-  return fetchJson<PlaylistResponse>(`/api/playlist-with-rekordbox`, {
+  return fetchJson<PlaylistResponse>(directApi(`/api/playlist-with-rekordbox`), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -143,7 +157,7 @@ export async function matchSnapshotWithXml(
   if (file) form.append('file', file);
 
   await warmupBackend();
-  return fetchJson<MatchSnapshotWithXmlResponse>(`/api/match-snapshot-with-xml`, {
+  return fetchJson<MatchSnapshotWithXmlResponse>(directApi(`/api/match-snapshot-with-xml`), {
     method: 'POST',
     body: form,
     signal,
