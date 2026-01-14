@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 export interface ProgressItem {
   url: string;
-  status: 'pending' | 'fetching' | 'parsing' | 'done' | 'error';
+  status: "pending" | "fetching" | "parsing" | "done" | "error";
   message?: string;
 }
 
@@ -13,29 +13,34 @@ export interface ProgressListProps {
   isProcessing: boolean;
 }
 
-const statusIcons: Record<ProgressItem['status'], string> = {
-  pending: '⏳',
-  fetching: '📡',
-  parsing: '⚙️',
-  done: '✅',
-  error: '❌',
+const statusIcons: Record<ProgressItem["status"], string> = {
+  pending: "⏳",
+  fetching: "📡",
+  parsing: "⚙️",
+  done: "✅",
+  error: "❌",
 };
 
-const statusLabels: Record<ProgressItem['status'], string> = {
-  pending: 'Queued',
-  fetching: 'Loading',
-  parsing: 'Analyzing',
-  done: 'Done',
-  error: 'Failed',
+const statusLabels: Record<ProgressItem["status"], string> = {
+  pending: "Queued",
+  fetching: "Loading",
+  parsing: "Analyzing",
+  done: "Done",
+  error: "Failed",
 };
 
-export default function ProgressList({ items, isProcessing }: ProgressListProps) {
+export default function ProgressList({
+  items,
+  isProcessing,
+}: ProgressListProps) {
   if (!isProcessing || items.length === 0) {
     return null;
   }
 
   const total = items.length;
-  const completed = items.filter((i) => i.status === 'done' || i.status === 'error').length;
+  const completed = items.filter(
+    (i) => i.status === "done" || i.status === "error",
+  ).length;
 
   return (
     <div className="space-y-2">
@@ -45,20 +50,21 @@ export default function ProgressList({ items, isProcessing }: ProgressListProps)
       <div className="space-y-1">
         {items.map((item, idx) => {
           const label = statusLabels[item.status] || item.status;
-          const normalizedMessage = item.message?.trim() ?? '';
+          const normalizedMessage = item.message?.trim() ?? "";
           const redundant = normalizedMessage
             ? normalizedMessage.toLowerCase() === label.toLowerCase() ||
               normalizedMessage.toLowerCase().includes(label.toLowerCase()) ||
               label.toLowerCase().includes(normalizedMessage.toLowerCase())
             : false;
-          const messageToShow = normalizedMessage && !redundant ? normalizedMessage : null;
+          const messageToShow =
+            normalizedMessage && !redundant ? normalizedMessage : null;
 
           return (
             <div
               key={`${item.url}-${idx}`}
               className="flex items-center gap-2 text-xs text-slate-300 bg-slate-900/30 rounded px-3 py-2"
             >
-              <span className="text-sm">{statusIcons[item.status] || '◯'}</span>
+              <span className="text-sm">{statusIcons[item.status] || "◯"}</span>
               <span className="flex-1 truncate font-mono">{item.url}</span>
               <span className="text-slate-500 text-xs whitespace-nowrap">
                 {label}

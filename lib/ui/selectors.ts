@@ -1,12 +1,12 @@
-import type { PlaylistRow, TrackCategory } from '../types';
-import { categorizeTrack } from '../state/usePlaylistAnalyzer';
+import type { PlaylistRow, TrackCategory } from "../types";
+import { categorizeTrack } from "../state/usePlaylistAnalyzer";
 import { buildSearchHaystack } from "@/lib/utils/normalize";
-import { normalizeTitle, normalizeArtist } from '../utils/normalize';
+import { normalizeTitle, normalizeArtist } from "../utils/normalize";
 
 export interface FilterOptions {
-  categoryFilter: 'all' | 'toBuy' | 'owned';
+  categoryFilter: "all" | "toBuy" | "owned";
   searchQuery: string;
-  sortKey: 'none' | 'artist' | 'album' | 'title';
+  sortKey: "none" | "artist" | "album" | "title";
 }
 
 /**
@@ -15,35 +15,39 @@ export interface FilterOptions {
  */
 export function selectDisplayedTracks(
   tracks: PlaylistRow[],
-  options: FilterOptions
+  options: FilterOptions,
 ): PlaylistRow[] {
   const safeTracks = Array.isArray(tracks) ? tracks : [];
   let filtered = safeTracks;
   // Filter by search (normalized, haystack)
   if (options.searchQuery.trim()) {
     const q = buildSearchHaystack([options.searchQuery]);
-    filtered = filtered.filter(
-      (t) => {
-        const hay = buildSearchHaystack([t.title, t.artist, t.album, t.label]);
-        return hay.includes(q);
-      }
-    );
+    filtered = filtered.filter((t) => {
+      const hay = buildSearchHaystack([t.title, t.artist, t.album, t.label]);
+      return hay.includes(q);
+    });
   }
 
   // Sort (normalized)
-  if (options.sortKey === 'artist') {
-    filtered = [...filtered].sort((a, b) => normalizeArtist(a.artist).localeCompare(normalizeArtist(b.artist)));
-  } else if (options.sortKey === 'album') {
-    filtered = [...filtered].sort((a, b) => (a.album ?? '').localeCompare(b.album ?? ''));
-  } else if (options.sortKey === 'title') {
-    filtered = [...filtered].sort((a, b) => normalizeTitle(a.title).localeCompare(normalizeTitle(b.title)));
+  if (options.sortKey === "artist") {
+    filtered = [...filtered].sort((a, b) =>
+      normalizeArtist(a.artist).localeCompare(normalizeArtist(b.artist)),
+    );
+  } else if (options.sortKey === "album") {
+    filtered = [...filtered].sort((a, b) =>
+      (a.album ?? "").localeCompare(b.album ?? ""),
+    );
+  } else if (options.sortKey === "title") {
+    filtered = [...filtered].sort((a, b) =>
+      normalizeTitle(a.title).localeCompare(normalizeTitle(b.title)),
+    );
   }
 
   // Category filter
-  if (options.categoryFilter === 'owned') {
-    filtered = filtered.filter((t) => categorizeTrack(t) === 'owned');
-  } else if (options.categoryFilter === 'toBuy') {
-    filtered = filtered.filter((t) => categorizeTrack(t) === 'checkout');
+  if (options.categoryFilter === "owned") {
+    filtered = filtered.filter((t) => categorizeTrack(t) === "owned");
+  } else if (options.categoryFilter === "toBuy") {
+    filtered = filtered.filter((t) => categorizeTrack(t) === "checkout");
   }
 
   return filtered;
@@ -66,8 +70,8 @@ export function selectTrackCounts(tracks: PlaylistRow[]): {
 /**
  * Category labels mapping (UI constant).
  */
-export const categoryLabels: Record<'all' | TrackCategory, string> = {
-  all: 'All',
-  checkout: 'To buy',
-  owned: 'Owned',
+export const categoryLabels: Record<"all" | TrackCategory, string> = {
+  all: "All",
+  checkout: "To buy",
+  owned: "Owned",
 };

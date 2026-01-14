@@ -36,7 +36,7 @@ const eslintConfig = defineConfig([
 ]);
 
 /* cc-flatconfig-patch */
-const __cc_base = (eslintConfig);
+const __cc_base = eslintConfig;
 
 const __cc_config = [
   {
@@ -58,16 +58,17 @@ const __cc_config = [
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     rules: {
-      "@typescript-eslint/no-unused-vars": ["warn", {
-        argsIgnorePattern: "^_",
-        varsIgnorePattern: "^_",
-        caughtErrorsIgnorePattern: "^_",
-        ignoreRestSiblings: true,
-      }],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
     },
   },
 ];
 
 export default __cc_config;
-
-

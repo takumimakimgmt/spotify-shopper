@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 
 interface ErrorAlertProps {
   title: string;
@@ -8,7 +8,12 @@ interface ErrorAlertProps {
   hint?: string;
 }
 
-export default function ErrorAlert({ title, message, details, hint }: ErrorAlertProps) {
+export default function ErrorAlert({
+  title,
+  message,
+  details,
+  hint,
+}: ErrorAlertProps) {
   const [expanded, setExpanded] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -18,7 +23,7 @@ export default function ErrorAlert({ title, message, details, hint }: ErrorAlert
     }
   }, [message]);
 
-  const hasDetails = typeof details === 'string' && details.trim().length > 0;
+  const hasDetails = typeof details === "string" && details.trim().length > 0;
 
   return (
     <div
@@ -39,7 +44,7 @@ export default function ErrorAlert({ title, message, details, hint }: ErrorAlert
             onClick={() => setExpanded((v) => !v)}
             className="text-xs text-red-200 hover:text-red-100 underline"
           >
-            {expanded ? 'Hide details' : 'Show details'}
+            {expanded ? "Hide details" : "Show details"}
           </button>
           {expanded && (
             <div className="mt-2 space-y-2">

@@ -34,6 +34,7 @@ tar -xzf spotify-shopper-backend.tgz -C spotify-shopper
 ## Post-Extraction Setup
 
 ### Frontend
+
 ```bash
 cd spotify-shopper-web
 npm install
@@ -41,6 +42,7 @@ npm run build
 ```
 
 ### Backend
+
 ```bash
 cd spotify-shopper
 python3 -m venv .venv

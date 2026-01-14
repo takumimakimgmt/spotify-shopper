@@ -1,11 +1,15 @@
-'use client';
+"use client";
 
-import React, { useMemo, useRef } from 'react';
-import ProcessingBar from './ProcessingBar';
-import ErrorAlert from './ErrorAlert';
-import type { ProgressItem } from './ProgressList';
+import React, { useMemo, useRef } from "react";
+import ProcessingBar from "./ProcessingBar";
+import ErrorAlert from "./ErrorAlert";
+import type { ProgressItem } from "./ProgressList";
 
-type ErrorMeta = { error_code: string; message?: string | null; [key: string]: unknown };
+type ErrorMeta = {
+  error_code: string;
+  message?: string | null;
+  [key: string]: unknown;
+};
 
 export interface AnalyzeFormProps {
   playlistUrlInput: string;
@@ -20,7 +24,7 @@ export interface AnalyzeFormProps {
   errorText: string | null;
   errorMeta?: ErrorMeta;
 
-  banner?: { kind: 'error' | 'info'; text: string } | null;
+  banner?: { kind: "error" | "info"; text: string } | null;
   onDismissBanner?: () => void;
 
   progressItems: ProgressItem[];
@@ -40,34 +44,34 @@ export interface AnalyzeFormProps {
 const MAX_XML_BYTES = 50 * 1024 * 1024;
 
 export default function AnalyzeForm(props: AnalyzeFormProps) {
-
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const messageFromMeta = useMemo(() => {
     const m = props.errorMeta?.message;
-    return typeof m === 'string' && m.trim() ? m : null;
+    return typeof m === "string" && m.trim() ? m : null;
   }, [props.errorMeta]);
 
   const playlistUrlError = useMemo(() => {
     const code = props.errorMeta?.error_code;
-    if (code === 'PLAYLIST_INVALID') return messageFromMeta ?? 'Invalid playlist URL';
+    if (code === "PLAYLIST_INVALID")
+      return messageFromMeta ?? "Invalid playlist URL";
     return null;
   }, [props.errorMeta, messageFromMeta]);
 
   const localXmlError = useMemo(() => {
     const file = props.rekordboxFile;
     if (!file) return null;
-    if (file.size > MAX_XML_BYTES) return 'XML file too large (max 50MB)';
+    if (file.size > MAX_XML_BYTES) return "XML file too large (max 50MB)";
 
     const code = props.errorMeta?.error_code;
-    if (code === 'XML_TOO_LARGE' || code === 'XML_PARSE_FAILED') {
-      return messageFromMeta ?? 'XML error';
+    if (code === "XML_TOO_LARGE" || code === "XML_PARSE_FAILED") {
+      return messageFromMeta ?? "XML error";
     }
     return null;
   }, [props.rekordboxFile, props.errorMeta, messageFromMeta]);
   const clearXml = () => {
     props.setRekordboxFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
@@ -75,9 +79,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
       {props.banner?.text ? (
         <div
           className={`rounded-lg p-3 text-sm ${
-            props.banner.kind === 'error'
-              ? 'bg-rose-950/50 border border-rose-800'
-              : 'bg-slate-900/50 border border-slate-800'
+            props.banner.kind === "error"
+              ? "bg-rose-950/50 border border-rose-800"
+              : "bg-slate-900/50 border border-slate-800"
           }`}
         >
           <div className="flex items-start gap-2">
@@ -98,23 +102,31 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
 
       <form onSubmit={props.handleAnalyze} className="space-y-4">
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-200">Playlist URL(s)</label>
+          <label className="block text-sm font-medium text-slate-200">
+            Playlist URL(s)
+          </label>
           <textarea
             value={props.playlistUrlInput}
             onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
             rows={3}
             placeholder="Spotify playlist URL"
             className={`w-full rounded-md bg-slate-900 border px-3 py-2 text-sm outline-none ${
-              (props.playlistUrlError || playlistUrlError) ? 'border-rose-500/60' : 'border-slate-700'
+              props.playlistUrlError || playlistUrlError
+                ? "border-rose-500/60"
+                : "border-slate-700"
             }`}
           />
-          {(props.playlistUrlError || playlistUrlError) ? (
-            <div className="text-xs text-rose-300">{props.playlistUrlError || playlistUrlError}</div>
+          {props.playlistUrlError || playlistUrlError ? (
+            <div className="text-xs text-rose-300">
+              {props.playlistUrlError || playlistUrlError}
+            </div>
           ) : null}
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-200">Rekordbox XML (optional)</label>
+          <label className="block text-sm font-medium text-slate-200">
+            Rekordbox XML (optional)
+          </label>
           <div className="flex items-center gap-3">
             <input
               ref={fileInputRef}
@@ -137,11 +149,13 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           {props.rekordboxFilename ? (
             <div className="text-xs text-slate-400">
               {props.rekordboxFilename}
-              {props.rekordboxDate ? ` · ${props.rekordboxDate}` : ''}
+              {props.rekordboxDate ? ` · ${props.rekordboxDate}` : ""}
             </div>
           ) : null}
 
-          {localXmlError ? <div className="text-xs text-rose-300">{localXmlError}</div> : null}
+          {localXmlError ? (
+            <div className="text-xs text-rose-300">{localXmlError}</div>
+          ) : null}
         </div>
 
         <label className="flex items-center gap-2 text-sm text-slate-200">
@@ -158,7 +172,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             disabled={props.loading || !!localXmlError}
             className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40"
           >
-            {props.isReanalyzing ? 'Reanalyze' : 'Analyze'}
+            {props.isReanalyzing ? "Reanalyze" : "Analyze"}
           </button>
 
           {props.cancelAnalyze && props.loading ? (
@@ -184,7 +198,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
 
         {props.loading ? (
           <div className="pt-2">
-            <ProcessingBar analyzing={props.loading} reanalyzing={props.isReanalyzing} progress={props.progress} />
+            <ProcessingBar
+              analyzing={props.loading}
+              reanalyzing={props.isReanalyzing}
+              progress={props.progress}
+            />
           </div>
         ) : null}
 
@@ -193,7 +211,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <ErrorAlert
               title="Error"
               message={props.errorText}
-              details={props.errorMeta ? JSON.stringify(props.errorMeta, null, 2) : undefined}
+              details={
+                props.errorMeta
+                  ? JSON.stringify(props.errorMeta, null, 2)
+                  : undefined
+              }
               hint="If this looks stale, try a hard refresh."
             />
             <div className="pt-2">

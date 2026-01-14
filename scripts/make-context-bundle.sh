@@ -80,16 +80,16 @@ cp -f "$ROOT/lib/constants.ts" "$RUN_DIR/files/" 2>/dev/null || true
   cd "$ROOT"
   TMP_DIR=$(mktemp -d)
   trap "rm -rf $TMP_DIR" EXIT
-  
+
   # Create a temporary copy with desired structure
   mkdir -p "$TMP_DIR/spotify-shopper-web"
-  
+
   # Copy files excluding unwanted dirs
   rsync -av --exclude=.next --exclude=node_modules --exclude=dist --exclude=coverage \
     --exclude=.git --exclude=.vercel --exclude=_context --exclude=_teacher_data \
     --exclude=.env --exclude=.env.* --exclude=.DS_Store --exclude="*.log" \
     . "$TMP_DIR/spotify-shopper-web/" 2>/dev/null || true
-  
+
   # Create tar in temp dir
   cd "$TMP_DIR"
   tar -czf "$ARCHIVE" spotify-shopper-web/

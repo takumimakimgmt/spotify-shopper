@@ -7,9 +7,7 @@
   "paths": {
     "/": {
       "get": {
-        "tags": [
-          "system"
-        ],
+        "tags": ["system"],
         "summary": "Root",
         "operationId": "root__get",
         "responses": {
@@ -299,10 +297,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "snapshot",
-          "file"
-        ],
+        "required": ["snapshot", "file"],
         "title": "Body_match_snapshot_with_xml_api_match_snapshot_with_xml_post"
       },
       "Body_playlist_with_rekordbox_upload_api_playlist_with_rekordbox_upload_post": {
@@ -363,9 +358,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "url"
-        ],
+        "required": ["url"],
         "title": "Body_playlist_with_rekordbox_upload_api_playlist_with_rekordbox_upload_post"
       },
       "HTTPValidationError": {
@@ -688,11 +681,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "playlist_id",
-          "playlist_name",
-          "tracks"
-        ],
+        "required": ["playlist_id", "playlist_name", "tracks"],
         "title": "PlaylistResponse"
       },
       "PlaylistWithRekordboxBody": {
@@ -719,10 +708,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "url",
-          "rekordbox_xml_path"
-        ],
+        "required": ["url", "rekordbox_xml_path"],
         "title": "PlaylistWithRekordboxBody"
       },
       "StoreLinksModel": {
@@ -874,10 +860,7 @@
           },
           "track_key_primary_type": {
             "type": "string",
-            "enum": [
-              "isrc",
-              "norm"
-            ],
+            "enum": ["isrc", "norm"],
             "title": "Track Key Primary Type",
             "default": "norm"
           },
@@ -888,10 +871,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "title",
-          "artist"
-        ],
+        "required": ["title", "artist"],
         "title": "TrackModel"
       },
       "ValidationError": {
@@ -920,11 +900,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       }
     }
