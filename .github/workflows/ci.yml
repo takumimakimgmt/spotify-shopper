@@ -20,7 +20,7 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Install node deps (for prettier/eslint hooks)
+      - name: Install node deps (required for eslint/prettier hooks)
         run: npm ci
 
       - uses: actions/setup-python@v5
