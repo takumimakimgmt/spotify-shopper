@@ -38,6 +38,9 @@ repos:
 
       - id: frontend-eslint
         name: "frontend: eslint"
-        entry: bash -lc "npm run -s lint"
-        language: system
+
+        entry: bash -lc 'npm run -s lint'
+
         pass_filenames: false
+
+        language: system
