@@ -9,7 +9,9 @@
     "lint": "eslint",
     "api:update-openapi": "node scripts/update-openapi.mjs",
     "api:gen-types": "node scripts/gen-openapi-types.mjs",
-    "api:sync": "npm run api:update-openapi && npm run api:gen-types"
+    "api:sync": "npm run api:update-openapi && npm run api:gen-types",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@vercel/analytics": "^1.0.0",
@@ -22,11 +24,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.0.17",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
+    "jsdom": "^27.4.0",
     "openapi-typescript": "^7.10.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.17"
   },
   "engines": {
     "node": ">=22 <23"
