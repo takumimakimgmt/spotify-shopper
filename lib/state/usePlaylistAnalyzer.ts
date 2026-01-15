@@ -23,7 +23,7 @@ const APPLE_TIMEOUT_MS = Number(
 const _ENABLE_APPLE = process.env.NEXT_PUBLIC_ENABLE_APPLE === "1";
 
 // --- Robust localStorage restore utilities ---
-function safeJsonParse<T>(s: string | null): T | null {
+export function safeJsonParse<T>(s: string | null): T | null {
   if (!s) return null;
   try {
     return JSON.parse(s) as T;
@@ -32,7 +32,7 @@ function safeJsonParse<T>(s: string | null): T | null {
   }
 }
 
-function normalizeStoredResults(
+export function normalizeStoredResults(
   parsed: any,
 ): Array<[string, ResultState]> | null {
   if (!parsed) return null;
@@ -94,6 +94,19 @@ function normalizeStoredResults(
   return null;
 }
 
+export function restoreResultsFromStorage(storage: {
+  getItem(k: string): string | null;
+  removeItem(k: string): void;
+}): Array<[string, any]> | null {
+  const saved = storage.getItem(STORAGE_RESULTS);
+  if (!saved) return null;
+  const parsed = safeJsonParse<any>(saved);
+  const restored = normalizeStoredResults(parsed as any);
+  if (restored && restored.length > 0) return restored as any;
+  storage.removeItem(STORAGE_RESULTS);
+  return null;
+}
+
 import type { RekordboxMeta } from "../types";
 import type { ApiMeta } from "../types";
 // RekordboxMeta utility
@@ -120,7 +133,7 @@ import {
 } from "../api/playlist";
 import { detectSourceFromUrl, sanitizeUrl } from "../utils/playlistUrl";
 
-const STORAGE_RESULTS = "spotify-shopper-results";
+export const STORAGE_RESULTS = "spotify-shopper-results";
 const MAX_STORAGE_BYTES = 300 * 1024; // ~300KB guard
 
 const ENABLE_LOCAL_PERSIST = false;
