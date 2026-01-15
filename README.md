@@ -16,7 +16,6 @@ pnpm dev
 bun dev
 ```
 
-
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses optimized web fonts via Next.js.

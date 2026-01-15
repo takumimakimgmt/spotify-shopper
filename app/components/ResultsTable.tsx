@@ -62,12 +62,11 @@ function bandcampSearchUrl(track: PlaylistRow): string {
   }
 }
 
-
 function youtubeTopicUrl(track: { title?: string; artist?: string }) {
   const q = [track.artist, track.title, "topic"].filter(Boolean).join(" ");
   if (!q) return "";
-    const proto = ['ht', 'tps', ':', '//'].join('');
-  const host = ['music', 'youtube', 'com'].join('.');
+  const proto = ["ht", "tps", ":", "//"].join("");
+  const host = ["music", "youtube", "com"].join(".");
   return `${proto}${host}/search?q=${encodeURIComponent(q)}`;
 }
 
@@ -91,7 +90,9 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
           if (!primaryUrl && !fallback) e.preventDefault();
         }}
         className={`inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] text-white ${
-          primaryUrl || fallback ? "hover:bg-white/15" : "opacity-50 cursor-not-allowed"
+          primaryUrl || fallback
+            ? "hover:bg-white/15"
+            : "opacity-50 cursor-not-allowed"
         }`}
         title={primaryUrl || fallback ? "Open store" : "No store link"}
       >
@@ -129,7 +130,10 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
   );
 }
 
-export default function ResultsTable({ currentResult, displayedTracks }: Props) {
+export default function ResultsTable({
+  currentResult,
+  displayedTracks,
+}: Props) {
   if (!currentResult) return null;
   const rows = Array.isArray(displayedTracks) ? displayedTracks : [];
 
@@ -148,11 +152,19 @@ export default function ResultsTable({ currentResult, displayedTracks }: Props) 
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-white truncate">{t?.title ?? ""}</div>
-                  <div className="text-xs text-white/70 truncate">{t?.artist ?? ""}</div>
-                  <div className="text-xs text-white/50 truncate">{t?.album ?? ""}</div>
+                  <div className="text-sm font-medium text-white truncate">
+                    {t?.title ?? ""}
+                  </div>
+                  <div className="text-xs text-white/70 truncate">
+                    {t?.artist ?? ""}
+                  </div>
+                  <div className="text-xs text-white/50 truncate">
+                    {t?.album ?? ""}
+                  </div>
                 </div>
-                <div className="shrink-0 text-[11px] text-white/40">{t?.isrc ?? ""}</div>
+                <div className="shrink-0 text-[11px] text-white/40">
+                  {t?.isrc ?? ""}
+                </div>
               </div>
               <div className="mt-2">
                 <StoreLinksInline track={t} />

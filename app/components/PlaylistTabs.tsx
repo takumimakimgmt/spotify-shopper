@@ -1,5 +1,5 @@
-import React from 'react';
-import type { ResultState } from '../../lib/types';
+import React from "react";
+import type { ResultState } from "../../lib/types";
 
 export type PlaylistTabsProps = {
   multiResults: Array<[string, ResultState]>;
@@ -9,7 +9,13 @@ export type PlaylistTabsProps = {
   onClearAll: () => void;
 };
 
-export function PlaylistTabs({ multiResults, activeTab, setActiveTab, onRemoveTab, onClearAll: _onClearAll }: PlaylistTabsProps) {
+export function PlaylistTabs({
+  multiResults,
+  activeTab,
+  setActiveTab,
+  onRemoveTab,
+  onClearAll: _onClearAll,
+}: PlaylistTabsProps) {
   if (multiResults.length === 0) return null;
 
   return (
@@ -22,8 +28,8 @@ export function PlaylistTabs({ multiResults, activeTab, setActiveTab, onRemoveTa
               key={url}
               className={`flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap rounded-t-lg transition ${
                 isActive
-                  ? 'bg-emerald-500/20 border-b-2 border-emerald-500 text-emerald-200'
-                  : 'bg-slate-800/50 hover:bg-slate-800 text-slate-300'
+                  ? "bg-emerald-500/20 border-b-2 border-emerald-500 text-emerald-200"
+                  : "bg-slate-800/50 hover:bg-slate-800 text-slate-300"
               }`}
             >
               <button
@@ -34,9 +40,7 @@ export function PlaylistTabs({ multiResults, activeTab, setActiveTab, onRemoveTa
                   {result.title} ({result.total})
                 </span>
                 {result.hasRekordboxData && (
-                  <span
-                    className="text-[10px] px-1 py-0.5 bg-emerald-600/30 text-emerald-300 rounded"
-                  >
+                  <span className="text-[10px] px-1 py-0.5 bg-emerald-600/30 text-emerald-300 rounded">
                     XML
                   </span>
                 )}

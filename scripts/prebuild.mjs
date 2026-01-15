@@ -13,7 +13,9 @@ try {
     console.log(`[prebuild] ${target} exists`);
     process.exit(0);
   }
-  console.warn(`[prebuild] ${target} exists but is not a directory; continuing anyway`);
+  console.warn(
+    `[prebuild] ${target} exists but is not a directory; continuing anyway`,
+  );
 } catch {
   // not exists
 }

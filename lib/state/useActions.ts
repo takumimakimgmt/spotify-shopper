@@ -31,11 +31,21 @@ export interface ActionsAPI {
   // XML re-analyze
   triggerReAnalyzeFileInput: () => void;
   handleReAnalyzeFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  applySnapshotWithXml: (file: File, result: ResultState, tracks: PlaylistRow[]) => Promise<void>;
+  applySnapshotWithXml: (
+    file: File,
+    result: ResultState,
+    tracks: PlaylistRow[],
+  ) => Promise<void>;
 
   // Export CSV
-  generateCsv: (displayedTracks: PlaylistRow[], currentResult: ResultState | null) => string | null;
-  downloadCsv: (displayedTracks: PlaylistRow[], currentResult: ResultState | null) => void;
+  generateCsv: (
+    displayedTracks: PlaylistRow[],
+    currentResult: ResultState | null,
+  ) => string | null;
+  downloadCsv: (
+    displayedTracks: PlaylistRow[],
+    currentResult: ResultState | null,
+  ) => void;
 
   // Local data
   clearLocalData: () => void;
@@ -43,7 +53,7 @@ export interface ActionsAPI {
 
 export function useActions(
   analyzer: ReturnType<typeof usePlaylistAnalyzer>,
-  selection: SelectionLike
+  selection: SelectionLike,
 ): ActionsAPI {
   const handleRemoveTab = useCallback(
     (urlToRemove: string) => {
@@ -57,7 +67,7 @@ export function useActions(
         return filtered;
       });
     },
-    [analyzer, selection]
+    [analyzer, selection],
   );
 
   const handleClearAllTabs = useCallback(() => {
@@ -71,7 +81,10 @@ export function useActions(
   }, [analyzer.reAnalyzeInputRef]);
 
   const generateCsv = useCallback(
-    (displayedTracks: PlaylistRow[], currentResult: ResultState | null): string | null => {
+    (
+      displayedTracks: PlaylistRow[],
+      currentResult: ResultState | null,
+    ): string | null => {
       const safeTracks = Array.isArray(displayedTracks) ? displayedTracks : [];
       if (!safeTracks.length || !currentResult) {
         return null;
@@ -105,15 +118,13 @@ export function useActions(
 
       const csv = [headers, ...rows]
         .map((row) =>
-          row
-            .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
-            .join(",")
+          row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
         )
         .join("\n");
 
       return csv;
     },
-    []
+    [],
   );
 
   const downloadCsv = useCallback(
@@ -137,7 +148,7 @@ export function useActions(
       a.click();
       URL.revokeObjectURL(url);
     },
-    [generateCsv]
+    [generateCsv],
   );
 
   const handleClearDataAndReset = useCallback(() => {

@@ -6,7 +6,11 @@ function isRetryableStatus(status: number): boolean {
   return status === 429 || status === 502 || status === 503 || status === 504;
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -19,7 +23,7 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
 export async function fetchWithRetry(
   url: string,
   init: RequestInit = {},
-  opts: { retries?: number; timeoutMs?: number } = {}
+  opts: { retries?: number; timeoutMs?: number } = {},
 ): Promise<Response> {
   const retries = opts.retries ?? 4;
   const timeoutMs = opts.timeoutMs ?? 25000;
@@ -58,7 +62,11 @@ export function warmupBackend(): Promise<void> {
   // Uses same base-building behavior as fetchJsonWithBase (below), because we call it via the same URL.
   warmupPromise = (async () => {
     try {
-      const res = await fetchWithRetry("/api/health", { cache: "no-store" }, { retries: 6, timeoutMs: 15000 });
+      const res = await fetchWithRetry(
+        "/api/health",
+        { cache: "no-store" },
+        { retries: 6, timeoutMs: 15000 },
+      );
       // Even 404 would be “backend reachable”, but we now expect 200.
       await res.text().catch(() => {});
     } catch {
@@ -70,28 +78,31 @@ export function warmupBackend(): Promise<void> {
 }
 
 const DEFAULT_BACKEND_ORIGIN = [
-  ['https', '://'].join(''),
-  ['spotify-shopper-backend', 'onrender', 'com'].join('.'),
-].join('');
+  ["https", "://"].join(""),
+  ["spotify-shopper-backend", "onrender", "com"].join("."),
+].join("");
 
 function resolveApiUrl(path: string): string {
-  if (path.startsWith('http')) return path;
+  if (path.startsWith("http")) return path;
   if (!BASE_URL) return path;
-  if (path.startsWith('/api/')) return `${BASE_URL}${path}`;
+  if (path.startsWith("/api/")) return `${BASE_URL}${path}`;
   return path;
 }
 
 const BASE_URL = (
   process.env.NEXT_PUBLIC_BACKEND_URL || DEFAULT_BACKEND_ORIGIN
-).replace(/\/+$/, '');
+).replace(/\/+$/, "");
 export function getBackendUrl(): string {
   if (!BASE_URL) {
-    throw new Error('NEXT_PUBLIC_BACKEND_URL environment variable is not set');
+    throw new Error("NEXT_PUBLIC_BACKEND_URL environment variable is not set");
   }
   return BASE_URL;
 }
 
-export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+export async function fetchJson<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   const url = resolveApiUrl(path);
   const res = await fetchWithRetry(url, init);
   const text = await res.text();
@@ -102,7 +113,10 @@ export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T>
   return data;
 }
 
-export async function fetchJsonWithBase<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = path.startsWith('http') ? path : `${BASE_URL}${path}`;
+export async function fetchJsonWithBase<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
   return fetchJson<T>(url, init);
 }

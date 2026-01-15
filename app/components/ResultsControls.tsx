@@ -1,10 +1,10 @@
-import React from 'react';
-import type { SortKey, ResultState } from '../../lib/types';
+import React from "react";
+import type { SortKey, ResultState } from "../../lib/types";
 
 type Props = {
   currentResult: ResultState | null;
-  categoryFilter: 'all' | 'toBuy' | 'owned';
-  setCategoryFilter: (val: 'all' | 'toBuy' | 'owned') => void;
+  categoryFilter: "all" | "toBuy" | "owned";
+  setCategoryFilter: (val: "all" | "toBuy" | "owned") => void;
   searchQuery: string;
   setSearchQuery: (val: string) => void;
   sortKey: SortKey;
@@ -32,8 +32,12 @@ export function ResultsControls({
         <div className="flex items-start gap-3">
           <div className="text-slate-200">
             <div className="font-semibold text-lg">{currentResult.title}</div>
-            <div className="text-xs text-slate-400">{currentResult.playlistUrl}</div>
-            <div className="text-xs text-slate-400">Tracks: {currentResult.total}</div>
+            <div className="text-xs text-slate-400">
+              {currentResult.playlistUrl}
+            </div>
+            <div className="text-xs text-slate-400">
+              Tracks: {currentResult.total}
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 justify-start md:justify-end items-center">
@@ -58,20 +62,20 @@ export function ResultsControls({
       <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-xl p-4">
         <div className="flex gap-2">
           <button
-            onClick={() => setCategoryFilter('all')}
-            className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === 'all' ? 'bg-slate-700 border-slate-500 text-slate-100' : 'bg-slate-800/40 border-slate-700 text-slate-300 hover:bg-slate-800'}`}
+            onClick={() => setCategoryFilter("all")}
+            className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === "all" ? "bg-slate-700 border-slate-500 text-slate-100" : "bg-slate-800/40 border-slate-700 text-slate-300 hover:bg-slate-800"}`}
           >
             All
           </button>
           <button
-            onClick={() => setCategoryFilter('toBuy')}
-            className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === 'toBuy' ? 'bg-amber-500/30 border-amber-500 text-amber-200' : 'bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20'}`}
+            onClick={() => setCategoryFilter("toBuy")}
+            className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === "toBuy" ? "bg-amber-500/30 border-amber-500 text-amber-200" : "bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20"}`}
           >
             To buy
           </button>
           <button
-            onClick={() => setCategoryFilter('owned')}
-            className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === 'owned' ? 'bg-emerald-500/30 border-emerald-500 text-emerald-100' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20'}`}
+            onClick={() => setCategoryFilter("owned")}
+            className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === "owned" ? "bg-emerald-500/30 border-emerald-500 text-emerald-100" : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20"}`}
           >
             Owned
           </button>

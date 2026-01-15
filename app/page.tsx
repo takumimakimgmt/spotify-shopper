@@ -25,34 +25,37 @@ TODO:
 "use client";
 import React, { useEffect, useRef, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { usePlaylistAnalyzer } from '../lib/state/usePlaylistAnalyzer';
-import { useFiltersState } from '../lib/state/useFiltersState';
-import { useSelectionState } from '../lib/state/useSelectionState';
-import { useViewModel } from '../lib/state/useViewModel';
-import { useActions } from '../lib/state/useActions';
-import { categoryLabels } from '../lib/ui/selectors';
-import { getOtherStores as _getOtherStores } from '../lib/playlist/stores';
-import AnalyzeForm from './components/AnalyzeForm';
-import _ProgressList from './components/ProgressList';
-import { ShopperHeader as _ShopperHeader } from './components/ShopperHeader';
-import { ResultsTabs } from './components/ResultsTabs';
-import { FiltersBar } from './components/FiltersBar';
-import dynamic from 'next/dynamic';
-import SkeletonResults from './components/SkeletonResults';
+import { usePlaylistAnalyzer } from "../lib/state/usePlaylistAnalyzer";
+import { useFiltersState } from "../lib/state/useFiltersState";
+import { useSelectionState } from "../lib/state/useSelectionState";
+import { useViewModel } from "../lib/state/useViewModel";
+import { useActions } from "../lib/state/useActions";
+import { categoryLabels } from "../lib/ui/selectors";
+import { getOtherStores as _getOtherStores } from "../lib/playlist/stores";
+import AnalyzeForm from "./components/AnalyzeForm";
+import _ProgressList from "./components/ProgressList";
+import { ShopperHeader as _ShopperHeader } from "./components/ShopperHeader";
+import { ResultsTabs } from "./components/ResultsTabs";
+import { FiltersBar } from "./components/FiltersBar";
+import dynamic from "next/dynamic";
+import SkeletonResults from "./components/SkeletonResults";
 const ResultsTable = dynamic(
-  () => import('./components/ResultsTable').then(mod => mod.default),
-  { ssr: false, loading: () => <SkeletonResults /> }
+  () => import("./components/ResultsTable").then((mod) => mod.default),
+  { ssr: false, loading: () => <SkeletonResults /> },
 );
 const SidePanels = dynamic(
-  () => import('./components/SidePanels').then(mod => mod.default),
-  { ssr: false, loading: () => null }
+  () => import("./components/SidePanels").then((mod) => mod.default),
+  { ssr: false, loading: () => null },
 );
-import ErrorAlert from './components/ErrorAlert';
-import { getOwnedStatusStyle } from '../lib/ui/ownedStatus';
+import ErrorAlert from "./components/ErrorAlert";
+import { getOwnedStatusStyle } from "../lib/ui/ownedStatus";
 
 function PageInner() {
   // 未対応URLブロック: 現在はSpotifyプレイリストURLのみ対応
-  const [banner, setBanner] = React.useState<null | { kind: "error" | "info"; text: string }>(null);
+  const [banner, setBanner] = React.useState<null | {
+    kind: "error" | "info";
+    text: string;
+  }>(null);
 
   // === HOOKS: Direct calls, no composition ===
   const analyzer = usePlaylistAnalyzer();
@@ -69,18 +72,19 @@ function PageInner() {
   const handleAnalyzeWithAppleBlock = (e: React.FormEvent) => {
     const url = analyzer.playlistUrlInput.trim();
     if (/music\.apple\.com/i.test(url)) {
-      setBanner({ kind: "error", text: "このURLは未対応です。現在はSpotifyプレイリストURLのみ対応しています。" });
+      setBanner({
+        kind: "error",
+        text: "このURLは未対応です。現在はSpotifyプレイリストURLのみ対応しています。",
+      });
       return;
     }
     actions.handleAnalyze(e);
   };
-    // --- clean-first-then-sync: 初回ロードはクリーン、以降は同期 ---
-    const initialTabRef = useRef<string | null>(null);
-    const allowUrlSyncRef = useRef(false);
+  // --- clean-first-then-sync: 初回ロードはクリーン、以降は同期 ---
+  const initialTabRef = useRef<string | null>(null);
+  const allowUrlSyncRef = useRef(false);
   // Vercel / backend cold start warmup
-  useEffect(() => {
-  }, []);
-
+  useEffect(() => {}, []);
 
   // === DERIVED DATA: Pure calculations ===
   // activeTab fallback logic after hydration
@@ -103,7 +107,9 @@ function PageInner() {
 
   const decodeTab = (s: string) => {
     try {
-      const padded = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+      const padded =
+        s.replace(/-/g, "+").replace(/_/g, "/") +
+        "===".slice((s.length + 3) % 4);
       return atob(padded);
     } catch {
       return null;
@@ -150,24 +156,23 @@ function PageInner() {
     const params = new URLSearchParams(searchParams.toString());
     params.set(TAB_QS_KEY, encodeTab(tab));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-     
   }, [selection.activeTab, router, pathname, searchParams]);
 
   // === ACTIONS: All operations ===
   const actions = useActions(analyzer, selection);
 
   // === SIDE EFFECTS ===
-    const { setFormCollapsed } = selection;
-    const prevResultRef = useRef<unknown>(null);
-    useEffect(() => {
-      const r = vm.currentResult;
-      const hasTracks = (r?.tracks?.length ?? 0) > 0;
-      if (!hasTracks) return;
-      if (r !== prevResultRef.current) {
-        setFormCollapsed(true);
-        prevResultRef.current = r;
-      }
-    }, [vm.currentResult, setFormCollapsed]);
+  const { setFormCollapsed } = selection;
+  const prevResultRef = useRef<unknown>(null);
+  useEffect(() => {
+    const r = vm.currentResult;
+    const hasTracks = (r?.tracks?.length ?? 0) > 0;
+    if (!hasTracks) return;
+    if (r !== prevResultRef.current) {
+      setFormCollapsed(true);
+      prevResultRef.current = r;
+    }
+  }, [vm.currentResult, setFormCollapsed]);
 
   // タブ切替時にtracksが空ならensureHydratedで埋める
   useEffect(() => {
@@ -176,7 +181,9 @@ function PageInner() {
     const result = analyzer.multiResults.find(([url]) => url === tab)?.[1];
     if (!result || result.tracks.length !== 0) return;
 
-    const ensureHydrated = (analyzer as Partial<{ ensureHydrated: (t: string) => void }>).ensureHydrated;
+    const ensureHydrated = (
+      analyzer as Partial<{ ensureHydrated: (t: string) => void }>
+    ).ensureHydrated;
     if (typeof ensureHydrated === "function") ensureHydrated(tab);
   }, [selection.activeTab, analyzer]);
 
@@ -185,16 +192,23 @@ function PageInner() {
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
         {/* Apple-like minimalist header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-white tracking-tight">Playlist Shopper</h1>
-          <p className="mt-2 text-base text-white/60">Match a Spotify playlist with your Rekordbox library, then open buy links.</p>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">
+            Playlist Shopper
+          </h1>
+          <p className="mt-2 text-base text-white/60">
+            Match a Spotify playlist with your Rekordbox library, then open buy
+            links.
+          </p>
         </div>
 
         {/* Form */}
         <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
           {analyzer.isProcessing && (
             <div className="text-[11px] text-slate-400">
-              {analyzer.phaseLabel || 'Processing…'}
-              {analyzer.progress < 10 && <span className="text-slate-500"> (server starting up…)</span>}
+              {analyzer.phaseLabel || "Processing…"}
+              {analyzer.progress < 10 && (
+                <span className="text-slate-500"> (server starting up…)</span>
+              )}
             </div>
           )}
           {vm.currentResult && selection.formCollapsed ? (
@@ -208,9 +222,14 @@ function PageInner() {
                 {/* XML meta info always visible when collapsed (from currentResult) */}
                 {vm.currentResult?.rekordboxMeta && (
                   <span className="text-xs text-slate-400 ml-2">
-                    XML: {vm.currentResult.rekordboxMeta.filename ?? '—'}
+                    XML: {vm.currentResult.rekordboxMeta.filename ?? "—"}
                     {vm.currentResult.rekordboxMeta.updatedAtISO && (
-                      <span className="ml-2">Updated: {new Date(vm.currentResult.rekordboxMeta.updatedAtISO).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}</span>
+                      <span className="ml-2">
+                        Updated:{" "}
+                        {new Date(
+                          vm.currentResult.rekordboxMeta.updatedAtISO,
+                        ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}
+                      </span>
                     )}
                   </span>
                 )}
@@ -232,8 +251,19 @@ function PageInner() {
               rekordboxFile={analyzer.rekordboxFile}
               setRekordboxFile={analyzer.setRekordboxFile}
               handleRekordboxChange={analyzer.handleRekordboxChange}
-              rekordboxFilename={analyzer.rekordboxFile?.name ?? vm.currentResult?.rekordboxMeta?.filename ?? null}
-              rekordboxDate={analyzer.rekordboxDate ?? (vm.currentResult?.rekordboxMeta?.updatedAtISO ? new Date(vm.currentResult.rekordboxMeta.updatedAtISO).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : null)}
+              rekordboxFilename={
+                analyzer.rekordboxFile?.name ??
+                vm.currentResult?.rekordboxMeta?.filename ??
+                null
+              }
+              rekordboxDate={
+                analyzer.rekordboxDate ??
+                (vm.currentResult?.rekordboxMeta?.updatedAtISO
+                  ? new Date(
+                      vm.currentResult.rekordboxMeta.updatedAtISO,
+                    ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+                  : null)
+              }
               loading={analyzer.loading}
               isReanalyzing={analyzer.isReanalyzing}
               progress={analyzer.progress}
@@ -259,7 +289,9 @@ function PageInner() {
               />
             )}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-400">Results are saved locally (~300KB cap). Clear to free space.</p>
+              <p className="text-xs text-slate-400">
+                Results are saved locally (~300KB cap). Clear to free space.
+              </p>
               <button
                 type="button"
                 onClick={() => actions.clearLocalData()}
@@ -287,7 +319,9 @@ function PageInner() {
                   applySnapshotWithXml={async (file, result, tracks) => {
                     await actions.applySnapshotWithXml(file, result, tracks);
                   }}
-                  handleExportCSV={() => actions.downloadCsv(vm.displayedTracks, vm.currentResult)}
+                  handleExportCSV={() =>
+                    actions.downloadCsv(vm.displayedTracks, vm.currentResult)
+                  }
                 />
                 <FiltersBar
                   categoryFilter={filters.categoryFilter}

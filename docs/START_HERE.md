@@ -18,6 +18,7 @@
 **backend 側の QUICK_RUN.md を参照して実行**
 
 ただしフロント側では:
+
 1. DevTools Console（F12）を開いておく
 2. Analyze 実行時に `[PERF]` ログが出たらコピペ
 3. ターミナルの backend `[PERF]` ログも一緒に記録

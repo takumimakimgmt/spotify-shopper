@@ -1,4 +1,8 @@
-import type { PlaylistResponse, TrackModel, StoreLinksModel } from "./api/schema";
+import type {
+  PlaylistResponse,
+  TrackModel,
+  StoreLinksModel,
+} from "./api/schema";
 
 /** API transport types are derived from OpenAPI (single source of truth). */
 export type ApiStoreLinks = StoreLinksModel;
@@ -8,7 +12,7 @@ export type ApiPlaylistResponse = PlaylistResponse;
 // --- RekordboxMeta for XML meta info ---
 
 // 軽量保存用: tracksを除外したResultState
-export type LightResult = Omit<ResultState, 'tracks'> & {
+export type LightResult = Omit<ResultState, "tracks"> & {
   tracks?: never;
 };
 export type RekordboxMeta = {
@@ -25,7 +29,6 @@ export type StoreLinks = {
   apple?: string;
 };
 
-
 export type ApiMeta = {
   cache_hit?: boolean;
   cache_ttl_s?: number;
@@ -34,9 +37,9 @@ export type ApiMeta = {
   enrich_ms?: number;
   total_backend_ms?: number;
   total_api_ms?: number;
-  apple_mode?: 'auto' | 'fast' | 'legacy';
+  apple_mode?: "auto" | "fast" | "legacy";
   apple_legacy_used?: boolean;
-  apple_strategy?: 'html';
+  apple_strategy?: "html";
   apple_enrich_skipped?: boolean;
   reason?: string;
   seen_catalog_playlist_api?: boolean;
@@ -63,8 +66,6 @@ export type ApiMeta = {
   };
 };
 
-
-
 export type PlaylistRow = {
   index: number;
   title: string;
@@ -79,7 +80,7 @@ export type PlaylistRow = {
   ownedReason?: string | null;
   trackKeyPrimary?: string;
   trackKeyFallback?: string;
-  trackKeyPrimaryType?: 'isrc' | 'norm';
+  trackKeyPrimaryType?: "isrc" | "norm";
   trackKeyGuess?: string;
 };
 
@@ -98,8 +99,8 @@ export type ResultState = {
   errorMeta?: unknown;
 };
 
-export type SortKey = 'none' | 'artist' | 'album' | 'title';
-export type TrackCategory = 'checkout' | 'owned';
+export type SortKey = "none" | "artist" | "album" | "title";
+export type TrackCategory = "checkout" | "owned";
 
 export type PlaylistSnapshotV1 = {
   schema: "playlist_snapshot";

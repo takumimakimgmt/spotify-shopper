@@ -11,7 +11,7 @@ type ErrorShape = {
   durationMs?: number;
 };
 
-const OPEN_SPOTIFY_HOST = ['open', 'spotify', 'com'].join('.');
+const OPEN_SPOTIFY_HOST = ["open", "spotify", "com"].join(".");
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -47,23 +47,26 @@ function genRequestId(req: NextRequest): string {
 
 function diag(err: unknown): Record<string, unknown> {
   if (err instanceof Error) {
-    const out: Record<string, unknown> = { name: err.name, message: err.message };
+    const out: Record<string, unknown> = {
+      name: err.name,
+      message: err.message,
+    };
     const cause = (err as { cause?: unknown }).cause;
     if (cause && typeof cause === "object") {
       const c = cause as Record<string, unknown>;
       out.cause = {
-        name: typeof c.name === 'string' ? c.name : undefined,
-        message: typeof c.message === 'string' ? c.message : undefined,
+        name: typeof c.name === "string" ? c.name : undefined,
+        message: typeof c.message === "string" ? c.message : undefined,
         code:
-          typeof c.code === 'string'
+          typeof c.code === "string"
             ? c.code
-            : typeof c.code === 'number'
+            : typeof c.code === "number"
               ? String(c.code)
               : undefined,
-        errno: typeof c.errno === 'number' ? c.errno : undefined,
-        syscall: typeof c.syscall === 'string' ? c.syscall : undefined,
-        address: typeof c.address === 'string' ? c.address : undefined,
-        port: typeof c.port === 'number' ? c.port : undefined,
+        errno: typeof c.errno === "number" ? c.errno : undefined,
+        syscall: typeof c.syscall === "string" ? c.syscall : undefined,
+        address: typeof c.address === "string" ? c.address : undefined,
+        port: typeof c.port === "number" ? c.port : undefined,
       };
     }
     return out;
@@ -102,7 +105,11 @@ function normalizeBackendUrl(raw: string | undefined): URL | null {
 
 function isPrivateIpv4(ip: string): boolean {
   const parts = ip.split(".").map((x) => Number(x));
-  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n) || n < 0 || n > 255)) return true;
+  if (
+    parts.length !== 4 ||
+    parts.some((n) => Number.isNaN(n) || n < 0 || n > 255)
+  )
+    return true;
 
   const [a, b] = parts;
   if (a === 10) return true;
@@ -116,7 +123,12 @@ function isPrivateIpv4(ip: string): boolean {
 
 function isPrivateIpv6(ip: string): boolean {
   const s = ip.toLowerCase();
-  return s === "::1" || s.startsWith("fc") || s.startsWith("fd") || s.startsWith("fe80");
+  return (
+    s === "::1" ||
+    s.startsWith("fc") ||
+    s.startsWith("fd") ||
+    s.startsWith("fe80")
+  );
 }
 
 function backendHostAllowed(u: URL): boolean {
@@ -131,7 +143,10 @@ function getAllowedBackendHosts(backend: URL): Set<string> {
   const env = process.env.BACKEND_HOST_ALLOWLIST;
   if (!env) return new Set([backend.hostname.toLowerCase()]);
 
-  const s = env.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  const s = env
+    .split(",")
+    .map((x) => x.trim().toLowerCase())
+    .filter(Boolean);
   return new Set(s.length ? s : [backend.hostname.toLowerCase()]);
 }
 
@@ -188,7 +203,10 @@ function checkRateLimit(
   }
 
   if (b.count >= limit) {
-    return { ok: false, retryAfterSec: Math.max(1, Math.ceil((b.resetAt - t) / 1000)) };
+    return {
+      ok: false,
+      retryAfterSec: Math.max(1, Math.ceil((b.resetAt - t) / 1000)),
+    };
   }
 
   b.count += 1;
@@ -217,8 +235,14 @@ function validatePlaylistUrlParam(
 
   const host = u.hostname.toLowerCase();
   if (host !== OPEN_SPOTIFY_HOST) {
-    const allowApple = (process.env.ALLOW_APPLE_MUSIC ?? "").toLowerCase() === "true";
-    if (!(allowApple && (host === "music.apple.com" || host === "itunes.apple.com"))) {
+    const allowApple =
+      (process.env.ALLOW_APPLE_MUSIC ?? "").toLowerCase() === "true";
+    if (
+      !(
+        allowApple &&
+        (host === "music.apple.com" || host === "itunes.apple.com")
+      )
+    ) {
       return { ok: false, message: "url host is not allowed" };
     }
   }
@@ -250,7 +274,10 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
     };
     return NextResponse.json(body, {
       status: 429,
-      headers: { "x-request-id": requestId, "retry-after": String(rl.retryAfterSec) },
+      headers: {
+        "x-request-id": requestId,
+        "retry-after": String(rl.retryAfterSec),
+      },
     });
   }
 
@@ -273,7 +300,8 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
     return NextResponse.json(
       {
         error: "backend_url_disallowed",
-        message: "BACKEND_URL hostname is disallowed (private IP literal or invalid).",
+        message:
+          "BACKEND_URL hostname is disallowed (private IP literal or invalid).",
         requestId,
         endpoint,
         upstreamHost: backend.hostname,
@@ -316,7 +344,9 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
   }
 
   const target = new URL(`/api/${endpoint}`, backend);
-  incomingUrl.searchParams.forEach((value, key) => target.searchParams.set(key, value));
+  incomingUrl.searchParams.forEach((value, key) =>
+    target.searchParams.set(key, value),
+  );
 
   const upstreamHeaders = new Headers(req.headers);
   for (const k of Array.from(upstreamHeaders.keys())) {
@@ -328,7 +358,9 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
 
   const method = req.method.toUpperCase();
   const bodyBytes =
-    method === "GET" || method === "HEAD" ? undefined : new Uint8Array(await req.arrayBuffer());
+    method === "GET" || method === "HEAD"
+      ? undefined
+      : new Uint8Array(await req.arrayBuffer());
 
   const maxAttempts = Number(process.env.PROXY_MAX_ATTEMPTS ?? "2");
   const timeoutMs = Number(process.env.PROXY_TIMEOUT_MS ?? "25000");
@@ -338,7 +370,10 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
     if (attempt > 1) await sleep(backoffMs[attempt - 1] ?? 500);
 
     const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort(new Error("upstream_timeout")), timeoutMs);
+    const timer = setTimeout(
+      () => ac.abort(new Error("upstream_timeout")),
+      timeoutMs,
+    );
 
     try {
       const t0 = nowMs();
@@ -362,7 +397,8 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
       const outHeaders = new Headers(res.headers);
       for (const k of Array.from(outHeaders.keys())) {
         const lk = k.toLowerCase();
-        if (HOP_BY_HOP.has(lk) || STRIP_RESPONSE_HEADERS.has(lk)) outHeaders.delete(k);
+        if (HOP_BY_HOP.has(lk) || STRIP_RESPONSE_HEADERS.has(lk))
+          outHeaders.delete(k);
       }
 
       if (isJsonLike(res.headers.get("content-type"))) {
@@ -387,7 +423,10 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
           endpoint,
           upstreamHost: backend.hostname,
           durationMs: nowMs() - startedAt,
-          diagnostics: process.env.PROXY_INCLUDE_DIAGNOSTICS === "true" ? diag(err) : undefined,
+          diagnostics:
+            process.env.PROXY_INCLUDE_DIAGNOSTICS === "true"
+              ? diag(err)
+              : undefined,
         } as Record<string, unknown>,
         { status: 502, headers: { "x-request-id": requestId } },
       );

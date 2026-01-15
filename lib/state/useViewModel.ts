@@ -2,7 +2,7 @@
  * useViewModel.ts
  * Returns ONLY derived data (displayedTracks, counts, etc.) based on analyzer + filters.
  * NO state setters, NO ref handling.
- * 
+ *
  * page.tsx calls hooks directly:
  * - const analyzer = usePlaylistAnalyzer()
  * - const filters = useFiltersState()
@@ -27,7 +27,7 @@ export interface ViewModel {
   currentResult: ResultState | null;
   multiResults: Array<[string, ResultState]>;
   storageWarning: string | null;
-  
+
   // Convenience booleans
   isEmpty: boolean;
   hasResults: boolean;
@@ -40,16 +40,16 @@ export interface ViewModel {
 export function useViewModel(
   analyzer: ReturnType<typeof usePlaylistAnalyzer>,
   filters: FiltersState,
-  selectedKey: string | null
+  selectedKey: string | null,
 ): ViewModel {
   const multiResults = useMemo(
     () => analyzer.multiResults || [],
-    [analyzer.multiResults]
+    [analyzer.multiResults],
   );
 
   const storageWarning = useMemo(
     () => analyzer.storageWarning || null,
-    [analyzer.storageWarning]
+    [analyzer.storageWarning],
   );
 
   // Compute currentResult from selectedKey and multiResults
@@ -103,7 +103,7 @@ export function useViewModel(
       storageWarning,
       isEmpty,
       hasResults,
-    ]
+    ],
   );
 
   return vm;

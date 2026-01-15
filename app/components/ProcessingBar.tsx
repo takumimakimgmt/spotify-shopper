@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 export interface ProcessingBarProps {
   analyzing: boolean;
@@ -8,9 +8,15 @@ export interface ProcessingBarProps {
   progress: number;
 }
 
-export default function ProcessingBar({ analyzing, reanalyzing, progress }: ProcessingBarProps) {
+export default function ProcessingBar({
+  analyzing,
+  reanalyzing,
+  progress,
+}: ProcessingBarProps) {
   if (!analyzing && !reanalyzing) return null;
-  const label = analyzing ? 'Analyzing playlist…' : 'Matching with Rekordbox XML';
+  const label = analyzing
+    ? "Analyzing playlist…"
+    : "Matching with Rekordbox XML";
   const pct = Math.max(progress, 5);
   return (
     <div className="space-y-2">

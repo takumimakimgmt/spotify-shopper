@@ -2,7 +2,8 @@ import type { PlaylistRow } from "../types";
 
 function stripNullsDeep(input: unknown): unknown {
   if (input === null || input === undefined) return undefined;
-  if (Array.isArray(input)) return input.map(stripNullsDeep).filter((v) => v !== undefined);
+  if (Array.isArray(input))
+    return input.map(stripNullsDeep).filter((v) => v !== undefined);
   if (typeof input === "object") {
     const obj = input as Record<string, unknown>;
     const out: Record<string, unknown> = {};
@@ -15,7 +16,9 @@ function stripNullsDeep(input: unknown): unknown {
   return input;
 }
 
-export function normalizeMeta(meta: unknown): Record<string, unknown> | undefined {
+export function normalizeMeta(
+  meta: unknown,
+): Record<string, unknown> | undefined {
   return stripNullsDeep(meta) as Record<string, unknown> | undefined;
 }
 
@@ -47,7 +50,11 @@ function asBool(v: unknown): boolean | undefined {
   return typeof v === "boolean" ? v : undefined;
 }
 
-function getLinks(v: unknown): { beatport: string; bandcamp: string; itunes: string } {
+function getLinks(v: unknown): {
+  beatport: string;
+  bandcamp: string;
+  itunes: string;
+} {
   if (!isRecord(v)) return { beatport: "", bandcamp: "", itunes: "" };
   return {
     beatport: asString(v.beatport) ?? "",
@@ -57,8 +64,11 @@ function getLinks(v: unknown): { beatport: string; bandcamp: string; itunes: str
 }
 
 function normalizeTrack(t: TrackLike, index: number): PlaylistRow {
-  const links = isRecord(t.links) ? getLinks(t.links) : { beatport: "", bandcamp: "", itunes: "" };
-  const primaryType = asString(t.track_key_primary_type) === "isrc" ? "isrc" : "norm";
+  const links = isRecord(t.links)
+    ? getLinks(t.links)
+    : { beatport: "", bandcamp: "", itunes: "" };
+  const primaryType =
+    asString(t.track_key_primary_type) === "isrc" ? "isrc" : "norm";
 
   return {
     index,
