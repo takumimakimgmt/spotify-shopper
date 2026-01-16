@@ -217,9 +217,15 @@ function checkRateLimit(
 // --- Gate-1 / FE-1: zod boundary validation for incoming query params ---
 const PlaylistUrlParamSchema = z.string().trim().min(1).url();
 
-function validatePlaylistUrlParam(raw: string | null): string | null {
+type PlaylistUrlParamValidation = { ok: true } | { ok: false; message: string };
+
+function validatePlaylistUrlParam(
+  raw: string | null,
+): PlaylistUrlParamValidation {
   const parsed = PlaylistUrlParamSchema.safeParse(raw);
-  if (!parsed.success) return null;
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid url parameter" };
+  }
   // keep existing domain/format rules in legacy validator
   return validatePlaylistUrlParamLegacy(parsed.data);
 }
