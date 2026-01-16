@@ -49,6 +49,15 @@ const SidePanels = dynamic(
 );
 import ErrorAlert from "./components/ErrorAlert";
 import { getOwnedStatusStyle } from "../lib/ui/ownedStatus";
+import { z } from "zod";
+
+// --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
+const TabQuerySchema = z.string().trim().min(1).max(64);
+
+function parseTabQuery(raw: string | null): string | null {
+  const parsed = TabQuerySchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
 
 function PageInner() {
   // 未対応URLブロック: 現在はSpotifyプレイリストURLのみ対応
@@ -120,7 +129,7 @@ function PageInner() {
   useEffect(() => {
     if (vm.multiResults.length === 0) return;
 
-    const t = searchParams.get(TAB_QS_KEY);
+    const t = parseTabQuery(searchParams.get(TAB_QS_KEY));
     const decoded = t ? decodeTab(t) : null;
 
     let next: string | null = null;
