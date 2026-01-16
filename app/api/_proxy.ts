@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import net from "node:net";
+import { z } from "zod";
 
 type ErrorShape = {
   error: string;
@@ -213,7 +214,23 @@ function checkRateLimit(
   return { ok: true };
 }
 
+// --- Gate-1 / FE-1: zod boundary validation for incoming query params ---
+const PlaylistUrlParamSchema = z.string().trim().min(1).url();
+
+type PlaylistUrlParamValidation = { ok: true } | { ok: false; message: string };
+
 function validatePlaylistUrlParam(
+  raw: string | null,
+): PlaylistUrlParamValidation {
+  const parsed = PlaylistUrlParamSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid url parameter" };
+  }
+  // keep existing domain/format rules in legacy validator
+  return validatePlaylistUrlParamLegacy(parsed.data);
+}
+
+function validatePlaylistUrlParamLegacy(
   raw: string | null,
 ): { ok: true } | { ok: false; message: string } {
   if (!raw) return { ok: false, message: "Missing required query param: url" };
