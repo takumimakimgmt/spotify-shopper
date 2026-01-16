@@ -1,3 +1,13 @@
+"use client";
+// --- Gate-1 / FE-1: zod boundary validation for query params ---
+const ActiveTabQuerySchema = z.string().trim().min(1);
+
+function parseActiveTabFromQuery(raw: string | null): string | null {
+  const parsed = ActiveTabQuerySchema.safeParse(raw);
+  if (!parsed.success) return null;
+  return parsed.data;
+}
+
 /**
 HOTFIX SPEC (Playlist Shopper)
 - Separate concerns:
@@ -21,8 +31,6 @@ TODO:
 - Implement guard + fallback for activeTab
 - Implement XML max size and correct error message
 */
-
-"use client";
 import React, { useEffect, useRef, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePlaylistAnalyzer } from "../lib/state/usePlaylistAnalyzer";
@@ -50,7 +58,6 @@ const SidePanels = dynamic(
 import ErrorAlert from "./components/ErrorAlert";
 import { getOwnedStatusStyle } from "../lib/ui/ownedStatus";
 import { z } from "zod";
-
 // --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
 const TabQuerySchema = z.string().trim().min(1).max(64);
 
