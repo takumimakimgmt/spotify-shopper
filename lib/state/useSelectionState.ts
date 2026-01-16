@@ -1,5 +1,20 @@
 "use client";
 import { useState, useEffect } from "react";
+import { z } from "zod";
+
+// --- Gate-1 / FE-1: zod boundary validation for localStorage ---
+const ActiveTabStorageSchema = z.string().trim().min(1).max(64);
+const BoolStringSchema = z.enum(["true", "false"]);
+
+function parseStoredActiveTab(v: string | null): string | null {
+  const parsed = ActiveTabStorageSchema.safeParse(v);
+  return parsed.success ? parsed.data : null;
+}
+
+function parseStoredBool(v: string | null): boolean | null {
+  const parsed = BoolStringSchema.safeParse(v);
+  return parsed.success ? parsed.data === "true" : null;
+}
 
 export interface SelectionState {
   activeTab: string | null;
@@ -23,6 +38,7 @@ export function useSelectionState(
     if (typeof window === "undefined") return initialActiveTab;
     try {
       const stored = localStorage.getItem("spotify-shopper-active-tab");
+      const parsedTab = parseStoredActiveTab(stored);
       return stored !== null ? stored : initialActiveTab;
     } catch {
       return initialActiveTab;
@@ -46,6 +62,7 @@ export function useSelectionState(
     if (typeof window === "undefined") return initialFormCollapsed;
     try {
       const stored = localStorage.getItem("spotify-shopper-form-collapsed");
+      const parsedCollapsed = parseStoredBool(stored);
       return stored !== null ? stored === "true" : initialFormCollapsed;
     } catch {
       return initialFormCollapsed;
