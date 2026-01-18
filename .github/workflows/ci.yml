@@ -11,21 +11,21 @@ concurrency:
 
 jobs:
   precommit:
+    name: precommit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-      - run: pnpm install --frozen-lockfile
-        with:
-          node-version: "22"
-          cache: "npm"
 
-      - name: Install node deps (required for eslint/prettier hooks)
-        run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - uses: actions/setup-python@v5
         with:
@@ -38,30 +38,30 @@ jobs:
           pre-commit run --all-files
 
   build:
-    runs-on: ubuntu-latest
+    name: build
     needs: [precommit]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-      - run: pnpm install --frozen-lockfile
-        with:
-          node-version: "22"
-          cache: "npm"
 
-      - name: Install deps
-        run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run -s lint
+        run: pnpm run -s lint
 
       - name: Test (if exists)
-        run: npm run -s test --if-present
+        run: pnpm run -s test --if-present
 
       - name: Build
         env:
           NEXT_PUBLIC_API_BASE_URL: "DUMMY_API_BASE_URL"
-        run: npm run -s build
+        run: pnpm run -s build
