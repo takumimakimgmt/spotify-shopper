@@ -1,3 +1,24 @@
+import type { ZodTypeAny } from "zod";
+
+class SchemaMismatch extends Error {
+  issues: unknown;
+  constructor(message: string, issues: unknown) {
+    super(message);
+    this.name = "SchemaMismatch";
+    this.issues = issues;
+  }
+}
+
+function parseJsonWithSchema(text: string, schema?: ZodTypeAny) {
+  const parsed = parseJsonWithSchema(text, schema) as unknown;
+  if (!schema) return parsed;
+  const r = schema.safeParse(parsed);
+  if (!r.success) {
+    throw new SchemaMismatch("API response schema mismatch", r.error.issues);
+  }
+  return r.data;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -102,11 +123,12 @@ export function getBackendUrl(): string {
 export async function fetchJson<T>(
   path: string,
   init?: RequestInit,
+  schema?: ZodTypeAny,
 ): Promise<T> {
   const url = resolveApiUrl(path);
   const res = await fetchWithRetry(url, init);
   const text = await res.text();
-  const data = text ? (JSON.parse(text) as T) : ({} as T);
+  const data = text ? (parseJsonWithSchema(text, schema) as T) : ({} as T);
   if (!res.ok) {
     throw { status: res.status, data };
   }
@@ -116,7 +138,8 @@ export async function fetchJson<T>(
 export async function fetchJsonWithBase<T>(
   path: string,
   init?: RequestInit,
+  schema?: ZodTypeAny,
 ): Promise<T> {
   const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
-  return fetchJson<T>(url, init);
+  return fetchJson<T>(url, init, schema);
 }
