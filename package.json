@@ -11,7 +11,8 @@
     "api:gen-types": "node scripts/gen-openapi-types.mjs",
     "api:sync": "npm run api:update-openapi && npm run api:gen-types",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@vercel/analytics": "^1.0.0",
@@ -30,8 +31,9 @@
     "eslint-config-next": "16.0.10",
     "jsdom": "^27.4.0",
     "openapi-typescript": "^7.10.1",
+    "prettier": "^3.8.0",
     "tailwindcss": "^4",
-    "typescript": "^5",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.17"
   },
   "engines": {
