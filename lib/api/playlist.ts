@@ -1,5 +1,7 @@
 import type { PlaylistSnapshotV1 } from "../types";
 import type { PlaylistResponse } from "./schema";
+import { PlaylistResponseSchema } from "./responseSchemas";
+import { fetchJson, warmupBackend } from "./client";
 
 export type PlaylistSource = "spotify";
 
@@ -30,10 +32,6 @@ export type MatchSnapshotWithXmlResponse = {
   [key: string]: unknown;
 };
 
-async function warmupBackend(): Promise<void> {
-  // no-op (kept for compatibility)
-}
-
 const DIRECT_BACKEND_ORIGIN = (
   process.env.NEXT_PUBLIC_BACKEND_URL ||
   [
@@ -46,16 +44,6 @@ function directApi(path: string): string {
   if (path.startsWith("http")) return path;
   if (path.startsWith("/api/")) return `${DIRECT_BACKEND_ORIGIN}${path}`;
   return path;
-}
-
-async function fetchJson<T>(
-  input: RequestInfo | URL,
-  init?: RequestInit,
-): Promise<T> {
-  const res = await fetch(input, init);
-  const text = await res.text();
-  if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
-  return text ? (JSON.parse(text) as T) : ({} as T);
 }
 
 /**
@@ -75,6 +63,7 @@ export async function fetchPlaylist(
   return fetchJson<PlaylistResponse>(
     directApi(`/api/playlist?${search.toString()}`),
     { signal: params.signal },
+    PlaylistResponseSchema,
   );
 }
 
@@ -100,6 +89,7 @@ export async function fetchPlaylistWithRekordbox(
         body: form,
         signal: params.signal,
       },
+      PlaylistResponseSchema,
     );
   }
 
