@@ -58,8 +58,10 @@ jobs:
       - name: Lint
         run: pnpm run -s lint
 
-      - name: Test (if exists)
-        run: pnpm run -s test --if-present
+      - name: Test
+        env:
+          NEXT_PUBLIC_API_BASE_URL: "DUMMY_API_BASE_URL"
+        run: pnpm test
 
       - name: Build
         env:
