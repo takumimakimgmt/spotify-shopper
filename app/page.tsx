@@ -2,7 +2,7 @@
 // --- Gate-1 / FE-1: zod boundary validation for query params ---
 const ActiveTabQuerySchema = z.string().trim().min(1);
 
-function parseActiveTabFromQuery(raw: string | null): string | null {
+function _parseActiveTabFromQuery(raw: string | null): string | null {
   const parsed = ActiveTabQuerySchema.safeParse(raw);
   if (!parsed.success) return null;
   return parsed.data;

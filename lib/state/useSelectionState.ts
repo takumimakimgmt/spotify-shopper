@@ -38,7 +38,7 @@ export function useSelectionState(
     if (typeof window === "undefined") return initialActiveTab;
     try {
       const stored = localStorage.getItem("spotify-shopper-active-tab");
-      const parsedTab = parseStoredActiveTab(stored);
+      const _parsedTab = parseStoredActiveTab(stored);
       return stored !== null ? stored : initialActiveTab;
     } catch {
       return initialActiveTab;
@@ -62,7 +62,7 @@ export function useSelectionState(
     if (typeof window === "undefined") return initialFormCollapsed;
     try {
       const stored = localStorage.getItem("spotify-shopper-form-collapsed");
-      const parsedCollapsed = parseStoredBool(stored);
+      const _parsedCollapsed = parseStoredBool(stored);
       return stored !== null ? stored === "true" : initialFormCollapsed;
     } catch {
       return initialFormCollapsed;

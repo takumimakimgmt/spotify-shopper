@@ -1,6 +1,6 @@
 import type { ZodTypeAny } from "zod";
 
-class SchemaMismatch extends Error {
+export class SchemaMismatch extends Error {
   issues: unknown;
   constructor(message: string, issues: unknown) {
     super(message);
@@ -10,7 +10,7 @@ class SchemaMismatch extends Error {
 }
 
 function parseJsonWithSchema(text: string, schema?: ZodTypeAny) {
-  const parsed = parseJsonWithSchema(text, schema) as unknown;
+  const parsed = JSON.parse(text) as unknown;
   if (!schema) return parsed;
   const r = schema.safeParse(parsed);
   if (!r.success) {
