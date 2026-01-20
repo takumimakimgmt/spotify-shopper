@@ -32,7 +32,7 @@ export type MatchSnapshotWithXmlResponse = {
   [key: string]: unknown;
 };
 
-const DIRECT_BACKEND_ORIGIN = (
+const _DIRECT_BACKEND_ORIGIN = (
   process.env.NEXT_PUBLIC_BACKEND_URL ||
   [
     ["https", "://"].join(""),
@@ -42,7 +42,8 @@ const DIRECT_BACKEND_ORIGIN = (
 
 function directApi(path: string): string {
   if (path.startsWith("http")) return path;
-  if (path.startsWith("/api/")) return `${DIRECT_BACKEND_ORIGIN}${path}`;
+  // IMPORTANT: In the browser, keep /api/* same-origin to avoid CORS (Next API proxies server-side).
+  if (path.startsWith("/api/")) return path;
   return path;
 }
 
