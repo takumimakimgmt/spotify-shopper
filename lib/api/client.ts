@@ -105,8 +105,9 @@ const DEFAULT_BACKEND_ORIGIN = [
 
 function resolveApiUrl(path: string): string {
   if (path.startsWith("http")) return path;
+  // In the browser, prefer same-origin Next.js API routes (/api/*).
+  if (path.startsWith("/api/")) return path;
   if (!BASE_URL) return path;
-  if (path.startsWith("/api/")) return `${BASE_URL}${path}`;
   return path;
 }
 
