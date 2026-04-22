@@ -224,4 +224,112 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
       }),
     ]);
   });
+
+  test("keeps only the successful result during a mixed multi-URL run", async () => {
+    const successUrl = "https://open.spotify.com/playlist/success123";
+    const failureUrl = "https://open.spotify.com/playlist/failure456";
+
+    getPlaylistMock
+      .mockResolvedValueOnce({
+        playlist_id: "success123",
+        playlist_name: "Success Playlist",
+        playlist_url: successUrl,
+        tracks: [
+          {
+            title: "Track S",
+            artist: "Artist S",
+            album: "Album S",
+            isrc: "JP0000000001",
+            spotify_url: "https://open.spotify.com/track/track-s",
+            apple_url: null,
+            links: {
+              beatport: "",
+              bandcamp: "",
+              itunes: "",
+            },
+            owned: false,
+            owned_reason: null,
+            track_key_primary: "isrc:JP0000000001",
+            track_key_fallback: "norm:track s|artist s|album s",
+            track_key_primary_type: "isrc",
+            track_key_version: "v1",
+          },
+        ],
+        meta: {
+          cache_hit: false,
+          refresh: false,
+        },
+      })
+      .mockRejectedValueOnce({
+        message: "request failed",
+        data: {
+          detail: {
+            error: "second playlist failed",
+            used_source: "spotify",
+            meta: {},
+          },
+        },
+      });
+
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+
+    expect(currentApi).not.toBeNull();
+
+    act(() => {
+      currentApi!.setPlaylistUrlInput(`${successUrl}\n${failureUrl}`);
+    });
+
+    await act(async () => {
+      await currentApi!.handleAnalyze({
+        preventDefault() {},
+      } as FormEvent);
+    });
+
+    await flush();
+
+    expect(getPlaylistMock).toHaveBeenCalledTimes(2);
+    expect(getPlaylistMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        url: successUrl,
+        source: "spotify",
+        refresh: false,
+      }),
+    );
+    expect(getPlaylistMock.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({
+        url: failureUrl,
+        source: "spotify",
+        refresh: false,
+      }),
+    );
+
+    expect(currentApi!.loading).toBe(false);
+    expect(currentApi!.multiResults).toHaveLength(1);
+    expect(currentApi!.multiResults[0]?.[0]).toBe(successUrl);
+    expect(currentApi!.multiResults[0]?.[1]).toEqual(
+      expect.objectContaining({
+        title: "Success Playlist",
+        playlist_id: "success123",
+        playlistUrl: successUrl,
+        total: 1,
+      }),
+    );
+    expect(currentApi!.errorText).toBe(
+      "Spotifyの取得に失敗しました / Spotify request failed: second playlist failed",
+    );
+    expect(currentApi!.progressItems).toEqual([
+      expect.objectContaining({
+        url: successUrl,
+        status: "done",
+        message: "1 tracks",
+      }),
+      expect.objectContaining({
+        url: failureUrl,
+        status: "error",
+        message: "request failed",
+      }),
+    ]);
+  });
 });
