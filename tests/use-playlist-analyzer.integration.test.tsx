@@ -29,7 +29,7 @@ async function flush() {
   });
 }
 
-describe("usePlaylistAnalyzer Spotify happy path", () => {
+describe("usePlaylistAnalyzer Spotify flow", () => {
   let container: HTMLDivElement;
   let root: Root;
   let currentApi: AnalyzerApi | null = null;
@@ -174,6 +174,53 @@ describe("usePlaylistAnalyzer Spotify happy path", () => {
         trackKeyFallback: "norm:track a|artist a|album a",
         trackKeyPrimaryType: "isrc",
         trackKeyGuess: "",
+      }),
+    ]);
+  });
+
+  test("surfaces a Spotify fetch failure without inserting multiResults", async () => {
+    getPlaylistMock.mockRejectedValue({
+      message: "request failed",
+      data: {
+        detail: {
+          error: "backend exploded",
+          used_source: "spotify",
+          meta: {},
+        },
+      },
+    });
+
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+
+    expect(currentApi).not.toBeNull();
+
+    act(() => {
+      currentApi!.setPlaylistUrlInput(
+        "https://open.spotify.com/playlist/abc123",
+      );
+    });
+
+    await act(async () => {
+      await currentApi!.handleAnalyze({
+        preventDefault() {},
+      } as FormEvent);
+    });
+
+    await flush();
+
+    expect(getPlaylistMock).toHaveBeenCalledTimes(1);
+    expect(currentApi!.loading).toBe(false);
+    expect(currentApi!.multiResults).toEqual([]);
+    expect(currentApi!.errorText).toBe(
+      "Spotifyの取得に失敗しました / Spotify request failed: backend exploded",
+    );
+    expect(currentApi!.progressItems).toEqual([
+      expect.objectContaining({
+        url: "https://open.spotify.com/playlist/abc123",
+        status: "error",
+        message: "request failed",
       }),
     ]);
   });
