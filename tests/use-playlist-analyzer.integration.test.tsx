@@ -332,4 +332,117 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
       }),
     ]);
   });
+
+  test("replaces only matching URLs and preserves unrelated existing multiResults", async () => {
+    const targetUrl = "https://open.spotify.com/playlist/replace123";
+    const preservedUrl = "https://open.spotify.com/playlist/preserve456";
+
+    getPlaylistMock.mockResolvedValue({
+      playlist_id: "replace123",
+      playlist_name: "Fresh Playlist",
+      playlist_url: targetUrl,
+      tracks: [
+        {
+          title: "Fresh Track",
+          artist: "Fresh Artist",
+          album: "Fresh Album",
+          isrc: "JP0000000002",
+          spotify_url: "https://open.spotify.com/track/fresh-track",
+          apple_url: null,
+          links: {
+            beatport: "",
+            bandcamp: "",
+            itunes: "",
+          },
+          owned: false,
+          owned_reason: null,
+          track_key_primary: "isrc:JP0000000002",
+          track_key_fallback: "norm:fresh track|fresh artist|fresh album",
+          track_key_primary_type: "isrc",
+          track_key_version: "v1",
+        },
+      ],
+      meta: {
+        cache_hit: false,
+        refresh: false,
+      },
+    });
+
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+
+    expect(currentApi).not.toBeNull();
+
+    act(() => {
+      currentApi!.setMultiResults([
+        [
+          targetUrl,
+          {
+            title: "Stale Playlist",
+            total: 99,
+            playlistUrl: targetUrl,
+            playlist_id: "replace123",
+            playlist_name: "Stale Playlist",
+            tracks: [],
+            analyzedAt: 1,
+            hasRekordboxData: false,
+          },
+        ],
+        [
+          preservedUrl,
+          {
+            title: "Preserved Playlist",
+            total: 2,
+            playlistUrl: preservedUrl,
+            playlist_id: "preserve456",
+            playlist_name: "Preserved Playlist",
+            tracks: [],
+            analyzedAt: 2,
+            hasRekordboxData: false,
+          },
+        ],
+      ]);
+      currentApi!.setPlaylistUrlInput(targetUrl);
+    });
+
+    await act(async () => {
+      await currentApi!.handleAnalyze({
+        preventDefault() {},
+      } as FormEvent);
+    });
+
+    await flush();
+
+    expect(getPlaylistMock).toHaveBeenCalledTimes(1);
+    expect(currentApi!.errorText).toBeNull();
+    expect(currentApi!.multiResults).toHaveLength(2);
+    expect(currentApi!.multiResults[0]?.[0]).toBe(targetUrl);
+    expect(currentApi!.multiResults[0]?.[1]).toEqual(
+      expect.objectContaining({
+        title: "Fresh Playlist",
+        total: 1,
+        playlistUrl: targetUrl,
+        playlist_id: "replace123",
+        playlist_name: "Fresh Playlist",
+      }),
+    );
+    expect(currentApi!.multiResults[1]).toEqual([
+      preservedUrl,
+      expect.objectContaining({
+        title: "Preserved Playlist",
+        total: 2,
+        playlistUrl: preservedUrl,
+        playlist_id: "preserve456",
+        playlist_name: "Preserved Playlist",
+      }),
+    ]);
+    expect(currentApi!.progressItems).toEqual([
+      expect.objectContaining({
+        url: targetUrl,
+        status: "done",
+        message: "1 tracks",
+      }),
+    ]);
+  });
 });
