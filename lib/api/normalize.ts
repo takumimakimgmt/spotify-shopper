@@ -69,11 +69,13 @@ function normalizeTrack(t: TrackLike, index: number): PlaylistRow {
     : { beatport: "", bandcamp: "", itunes: "" };
   const primaryType =
     asString(t.track_key_primary_type) === "isrc" ? "isrc" : "norm";
+  const title = asString(t.title) ?? "";
+  const artist = asString(t.artist) ?? "";
 
   return {
     index,
-    title: asString(t.title) ?? "",
-    artist: asString(t.artist) ?? "",
+    title,
+    artist,
     album: asString(t.album) ?? "",
     isrc: asString(t.isrc),
     spotifyUrl: asString(t.spotify_url) ?? "",
@@ -95,5 +97,5 @@ export function normalizeTracks(input: unknown): PlaylistRow[] {
 
   return tracks
     .filter(isRecord)
-    .map((t, idx) => normalizeTrack(t as unknown as TrackLike, idx + 1));
+    .map((t, idx) => normalizeTrack(t as TrackLike, idx + 1));
 }

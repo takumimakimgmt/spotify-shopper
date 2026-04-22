@@ -1,36 +1,39 @@
 import { z } from "zod";
 
-// Minimal track shape (passthrough to avoid breaking UI on extra fields)
+const StoreLinksModelSchema = z
+  .object({
+    beatport: z.string().nullable().optional(),
+    bandcamp: z.string().nullable().optional(),
+    itunes: z.string().nullable().optional(),
+  })
+  .passthrough();
+
 export const TrackModelSchema = z
   .object({
     title: z.string(),
-    // allow either artists[] or legacy artist, but don't require either
-    artists: z.array(z.string()).optional(),
-    artist: z.string().optional(),
+    artist: z.string(),
+    album: z.string().nullable().optional(),
+    isrc: z.string().nullable().optional(),
+    spotify_url: z.string().nullable().optional(),
+    apple_url: z.string().nullable().optional(),
+    links: StoreLinksModelSchema.nullable().optional(),
+    owned: z.boolean().nullable().optional(),
+    owned_reason: z.string().nullable().optional(),
+    track_key_primary: z.string().nullable().optional(),
+    track_key_fallback: z.string().nullable().optional(),
+    track_key_primary_type: z.enum(["isrc", "norm"]).default("norm"),
+    track_key_version: z.string().default("v1"),
   })
   .passthrough();
 
-export const PlaylistOkResponseSchema = z
+export const PlaylistResponseSchema = z
   .object({
-    ok: z.literal(true),
+    playlist_id: z.string(),
+    playlist_name: z.string(),
+    playlist_url: z.string().nullable().optional(),
     tracks: z.array(TrackModelSchema),
-    // meta is optional and passthrough (backend may evolve)
-    meta: z.unknown().optional(),
+    meta: z.record(z.string(), z.unknown()).nullable().optional(),
   })
   .passthrough();
-
-export const PlaylistErrorResponseSchema = z
-  .object({
-    ok: z.literal(false),
-    message: z.string().optional(),
-    error: z.unknown().optional(),
-  })
-  .passthrough();
-
-// Gate-1 / FE-1: API boundary schema
-export const PlaylistResponseSchema = z.discriminatedUnion("ok", [
-  PlaylistOkResponseSchema,
-  PlaylistErrorResponseSchema,
-]);
 
 export type PlaylistResponseParsed = z.infer<typeof PlaylistResponseSchema>;
