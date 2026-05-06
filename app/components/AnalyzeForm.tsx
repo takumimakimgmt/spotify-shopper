@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import ProcessingBar from "./ProcessingBar";
 import ErrorAlert from "./ErrorAlert";
 import type { ProgressItem } from "./ProgressList";
@@ -44,7 +44,9 @@ export interface AnalyzeFormProps {
 const MAX_XML_BYTES = 50 * 1024 * 1024;
 
 export default function AnalyzeForm(props: AnalyzeFormProps) {
+  const playlistInputRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [clipboardError, setClipboardError] = useState<string | null>(null);
 
   const messageFromMeta = useMemo(() => {
     const m = props.errorMeta?.message;
@@ -72,6 +74,20 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const clearXml = () => {
     props.setRekordboxFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handlePasteFromClipboard = async () => {
+    setClipboardError(null);
+    try {
+      const text = await navigator.clipboard.readText();
+      props.setPlaylistUrlInput(text.trim());
+      playlistInputRef.current?.focus();
+    } catch {
+      setClipboardError(
+        "Could not read the clipboard. Paste manually or allow clipboard access.",
+      );
+      playlistInputRef.current?.focus();
+    }
   };
 
   return (
@@ -105,17 +121,33 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <label className="block text-sm font-medium text-slate-200">
             Playlist URL(s)
           </label>
-          <textarea
-            value={props.playlistUrlInput}
-            onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
-            rows={3}
-            placeholder="Spotify playlist URL"
-            className={`w-full rounded-md bg-slate-900 border px-3 py-2 text-sm outline-none ${
-              props.playlistUrlError || playlistUrlError
-                ? "border-rose-500/60"
-                : "border-slate-700"
-            }`}
-          />
+          <div className="flex items-start gap-2">
+            <textarea
+              ref={playlistInputRef}
+              value={props.playlistUrlInput}
+              onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
+              rows={3}
+              placeholder="Spotify playlist URL"
+              className={`w-full rounded-md bg-slate-900 border px-3 py-2 text-sm outline-none ${
+                props.playlistUrlError || playlistUrlError
+                  ? "border-rose-500/60"
+                  : "border-slate-700"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={handlePasteFromClipboard}
+              className="shrink-0 px-3 py-2 rounded-md border border-slate-700 text-sm text-slate-200 hover:text-white hover:bg-slate-800"
+            >
+              Paste
+            </button>
+          </div>
+          <div className="text-xs text-slate-400">
+            Paste a Spotify playlist URL
+          </div>
+          {clipboardError ? (
+            <div className="text-xs text-rose-300">{clipboardError}</div>
+          ) : null}
           {props.playlistUrlError || playlistUrlError ? (
             <div className="text-xs text-rose-300">
               {props.playlistUrlError || playlistUrlError}
@@ -127,6 +159,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <label className="block text-sm font-medium text-slate-200">
             Rekordbox XML (optional)
           </label>
+          <div className="text-xs text-slate-400">
+            Optional — attach XML to mark tracks you already own
+          </div>
           <div className="flex items-center gap-3">
             <input
               ref={fileInputRef}
@@ -163,7 +198,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             type="checkbox"
             className="rounded border-slate-700 bg-slate-900"
           />
-          Only unowned
+          Unowned only
         </label>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -172,7 +207,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             disabled={props.loading || !!localXmlError}
             className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40"
           >
-            {props.isReanalyzing ? "Reanalyze" : "Analyze"}
+            {props.isReanalyzing ? "Reanalyze" : "Analyze playlist"}
           </button>
 
           {props.cancelAnalyze && props.loading ? (
@@ -194,6 +229,10 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               Retry
             </button>
           ) : null}
+
+          <span className="text-xs text-slate-400">
+            {props.rekordboxFile ? "Spotify + Rekordbox XML" : "Spotify only"}
+          </span>
         </div>
 
         {props.loading ? (
