@@ -20,7 +20,18 @@ export function FiltersBar({
 }: FiltersBarProps) {
   return (
     <div className="space-y-3">
-      <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-xl p-4">
+      <div className="sticky top-0 z-20 rounded-xl border border-slate-800 bg-slate-950/95 p-4 backdrop-blur">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium text-slate-100">
+              Review tracks
+            </div>
+            <div className="text-xs text-slate-400">
+              Start with To buy, then scan all or owned as needed.
+            </div>
+          </div>
+        </div>
+
         <div className="flex gap-2">
           <button
             onClick={() => setCategoryFilter("all")}

@@ -62,42 +62,47 @@ export function SidePanels({
         ownedCount={ownedCount}
         toBuyCount={toBuyCount}
       />
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="space-y-1">
-          <h2 className="font-semibold">
-            {currentResult.title}{" "}
-            {currentResult.playlistUrl && (
-              <a
-                href={currentResult.playlistUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-emerald-300 hover:underline ml-2"
-              >
-                Open
-              </a>
+      <div className="rounded-xl border border-slate-800 bg-slate-900/55 p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold text-slate-100">
+                {currentResult.title}
+              </h2>
+              {currentResult.playlistUrl && (
+                <a
+                  href={currentResult.playlistUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-slate-700 px-2.5 py-1 text-[11px] text-emerald-300 hover:border-emerald-400/40 hover:text-emerald-200"
+                >
+                  Open playlist
+                </a>
+              )}
+            </div>
+
+            <div className="text-sm text-slate-300">
+              Focus the shortlist first, then use XML re-check or export when
+              you are ready to act.
+            </div>
+
+            {currentResult.rekordboxMeta && (
+              <div className="text-xs text-slate-400">
+                Last XML: {currentResult.rekordboxMeta.filename ?? "—"}
+                <span className="ml-2">
+                  Updated:{" "}
+                  {currentResult.rekordboxMeta.updatedAtISO
+                    ? new Date(
+                        currentResult.rekordboxMeta.updatedAtISO,
+                      ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+                    : "—"}
+                </span>
+              </div>
             )}
-          </h2>
-          {/* XML meta info always visible in side panel (from currentResult) */}
-          {currentResult.rekordboxMeta && (
-            <div className="text-xs text-slate-400 mt-1">
-              Last XML: {currentResult.rekordboxMeta.filename ?? "—"}
-              <span className="ml-2">
-                Updated:{" "}
-                {currentResult.rekordboxMeta.updatedAtISO
-                  ? new Date(
-                      currentResult.rekordboxMeta.updatedAtISO,
-                    ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
-                  : "—"}
-              </span>
-            </div>
-          )}
-          {xmlError && (
-            <div className="mt-2">
-              <ErrorAlert title="XML Error" message={xmlError} />
-            </div>
-          )}
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-2 sm:flex-wrap">
-            <label className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium cursor-pointer hover:bg-slate-600">
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
+            <label className="cursor-pointer rounded bg-emerald-600 px-3 py-2 text-xs font-medium text-slate-950 hover:bg-emerald-500">
               Re-analyze with XML
               <input
                 type="file"
@@ -108,12 +113,18 @@ export function SidePanels({
             </label>
             <button
               onClick={handleExportCSV}
-              className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium hover:bg-slate-600"
+              className="rounded border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700"
             >
               Export as CSV
             </button>
           </div>
         </div>
+
+        {xmlError && (
+          <div className="mt-4">
+            <ErrorAlert title="XML Error" message={xmlError} />
+          </div>
+        )}
       </div>
     </div>
   );

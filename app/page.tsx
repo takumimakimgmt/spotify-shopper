@@ -304,18 +304,6 @@ function PageInner() {
                 hint="Use Clear saved data to reset local storage, then re-run analysis."
               />
             )}
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-400">
-                Results are saved locally (~300KB cap). Clear to free space.
-              </p>
-              <button
-                type="button"
-                onClick={() => actions.clearLocalData()}
-                className="self-start sm:self-auto inline-flex items-center gap-2 rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-700 border border-slate-700"
-              >
-                Clear saved data
-              </button>
-            </div>
             {/* Tabs */}
             <ResultsTabs
               multiResults={vm.multiResults}
@@ -347,6 +335,24 @@ function PageInner() {
                   sortKey={filters.sortKey}
                   setSortKey={filters.setSortKey}
                 />
+                <details className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400">
+                  <summary className="cursor-pointer list-none font-medium text-slate-300">
+                    Workspace utilities
+                  </summary>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p>
+                      Results are saved locally (~300KB cap). Clear to free
+                      space.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => actions.clearLocalData()}
+                      className="self-start rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700"
+                    >
+                      Clear saved data
+                    </button>
+                  </div>
+                </details>
                 <ResultsTable
                   currentResult={vm.currentResult}
                   displayedTracks={vm.displayedTracks}
