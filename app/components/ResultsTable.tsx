@@ -4,12 +4,18 @@ import React from "react";
 import type { PlaylistRow, StoreLinks } from "../../lib/types";
 import { getRecommendedStore, getOtherStores } from "../../lib/playlist/stores";
 import { withBeatportAid } from "../../lib/affiliates/beatport";
+import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
 
 const BEATPORT_A_AID = process.env.NEXT_PUBLIC_BEATPORT_A_AID;
 
 type Props = {
   currentResult: unknown | null;
   displayedTracks: PlaylistRow[];
+  queuedTrackIds?: Set<string>;
+  onAddToBuyQueue?: (
+    track: PlaylistRow,
+    buyLink: { name: string; url: string },
+  ) => void;
 
   // page.tsx が渡してくる余計な props を許容（互換のため）
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,31 +76,39 @@ function youtubeTopicUrl(track: { title?: string; artist?: string }) {
   return `${proto}${host}/search?q=${encodeURIComponent(q)}`;
 }
 
+function getPrimaryBuyLink(
+  track: PlaylistRow,
+): { name: string; url: string } | null {
+  const recommended = getRecommendedStore(track);
+  const primaryUrl = recommended?.url || firstStoreUrl(track.stores);
+  const fallback = beatportSearchUrl(track) || bandcampSearchUrl(track);
+  const url = primaryUrl || fallback;
+  if (!url) return null;
+  return { name: recommended?.name ?? (primaryUrl ? "Buy" : "Search"), url };
+}
+
 function StoreLinksInline({ track }: { track: PlaylistRow }) {
   const recommended = getRecommendedStore(track);
   const others = getOtherStores(track.stores, recommended);
-  const primaryUrl = recommended?.url || firstStoreUrl(track.stores);
-  const fallback = beatportSearchUrl(track) || bandcampSearchUrl(track);
+  const primary = getPrimaryBuyLink(track);
   const yt = youtubeTopicUrl(track);
 
-  const mainLabel = primaryUrl ? (recommended?.name ?? "Buy") : "Search";
+  const mainLabel = primary?.name ?? "Buy";
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <a
-        href={primaryUrl || fallback || "#"}
+        href={primary?.url || "#"}
         target="_blank"
         rel="noreferrer"
-        aria-disabled={!primaryUrl && !fallback}
+        aria-disabled={!primary}
         onClick={(e) => {
-          if (!primaryUrl && !fallback) e.preventDefault();
+          if (!primary) e.preventDefault();
         }}
         className={`inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-[11px] text-white ${
-          primaryUrl || fallback
-            ? "hover:bg-white/15"
-            : "opacity-50 cursor-not-allowed"
+          primary ? "hover:bg-white/15" : "opacity-50 cursor-not-allowed"
         }`}
-        title={primaryUrl || fallback ? "Open store" : "No store link"}
+        title={primary ? "Open store" : "No store link"}
       >
         {mainLabel}
       </a>
@@ -133,6 +147,8 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
 export default function ResultsTable({
   currentResult,
   displayedTracks,
+  queuedTrackIds,
+  onAddToBuyQueue,
 }: Props) {
   if (!currentResult) return null;
   const rows = Array.isArray(displayedTracks) ? displayedTracks : [];
@@ -146,30 +162,12 @@ export default function ResultsTable({
           </div>
         ) : (
           rows.map((t, i) => (
-            <div
+            <TrackCard
               key={`${t?.isrc ?? ""}-${i}`}
-              className="rounded-xl border border-white/10 bg-white/5 p-3"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-sm font-medium text-white truncate">
-                    {t?.title ?? ""}
-                  </div>
-                  <div className="text-xs text-white/70 truncate">
-                    {t?.artist ?? ""}
-                  </div>
-                  <div className="text-xs text-white/50 truncate">
-                    {t?.album ?? ""}
-                  </div>
-                </div>
-                <div className="shrink-0 text-[11px] text-white/40">
-                  {t?.isrc ?? ""}
-                </div>
-              </div>
-              <div className="mt-2">
-                <StoreLinksInline track={t} />
-              </div>
-            </div>
+              track={t}
+              queuedTrackIds={queuedTrackIds}
+              onAddToBuyQueue={onAddToBuyQueue}
+            />
           ))
         )}
       </div>
@@ -183,23 +181,102 @@ export default function ResultsTable({
               <th className="px-3 py-2 text-left">Album</th>
               <th className="px-3 py-2 text-left">ISRC</th>
               <th className="px-3 py-2 text-left">Buy</th>
+              <th className="px-3 py-2 text-left">Queue</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {rows.map((t, i) => (
-              <tr key={`${t?.isrc ?? ""}-${i}`} className="hover:bg-white/5">
-                <td className="px-3 py-2 text-white">{t?.title ?? ""}</td>
-                <td className="px-3 py-2 text-white/80">{t?.artist ?? ""}</td>
-                <td className="px-3 py-2 text-white/60">{t?.album ?? ""}</td>
-                <td className="px-3 py-2 text-white/40">{t?.isrc ?? ""}</td>
-                <td className="px-3 py-2">
-                  <StoreLinksInline track={t} />
-                </td>
-              </tr>
-            ))}
+            {rows.map((t, i) => {
+              const primary = getPrimaryBuyLink(t);
+              const canQueue = t.owned !== true && Boolean(primary);
+              const isQueued =
+                queuedTrackIds?.has(getBuyQueueItemId(t)) ?? false;
+
+              return (
+                <tr key={`${t?.isrc ?? ""}-${i}`} className="hover:bg-white/5">
+                  <td className="px-3 py-2 text-white">{t?.title ?? ""}</td>
+                  <td className="px-3 py-2 text-white/80">{t?.artist ?? ""}</td>
+                  <td className="px-3 py-2 text-white/60">{t?.album ?? ""}</td>
+                  <td className="px-3 py-2 text-white/40">{t?.isrc ?? ""}</td>
+                  <td className="px-3 py-2">
+                    <StoreLinksInline track={t} />
+                  </td>
+                  <td className="px-3 py-2">
+                    {t.owned === true ? (
+                      <span className="text-[11px] text-white/40">Owned</span>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={!canQueue || isQueued}
+                        onClick={() => {
+                          if (primary) onAddToBuyQueue?.(t, primary);
+                        }}
+                        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10 disabled:opacity-40"
+                      >
+                        {isQueued ? "Queued" : "Add to Buy Queue"}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function TrackCard({
+  track,
+  queuedTrackIds,
+  onAddToBuyQueue,
+}: {
+  track: PlaylistRow;
+  queuedTrackIds?: Set<string>;
+  onAddToBuyQueue?: (
+    track: PlaylistRow,
+    buyLink: { name: string; url: string },
+  ) => void;
+}) {
+  const primary = getPrimaryBuyLink(track);
+  const isQueued = queuedTrackIds?.has(getBuyQueueItemId(track)) ?? false;
+  const canQueue = track.owned !== true && Boolean(primary);
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-medium text-white truncate">
+            {track?.title ?? ""}
+          </div>
+          <div className="text-xs text-white/70 truncate">
+            {track?.artist ?? ""}
+          </div>
+          <div className="text-xs text-white/50 truncate">
+            {track?.album ?? ""}
+          </div>
+        </div>
+        <div className="shrink-0 text-[11px] text-white/40">
+          {track?.isrc ?? ""}
+        </div>
+      </div>
+      <div className="mt-2">
+        <StoreLinksInline track={track} />
+      </div>
+      {track.owned !== true ? (
+        <div className="mt-2">
+          <button
+            type="button"
+            disabled={!canQueue || isQueued}
+            onClick={() => {
+              if (primary) onAddToBuyQueue?.(track, primary);
+            }}
+            className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10 disabled:opacity-40"
+          >
+            {isQueued ? "Queued" : "Add to Buy Queue"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

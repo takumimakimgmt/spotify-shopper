@@ -38,6 +38,7 @@ import { useFiltersState } from "../lib/state/useFiltersState";
 import { useSelectionState } from "../lib/state/useSelectionState";
 import { useViewModel } from "../lib/state/useViewModel";
 import { useActions } from "../lib/state/useActions";
+import { useBuyQueue } from "../lib/state/useBuyQueue";
 import { categoryLabels } from "../lib/ui/selectors";
 import { getOtherStores as _getOtherStores } from "../lib/playlist/stores";
 import AnalyzeForm from "./components/AnalyzeForm";
@@ -56,6 +57,7 @@ const SidePanels = dynamic(
   { ssr: false, loading: () => null },
 );
 import ErrorAlert from "./components/ErrorAlert";
+import BuyQueuePanel from "./components/BuyQueuePanel";
 import { getOwnedStatusStyle } from "../lib/ui/ownedStatus";
 import { z } from "zod";
 // --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
@@ -77,6 +79,7 @@ function PageInner() {
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
   const selection = useSelectionState(null, false);
+  const buyQueue = useBuyQueue();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -280,6 +283,11 @@ function PageInner() {
                     ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
                   : null)
               }
+              savedRekordboxXmlMeta={analyzer.savedRekordboxXmlMeta}
+              savedRekordboxXmlBusy={analyzer.savedRekordboxXmlBusy}
+              savedRekordboxXmlError={analyzer.savedRekordboxXmlError}
+              useSavedRekordboxXml={analyzer.useSavedRekordboxXml}
+              forgetSavedRekordboxXml={analyzer.forgetSavedRekordboxXml}
               loading={analyzer.loading}
               isReanalyzing={analyzer.isReanalyzing}
               progress={analyzer.progress}
@@ -335,6 +343,10 @@ function PageInner() {
                   sortKey={filters.sortKey}
                   setSortKey={filters.setSortKey}
                 />
+                <BuyQueuePanel
+                  items={buyQueue.items}
+                  onRemove={buyQueue.removeItem}
+                />
                 <details className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400">
                   <summary className="cursor-pointer list-none font-medium text-slate-300">
                     Workspace utilities
@@ -364,6 +376,8 @@ function PageInner() {
                   isLoading={analyzer.isProcessing}
                   errorText={analyzer.errorText}
                   errorMeta={analyzer.errorMeta}
+                  queuedTrackIds={buyQueue.queuedIds}
+                  onAddToBuyQueue={buyQueue.addTrack}
                 />
               </div>
             )}

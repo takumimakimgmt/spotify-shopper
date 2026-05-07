@@ -16,6 +16,9 @@ function makeProps(
     rekordboxFile: null,
     rekordboxDate: null,
     rekordboxFilename: null,
+    savedRekordboxXmlMeta: null,
+    savedRekordboxXmlBusy: false,
+    savedRekordboxXmlError: null,
     loading: false,
     isReanalyzing: false,
     progress: 0,
@@ -28,6 +31,8 @@ function makeProps(
     setRekordboxFile: vi.fn(),
     handleAnalyze: vi.fn(),
     handleRekordboxChange: vi.fn(),
+    useSavedRekordboxXml: vi.fn(),
+    forgetSavedRekordboxXml: vi.fn(),
     setForceRefreshHint: vi.fn(),
     cancelAnalyze: undefined,
     retryFailed: undefined,
@@ -156,5 +161,37 @@ describe("AnalyzeForm paste button", () => {
       "Clipboard access blocked. Press ⌘V / Ctrl+V.",
     );
     expect(props.setPlaylistUrlInput).not.toHaveBeenCalled();
+  });
+
+  test("shows saved XML metadata and actions", async () => {
+    const props = makeProps({
+      savedRekordboxXmlMeta: {
+        filename: "collection.xml",
+        uploadedAt: "2026-05-07T00:00:00.000Z",
+        lastModified: Date.UTC(2026, 4, 6, 0, 0, 0),
+        size: 2048,
+        type: "text/xml",
+      },
+    });
+    await renderForm(props);
+
+    expect(container.textContent).toContain("Saved Rekordbox XML");
+    expect(container.textContent).toContain("collection.xml");
+    expect(container.textContent).toContain("2 KB");
+
+    const useSavedButton = Array.from(
+      container.querySelectorAll("button"),
+    ).find((button) => button.textContent === "Use saved XML");
+    const forgetButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Forget",
+    );
+
+    await act(async () => {
+      useSavedButton?.click();
+      forgetButton?.click();
+    });
+
+    expect(props.useSavedRekordboxXml).toHaveBeenCalledTimes(1);
+    expect(props.forgetSavedRekordboxXml).toHaveBeenCalledTimes(1);
   });
 });

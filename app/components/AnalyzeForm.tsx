@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useState } from "react";
 import ProcessingBar from "./ProcessingBar";
 import ErrorAlert from "./ErrorAlert";
 import type { ProgressItem } from "./ProgressList";
+import type { SavedRekordboxXmlMeta } from "@/lib/storage/savedRekordboxXml";
 
 type ErrorMeta = {
   error_code: string;
@@ -16,6 +17,9 @@ export interface AnalyzeFormProps {
   rekordboxFile: File | null;
   rekordboxDate?: string | null;
   rekordboxFilename?: string | null;
+  savedRekordboxXmlMeta?: SavedRekordboxXmlMeta | null;
+  savedRekordboxXmlBusy?: boolean;
+  savedRekordboxXmlError?: string | null;
 
   loading: boolean;
   isReanalyzing: boolean;
@@ -33,6 +37,8 @@ export interface AnalyzeFormProps {
   setRekordboxFile: (file: File | null) => void;
   handleAnalyze: (e: React.FormEvent) => void;
   handleRekordboxChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  useSavedRekordboxXml?: () => void;
+  forgetSavedRekordboxXml?: () => void;
   setForceRefreshHint: (value: boolean) => void;
 
   cancelAnalyze?: () => void;
@@ -42,6 +48,18 @@ export interface AnalyzeFormProps {
 }
 
 const MAX_XML_BYTES = 50 * 1024 * 1024;
+
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes)) return "-";
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDateTime(value: string | number) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString();
+}
 
 export default function AnalyzeForm(props: AnalyzeFormProps) {
   const playlistInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -74,6 +92,10 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const clearXml = () => {
     props.setRekordboxFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const replaceXml = () => {
+    fileInputRef.current?.click();
   };
 
   const handlePasteFromClipboard = async () => {
@@ -191,16 +213,75 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             ) : null}
           </div>
 
-          {props.rekordboxFilename ? (
-            <div className="text-xs text-slate-400">
-              {props.rekordboxFilename}
-              {props.rekordboxDate ? ` · ${props.rekordboxDate}` : ""}
-            </div>
-          ) : null}
+          <div className="text-xs text-slate-400">
+            Active XML: {props.rekordboxFilename ?? "none"}
+            {props.rekordboxFilename && props.rekordboxDate
+              ? ` · ${props.rekordboxDate}`
+              : ""}
+          </div>
 
           {localXmlError ? (
             <div className="text-xs text-rose-300">{localXmlError}</div>
           ) : null}
+
+          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <div className="font-medium text-slate-300">
+                  Saved Rekordbox XML
+                </div>
+                {props.savedRekordboxXmlMeta ? (
+                  <div>
+                    {props.savedRekordboxXmlMeta.filename} ·{" "}
+                    {formatBytes(props.savedRekordboxXmlMeta.size)}
+                    <br />
+                    Uploaded:{" "}
+                    {formatDateTime(props.savedRekordboxXmlMeta.uploadedAt)}
+                    <br />
+                    Last modified:{" "}
+                    {formatDateTime(props.savedRekordboxXmlMeta.lastModified)}
+                  </div>
+                ) : (
+                  <div>No saved XML yet.</div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => props.useSavedRekordboxXml?.()}
+                  disabled={
+                    !props.savedRekordboxXmlMeta || props.savedRekordboxXmlBusy
+                  }
+                  className="px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white disabled:opacity-40"
+                >
+                  Use saved XML
+                </button>
+                <button
+                  type="button"
+                  onClick={replaceXml}
+                  disabled={props.savedRekordboxXmlBusy}
+                  className="px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white disabled:opacity-40"
+                >
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  onClick={() => props.forgetSavedRekordboxXml?.()}
+                  disabled={
+                    !props.savedRekordboxXmlMeta || props.savedRekordboxXmlBusy
+                  }
+                  className="px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white disabled:opacity-40"
+                >
+                  Forget
+                </button>
+              </div>
+            </div>
+            {props.savedRekordboxXmlError ? (
+              <div className="mt-2 text-rose-300">
+                {props.savedRekordboxXmlError}
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <label className="flex items-center gap-2 text-sm text-slate-200">
