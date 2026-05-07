@@ -4,7 +4,6 @@ import React, { useMemo, useRef, useState } from "react";
 import ProcessingBar from "./ProcessingBar";
 import ErrorAlert from "./ErrorAlert";
 import type { ProgressItem } from "./ProgressList";
-import SpotifyConnectPanel from "./SpotifyConnectPanel";
 
 type ErrorMeta = {
   error_code: string;
@@ -79,14 +78,24 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
 
   const handlePasteFromClipboard = async () => {
     setClipboardError(null);
+    if (!navigator.clipboard?.readText) {
+      setClipboardError("Clipboard access blocked. Press ⌘V / Ctrl+V.");
+      playlistInputRef.current?.focus();
+      return;
+    }
+
     try {
-      const text = await navigator.clipboard.readText();
-      props.setPlaylistUrlInput(text.trim());
+      const text = (await navigator.clipboard.readText()).trim();
+      if (!text) {
+        setClipboardError("Clipboard is empty. Press ⌘V / Ctrl+V.");
+        playlistInputRef.current?.focus();
+        return;
+      }
+
+      props.setPlaylistUrlInput(text);
       playlistInputRef.current?.focus();
     } catch {
-      setClipboardError(
-        "Could not read the clipboard. Paste manually or allow clipboard access.",
-      );
+      setClipboardError("Clipboard access blocked. Press ⌘V / Ctrl+V.");
       playlistInputRef.current?.focus();
     }
   };
@@ -118,11 +127,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
       ) : null}
 
       <form onSubmit={props.handleAnalyze} className="space-y-4">
-        <SpotifyConnectPanel
-          playlistUrlInput={props.playlistUrlInput}
-          setPlaylistUrlInput={props.setPlaylistUrlInput}
-        />
-
         <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-200">
             Playlist URL(s)
@@ -149,7 +153,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             </button>
           </div>
           <div className="text-xs text-slate-400">
-            Fallback path: paste a Spotify playlist URL or ID
+            Paste a Spotify playlist URL
           </div>
           {clipboardError ? (
             <div className="text-xs text-rose-300">{clipboardError}</div>
