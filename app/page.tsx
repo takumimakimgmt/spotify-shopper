@@ -263,43 +263,52 @@ function PageInner() {
               </button>
             </div>
           ) : (
-            <AnalyzeForm
-              playlistUrlInput={analyzer.playlistUrlInput}
-              setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
-              handleAnalyze={handleAnalyzeWithAppleBlock}
-              rekordboxFile={analyzer.rekordboxFile}
-              setRekordboxFile={analyzer.setRekordboxFile}
-              handleRekordboxChange={analyzer.handleRekordboxChange}
-              rekordboxFilename={
-                analyzer.rekordboxFile?.name ??
-                vm.currentResult?.rekordboxMeta?.filename ??
-                null
-              }
-              rekordboxDate={
-                analyzer.rekordboxDate ??
-                (vm.currentResult?.rekordboxMeta?.updatedAtISO
-                  ? new Date(
-                      vm.currentResult.rekordboxMeta.updatedAtISO,
-                    ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
-                  : null)
-              }
-              savedRekordboxXmlMeta={analyzer.savedRekordboxXmlMeta}
-              savedRekordboxXmlBusy={analyzer.savedRekordboxXmlBusy}
-              savedRekordboxXmlError={analyzer.savedRekordboxXmlError}
-              useSavedRekordboxXml={analyzer.useSavedRekordboxXml}
-              forgetSavedRekordboxXml={analyzer.forgetSavedRekordboxXml}
-              loading={analyzer.loading}
-              isReanalyzing={analyzer.isReanalyzing}
-              progress={analyzer.progress}
-              errorText={analyzer.errorText}
-              errorMeta={analyzer.errorMeta}
-              progressItems={analyzer.progressItems}
-              setForceRefreshHint={analyzer.setForceRefreshHint}
-              cancelAnalyze={actions.cancelAnalyze}
-              retryFailed={actions.retryFailed}
-              banner={banner}
-              onDismissBanner={() => setBanner(null)}
-            />
+            <>
+              <AnalyzeForm
+                playlistUrlInput={analyzer.playlistUrlInput}
+                setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
+                handleAnalyze={handleAnalyzeWithAppleBlock}
+                rekordboxFile={analyzer.rekordboxFile}
+                setRekordboxFile={analyzer.setRekordboxFile}
+                handleRekordboxChange={analyzer.handleRekordboxChange}
+                rekordboxFilename={
+                  analyzer.rekordboxFile?.name ??
+                  vm.currentResult?.rekordboxMeta?.filename ??
+                  null
+                }
+                rekordboxDate={
+                  analyzer.rekordboxDate ??
+                  (vm.currentResult?.rekordboxMeta?.updatedAtISO
+                    ? new Date(
+                        vm.currentResult.rekordboxMeta.updatedAtISO,
+                      ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+                    : null)
+                }
+                savedRekordboxXmlMeta={analyzer.savedRekordboxXmlMeta}
+                savedRekordboxXmlBusy={analyzer.savedRekordboxXmlBusy}
+                savedRekordboxXmlError={analyzer.savedRekordboxXmlError}
+                useSavedRekordboxXml={analyzer.useSavedRekordboxXml}
+                forgetSavedRekordboxXml={analyzer.forgetSavedRekordboxXml}
+                loading={analyzer.loading}
+                isReanalyzing={analyzer.isReanalyzing}
+                progress={analyzer.progress}
+                errorText={analyzer.errorText}
+                errorMeta={analyzer.errorMeta}
+                progressItems={analyzer.progressItems}
+                setForceRefreshHint={analyzer.setForceRefreshHint}
+                cancelAnalyze={actions.cancelAnalyze}
+                retryFailed={actions.retryFailed}
+                banner={banner}
+                onDismissBanner={() => setBanner(null)}
+              />
+
+              {buyQueue.items.length > 0 ? (
+                <BuyQueuePanel
+                  items={buyQueue.items}
+                  onRemove={buyQueue.removeItem}
+                />
+              ) : null}
+            </>
           )}
         </section>
         {/* Results */}
@@ -342,10 +351,6 @@ function PageInner() {
                   setSearchQuery={filters.setSearchQuery}
                   sortKey={filters.sortKey}
                   setSortKey={filters.setSortKey}
-                />
-                <BuyQueuePanel
-                  items={buyQueue.items}
-                  onRemove={buyQueue.removeItem}
                 />
                 <details className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400">
                   <summary className="cursor-pointer list-none font-medium text-slate-300">
