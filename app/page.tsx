@@ -302,12 +302,10 @@ function PageInner() {
                 onDismissBanner={() => setBanner(null)}
               />
 
-              {buyQueue.items.length > 0 ? (
-                <BuyQueuePanel
-                  items={buyQueue.items}
-                  onRemove={buyQueue.removeItem}
-                />
-              ) : null}
+              <BuyQueuePanel
+                items={buyQueue.items}
+                onRemove={buyQueue.removeItem}
+              />
             </>
           )}
         </section>
