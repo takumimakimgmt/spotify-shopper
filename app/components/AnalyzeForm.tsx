@@ -149,6 +149,12 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
       ) : null}
 
       <form onSubmit={props.handleAnalyze} className="space-y-4">
+        <p className="text-sm leading-6 text-slate-300">
+          Spotifyのプレイリストを、あなたのRekordboxライブラリと照合。
+          <br />
+          持っている曲を除いて、あとで買う曲だけを残せます。
+        </p>
+
         <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-200">
             Playlist URL(s)
@@ -214,7 +220,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </div>
 
           <div className="text-xs text-slate-400">
-            Active XML: {props.rekordboxFilename ?? "none"}
+            使用中のXML: {props.rekordboxFilename ?? "none"}
             {props.rekordboxFilename && props.rekordboxDate
               ? ` · ${props.rekordboxDate}`
               : ""}
@@ -227,9 +233,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
-                <div className="font-medium text-slate-300">
-                  Saved Rekordbox XML
-                </div>
+                <div className="font-medium text-slate-300">保存済みXML</div>
                 {props.savedRekordboxXmlMeta ? (
                   <div>
                     {props.savedRekordboxXmlMeta.filename} ·{" "}
@@ -254,7 +258,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   }
                   className="px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white disabled:opacity-40"
                 >
-                  Use saved XML
+                  保存済みを使う
                 </button>
                 <button
                   type="button"
@@ -262,7 +266,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   disabled={props.savedRekordboxXmlBusy}
                   className="px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white disabled:opacity-40"
                 >
-                  Replace
+                  入れ替える
                 </button>
                 <button
                   type="button"
@@ -272,7 +276,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   }
                   className="px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white disabled:opacity-40"
                 >
-                  Forget
+                  保存済みを削除
                 </button>
               </div>
             </div>

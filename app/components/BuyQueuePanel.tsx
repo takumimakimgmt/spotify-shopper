@@ -11,12 +11,12 @@ export default function BuyQueuePanel({ items, onRemove }: BuyQueuePanelProps) {
   return (
     <details className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400">
       <summary className="cursor-pointer list-none font-medium text-slate-300">
-        Buy Queue ({items.length})
+        あとで買う ({items.length})
       </summary>
 
       <div className="mt-3 space-y-2">
         {items.length === 0 ? (
-          <p>Add unowned tracks from the results table to buy them later.</p>
+          <p>解析後に、持っていない曲をあとで買うリストへ追加できます。</p>
         ) : (
           items.map((item) => (
             <div
@@ -43,14 +43,14 @@ export default function BuyQueuePanel({ items, onRemove }: BuyQueuePanelProps) {
                   rel="noreferrer"
                   className="rounded-md border border-emerald-500/60 bg-emerald-500/10 px-2 py-1 text-emerald-200 hover:bg-emerald-500/20"
                 >
-                  Open buy link
+                  購入ページを開く
                 </a>
                 <button
                   type="button"
                   onClick={() => onRemove(item.id)}
                   className="rounded-md border border-slate-700 px-2 py-1 text-slate-300 hover:text-white"
                 >
-                  Remove
+                  削除
                 </button>
               </div>
             </div>

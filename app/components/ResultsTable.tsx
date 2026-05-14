@@ -181,7 +181,7 @@ export default function ResultsTable({
               <th className="px-3 py-2 text-left">Album</th>
               <th className="px-3 py-2 text-left">ISRC</th>
               <th className="px-3 py-2 text-left">Buy</th>
-              <th className="px-3 py-2 text-left">Queue</th>
+              <th className="px-3 py-2 text-left">あとで買う</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
@@ -212,7 +212,7 @@ export default function ResultsTable({
                         }}
                         className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10 disabled:opacity-40"
                       >
-                        {isQueued ? "Queued" : "Add to Buy Queue"}
+                        {isQueued ? "追加済み" : "あとで買うに追加"}
                       </button>
                     )}
                   </td>
@@ -273,7 +273,7 @@ function TrackCard({
             }}
             className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10 disabled:opacity-40"
           >
-            {isQueued ? "Queued" : "Add to Buy Queue"}
+            {isQueued ? "追加済み" : "あとで買うに追加"}
           </button>
         </div>
       ) : null}
