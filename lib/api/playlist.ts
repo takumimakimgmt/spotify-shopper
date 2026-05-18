@@ -108,6 +108,7 @@ export async function fetchPlaylistWithRekordbox(
       }),
       signal: params.signal,
     },
+    PlaylistResponseSchema,
   );
 }
 

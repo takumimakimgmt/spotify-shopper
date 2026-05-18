@@ -154,7 +154,7 @@ export interface components {
        * Refresh
        * @description Bypass cache when set to 1
        */
-      refresh?: number | null;
+      refresh?: boolean;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -168,7 +168,7 @@ export interface components {
       /** Cache Ttl S */
       cache_ttl_s?: number | null;
       /** Refresh */
-      refresh?: number | null;
+      refresh?: boolean;
       /** Fetch Ms */
       fetch_ms?: number | null;
       /** Enrich Ms */
@@ -336,7 +336,7 @@ export interface operations {
         /** @description For Apple: 1 to enrich via Spotify, 0 to skip (default 0 for apple) */
         enrich_spotify?: number | null;
         /** @description Bypass cache when set to 1 */
-        refresh?: number | null;
+        refresh?: boolean;
       };
       header?: never;
       path?: never;

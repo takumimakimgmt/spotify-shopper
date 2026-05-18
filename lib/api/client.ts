@@ -9,16 +9,6 @@ export class SchemaMismatch extends Error {
   }
 }
 
-function parseJsonWithSchema(text: string, schema?: ZodTypeAny) {
-  const parsed = JSON.parse(text) as unknown;
-  if (!schema) return parsed;
-  const r = schema.safeParse(parsed);
-  if (!r.success) {
-    throw new SchemaMismatch("API response schema mismatch", r.error.issues);
-  }
-  return r.data;
-}
-
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -129,11 +119,19 @@ export async function fetchJson<T>(
   const url = resolveApiUrl(path);
   const res = await fetchWithRetry(url, init);
   const text = await res.text();
-  const data = text ? (parseJsonWithSchema(text, schema) as T) : ({} as T);
+  const raw = text ? (JSON.parse(text) as unknown) : {};
   if (!res.ok) {
-    throw { status: res.status, data };
+    throw { status: res.status, data: raw };
   }
-  return data;
+  if (!schema) return raw as T;
+  const parsed = schema.safeParse(raw);
+  if (!parsed.success) {
+    throw new SchemaMismatch(
+      "API response schema mismatch",
+      parsed.error.issues,
+    );
+  }
+  return parsed.data as T;
 }
 
 export async function fetchJsonWithBase<T>(

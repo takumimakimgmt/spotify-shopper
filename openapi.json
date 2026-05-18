@@ -119,15 +119,9 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "boolean",
               "description": "Bypass cache when set to 1",
+              "default": false,
               "title": "Refresh"
             },
             "description": "Bypass cache when set to 1"
@@ -399,15 +393,9 @@
             "title": "Cache Ttl S"
           },
           "refresh": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Refresh"
+            "type": "boolean",
+            "title": "Refresh",
+            "default": false
           },
           "fetch_ms": {
             "anyOf": [

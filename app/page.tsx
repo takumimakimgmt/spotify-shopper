@@ -38,6 +38,7 @@ import { useFiltersState } from "../lib/state/useFiltersState";
 import { useSelectionState } from "../lib/state/useSelectionState";
 import { useViewModel } from "../lib/state/useViewModel";
 import { useActions } from "../lib/state/useActions";
+import { useBuyQueue } from "../lib/state/useBuyQueue";
 import { categoryLabels } from "../lib/ui/selectors";
 import { getOtherStores as _getOtherStores } from "../lib/playlist/stores";
 import AnalyzeForm from "./components/AnalyzeForm";
@@ -56,6 +57,7 @@ const SidePanels = dynamic(
   { ssr: false, loading: () => null },
 );
 import ErrorAlert from "./components/ErrorAlert";
+import BuyQueuePanel from "./components/BuyQueuePanel";
 import { getOwnedStatusStyle } from "../lib/ui/ownedStatus";
 import { z } from "zod";
 // --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
@@ -77,6 +79,7 @@ function PageInner() {
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
   const selection = useSelectionState(null, false);
+  const buyQueue = useBuyQueue();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -260,38 +263,50 @@ function PageInner() {
               </button>
             </div>
           ) : (
-            <AnalyzeForm
-              playlistUrlInput={analyzer.playlistUrlInput}
-              setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
-              handleAnalyze={handleAnalyzeWithAppleBlock}
-              rekordboxFile={analyzer.rekordboxFile}
-              setRekordboxFile={analyzer.setRekordboxFile}
-              handleRekordboxChange={analyzer.handleRekordboxChange}
-              rekordboxFilename={
-                analyzer.rekordboxFile?.name ??
-                vm.currentResult?.rekordboxMeta?.filename ??
-                null
-              }
-              rekordboxDate={
-                analyzer.rekordboxDate ??
-                (vm.currentResult?.rekordboxMeta?.updatedAtISO
-                  ? new Date(
-                      vm.currentResult.rekordboxMeta.updatedAtISO,
-                    ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
-                  : null)
-              }
-              loading={analyzer.loading}
-              isReanalyzing={analyzer.isReanalyzing}
-              progress={analyzer.progress}
-              errorText={analyzer.errorText}
-              errorMeta={analyzer.errorMeta}
-              progressItems={analyzer.progressItems}
-              setForceRefreshHint={analyzer.setForceRefreshHint}
-              cancelAnalyze={actions.cancelAnalyze}
-              retryFailed={actions.retryFailed}
-              banner={banner}
-              onDismissBanner={() => setBanner(null)}
-            />
+            <>
+              <AnalyzeForm
+                playlistUrlInput={analyzer.playlistUrlInput}
+                setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
+                handleAnalyze={handleAnalyzeWithAppleBlock}
+                rekordboxFile={analyzer.rekordboxFile}
+                setRekordboxFile={analyzer.setRekordboxFile}
+                handleRekordboxChange={analyzer.handleRekordboxChange}
+                rekordboxFilename={
+                  analyzer.rekordboxFile?.name ??
+                  vm.currentResult?.rekordboxMeta?.filename ??
+                  null
+                }
+                rekordboxDate={
+                  analyzer.rekordboxDate ??
+                  (vm.currentResult?.rekordboxMeta?.updatedAtISO
+                    ? new Date(
+                        vm.currentResult.rekordboxMeta.updatedAtISO,
+                      ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+                    : null)
+                }
+                savedRekordboxXmlMeta={analyzer.savedRekordboxXmlMeta}
+                savedRekordboxXmlBusy={analyzer.savedRekordboxXmlBusy}
+                savedRekordboxXmlError={analyzer.savedRekordboxXmlError}
+                useSavedRekordboxXml={analyzer.useSavedRekordboxXml}
+                forgetSavedRekordboxXml={analyzer.forgetSavedRekordboxXml}
+                loading={analyzer.loading}
+                isReanalyzing={analyzer.isReanalyzing}
+                progress={analyzer.progress}
+                errorText={analyzer.errorText}
+                errorMeta={analyzer.errorMeta}
+                progressItems={analyzer.progressItems}
+                setForceRefreshHint={analyzer.setForceRefreshHint}
+                cancelAnalyze={actions.cancelAnalyze}
+                retryFailed={actions.retryFailed}
+                banner={banner}
+                onDismissBanner={() => setBanner(null)}
+              />
+
+              <BuyQueuePanel
+                items={buyQueue.items}
+                onRemove={buyQueue.removeItem}
+              />
+            </>
           )}
         </section>
         {/* Results */}
@@ -304,18 +319,6 @@ function PageInner() {
                 hint="Use Clear saved data to reset local storage, then re-run analysis."
               />
             )}
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-400">
-                Results are saved locally (~300KB cap). Clear to free space.
-              </p>
-              <button
-                type="button"
-                onClick={() => actions.clearLocalData()}
-                className="self-start sm:self-auto inline-flex items-center gap-2 rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-700 border border-slate-700"
-              >
-                Clear saved data
-              </button>
-            </div>
             {/* Tabs */}
             <ResultsTabs
               multiResults={vm.multiResults}
@@ -347,6 +350,24 @@ function PageInner() {
                   sortKey={filters.sortKey}
                   setSortKey={filters.setSortKey}
                 />
+                <details className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400">
+                  <summary className="cursor-pointer list-none font-medium text-slate-300">
+                    Workspace utilities
+                  </summary>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p>
+                      Results are saved locally (~300KB cap). Clear to free
+                      space.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => actions.clearLocalData()}
+                      className="self-start rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700"
+                    >
+                      Clear saved data
+                    </button>
+                  </div>
+                </details>
                 <ResultsTable
                   currentResult={vm.currentResult}
                   displayedTracks={vm.displayedTracks}
@@ -358,6 +379,8 @@ function PageInner() {
                   isLoading={analyzer.isProcessing}
                   errorText={analyzer.errorText}
                   errorMeta={analyzer.errorMeta}
+                  queuedTrackIds={buyQueue.queuedIds}
+                  onAddToBuyQueue={buyQueue.addTrack}
                 />
               </div>
             )}

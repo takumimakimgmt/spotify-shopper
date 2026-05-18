@@ -131,6 +131,13 @@ import {
   postPlaylistWithRekordboxUpload,
   matchSnapshotWithXml,
 } from "../api/playlist";
+import {
+  deleteSavedRekordboxXml,
+  getSavedRekordboxXml,
+  getSavedRekordboxXmlMeta,
+  saveRekordboxXmlFile,
+  type SavedRekordboxXmlMeta,
+} from "../storage/savedRekordboxXml";
 import { detectSourceFromUrl, sanitizeUrl } from "../utils/playlistUrl";
 
 export const STORAGE_RESULTS = "spotify-shopper-results";
@@ -272,6 +279,12 @@ export function usePlaylistAnalyzer() {
   const [playlistUrlInput, setPlaylistUrlInput] = useState("");
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
   const [rekordboxDate, setRekordboxDate] = useState<string | null>(null);
+  const [savedRekordboxXmlMeta, setSavedRekordboxXmlMeta] =
+    useState<SavedRekordboxXmlMeta | null>(null);
+  const [savedRekordboxXmlBusy, setSavedRekordboxXmlBusy] = useState(false);
+  const [savedRekordboxXmlError, setSavedRekordboxXmlError] = useState<
+    string | null
+  >(null);
   const [multiResults, setMultiResults] = useState<
     Array<[string, ResultState]>
   >([]);
@@ -317,6 +330,70 @@ export function usePlaylistAnalyzer() {
       setRekordboxDate(date.toLocaleString());
     } else {
       setRekordboxDate(null);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getSavedRekordboxXmlMeta()
+      .then((meta) => {
+        if (!cancelled) setSavedRekordboxXmlMeta(meta);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSavedRekordboxXmlMeta(null);
+          setSavedRekordboxXmlError("Saved XML is not available.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const persistRekordboxFile = async (file: File) => {
+    setSavedRekordboxXmlBusy(true);
+    setSavedRekordboxXmlError(null);
+    try {
+      const meta = await saveRekordboxXmlFile(file);
+      setSavedRekordboxXmlMeta(meta);
+    } catch {
+      setSavedRekordboxXmlError("Could not save XML locally.");
+    } finally {
+      setSavedRekordboxXmlBusy(false);
+    }
+  };
+
+  const useSavedRekordboxXml = async () => {
+    setSavedRekordboxXmlBusy(true);
+    setSavedRekordboxXmlError(null);
+    try {
+      const saved = await getSavedRekordboxXml();
+      if (!saved) {
+        setSavedRekordboxXmlMeta(null);
+        setSavedRekordboxXmlError("No saved XML found.");
+        return;
+      }
+      applyRekordboxFile(saved.file);
+      setSavedRekordboxXmlMeta(saved.meta);
+    } catch {
+      setSavedRekordboxXmlError("Could not load saved XML.");
+    } finally {
+      setSavedRekordboxXmlBusy(false);
+    }
+  };
+
+  const forgetSavedRekordboxXml = async () => {
+    setSavedRekordboxXmlBusy(true);
+    setSavedRekordboxXmlError(null);
+    try {
+      await deleteSavedRekordboxXml();
+      setSavedRekordboxXmlMeta(null);
+    } catch {
+      setSavedRekordboxXmlError("Could not forget saved XML.");
+    } finally {
+      setSavedRekordboxXmlBusy(false);
     }
   };
   const [progress, setProgress] = useState<number>(0);
@@ -384,6 +461,9 @@ export function usePlaylistAnalyzer() {
   const handleRekordboxChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     applyRekordboxFile(file);
+    if (file) {
+      void persistRekordboxFile(file);
+    }
   };
 
   const handleRemoveTab = (urlToRemove: string) => {
@@ -1015,8 +1095,13 @@ export function usePlaylistAnalyzer() {
     playlistUrlInput,
     setPlaylistUrlInput,
     rekordboxFile,
-    setRekordboxFile,
+    setRekordboxFile: applyRekordboxFile,
     rekordboxDate,
+    savedRekordboxXmlMeta,
+    savedRekordboxXmlBusy,
+    savedRekordboxXmlError,
+    useSavedRekordboxXml,
+    forgetSavedRekordboxXml,
     multiResults,
     setMultiResults,
     loading,

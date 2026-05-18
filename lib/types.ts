@@ -32,7 +32,7 @@ export type StoreLinks = {
 export type ApiMeta = {
   cache_hit?: boolean;
   cache_ttl_s?: number;
-  refresh?: number;
+  refresh?: boolean;
   fetch_ms?: number;
   enrich_ms?: number;
   total_backend_ms?: number;
