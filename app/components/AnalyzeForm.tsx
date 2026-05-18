@@ -155,6 +155,21 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           持っている曲を除いて、あとで買う曲だけを残せます。
         </p>
 
+        <ol className="grid gap-2 rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-300 sm:grid-cols-3">
+          <li className="flex gap-2">
+            <span className="font-semibold text-slate-100">1.</span>
+            <span>Spotify URLを貼る</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-semibold text-slate-100">2.</span>
+            <span>XMLを使う / アップロードする</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-semibold text-slate-100">3.</span>
+            <span>To buyを見て、あとで買うに追加する</span>
+          </li>
+        </ol>
+
         <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-200">
             Playlist URL(s)
@@ -183,6 +198,16 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <div className="text-xs text-slate-400">
             Paste a Spotify playlist URL
           </div>
+          <details className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+            <summary className="cursor-pointer font-medium text-slate-300">
+              Spotify URL の取り方
+            </summary>
+            <ol className="mt-2 list-decimal space-y-1 pl-4">
+              <li>Spotifyでプレイリストを開く</li>
+              <li>共有メニューを開く</li>
+              <li>リンクをコピーする</li>
+            </ol>
+          </details>
           {clipboardError ? (
             <div className="text-xs text-rose-300">{clipboardError}</div>
           ) : null}
@@ -200,6 +225,17 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <div className="text-xs text-slate-400">
             Optional — attach XML to mark tracks you already own
           </div>
+          <details className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+            <summary className="cursor-pointer font-medium text-slate-300">
+              Rekordbox XML の書き出し方
+            </summary>
+            <ol className="mt-2 list-decimal space-y-1 pl-4">
+              <li>rekordboxを開く</li>
+              <li>File を開く</li>
+              <li>Export Collection in xml format を選ぶ</li>
+              <li>保存したXMLをここにアップロードする</li>
+            </ol>
+          </details>
           <div className="flex items-center gap-3">
             <input
               ref={fileInputRef}
