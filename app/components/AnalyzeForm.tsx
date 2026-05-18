@@ -342,7 +342,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <button
             type="submit"
             disabled={props.loading || !!localXmlError}
-            className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40"
+            className="rounded-md bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-950/30 ring-1 ring-emerald-300/30 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:opacity-40 disabled:shadow-none"
           >
             {props.isReanalyzing ? "Reanalyze" : "Analyze playlist"}
           </button>
@@ -351,7 +351,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <button
               type="button"
               onClick={() => props.cancelAnalyze?.()}
-              className="px-3 py-2 rounded-md border border-slate-700 text-slate-200 hover:text-white"
+              className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-slate-300 hover:border-slate-600 hover:bg-slate-800/50 hover:text-white"
             >
               Cancel
             </button>
@@ -361,7 +361,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <button
               type="button"
               onClick={() => props.retryFailed?.()}
-              className="px-3 py-2 rounded-md border border-slate-700 text-slate-200 hover:text-white"
+              className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-slate-300 hover:border-slate-600 hover:bg-slate-800/50 hover:text-white"
             >
               Retry
             </button>
