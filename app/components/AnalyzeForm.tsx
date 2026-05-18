@@ -261,6 +261,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               ? ` · ${props.rekordboxDate}`
               : ""}
           </div>
+          <div className="text-xs text-slate-500">今回の照合に使うXMLです</div>
 
           {localXmlError ? (
             <div className="text-xs text-rose-300">{localXmlError}</div>
@@ -270,6 +271,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
                 <div className="font-medium text-slate-300">保存済みXML</div>
+                <div className="text-slate-500">
+                  このブラウザに保存されています
+                </div>
                 {props.savedRekordboxXmlMeta ? (
                   <div>
                     {props.savedRekordboxXmlMeta.filename} ·{" "}
