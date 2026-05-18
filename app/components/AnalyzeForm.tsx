@@ -148,29 +148,31 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         </div>
       ) : null}
 
-      <form onSubmit={props.handleAnalyze} className="space-y-4">
-        <p className="text-sm leading-6 text-slate-300">
-          Spotifyのプレイリストを、あなたのRekordboxライブラリと照合。
-          <br />
-          持っている曲を除いて、あとで買う曲だけを残せます。
-        </p>
+      <form onSubmit={props.handleAnalyze} className="space-y-5">
+        <div className="space-y-3">
+          <p className="text-sm leading-6 text-slate-300">
+            Spotifyのプレイリストを、あなたのRekordboxライブラリと照合。
+            <br />
+            持っている曲を除いて、あとで買う曲だけを残せます。
+          </p>
 
-        <ol className="grid gap-2 rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-300 sm:grid-cols-3">
-          <li className="flex gap-2">
-            <span className="font-semibold text-slate-100">1.</span>
-            <span>Spotify URLを貼る</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="font-semibold text-slate-100">2.</span>
-            <span>XMLを使う / アップロードする</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="font-semibold text-slate-100">3.</span>
-            <span>To buyを見て、あとで買うに追加する</span>
-          </li>
-        </ol>
+          <ol className="grid gap-1.5 rounded-md border border-slate-800 bg-slate-900/30 p-2.5 text-xs text-slate-300 sm:grid-cols-3">
+            <li className="flex gap-2">
+              <span className="font-semibold text-slate-100">1.</span>
+              <span>Spotify URLを貼る</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold text-slate-100">2.</span>
+              <span>XMLを使う / アップロードする</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold text-slate-100">3.</span>
+              <span>To buyを見て、あとで買うに追加する</span>
+            </li>
+          </ol>
+        </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <label className="block text-sm font-medium text-slate-200">
             Playlist URL(s)
           </label>
@@ -198,7 +200,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           <div className="text-xs text-slate-400">
             Paste a Spotify playlist URL
           </div>
-          <details className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+          <details className="rounded-md border border-slate-800 bg-slate-900/30 px-3 py-2 text-xs text-slate-400">
             <summary className="cursor-pointer font-medium text-slate-300">
               Spotify URL の取り方
             </summary>
@@ -218,14 +220,14 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           ) : null}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <label className="block text-sm font-medium text-slate-200">
             Rekordbox XML (optional)
           </label>
           <div className="text-xs text-slate-400">
             Optional — attach XML to mark tracks you already own
           </div>
-          <details className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+          <details className="rounded-md border border-slate-800 bg-slate-900/30 px-3 py-2 text-xs text-slate-400">
             <summary className="cursor-pointer font-medium text-slate-300">
               Rekordbox XML の書き出し方
             </summary>
@@ -267,7 +269,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <div className="text-xs text-rose-300">{localXmlError}</div>
           ) : null}
 
-          <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+          <div className="rounded-md border border-slate-800 bg-slate-900/30 p-3 text-xs text-slate-400">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
                 <div className="font-medium text-slate-300">保存済みXML</div>
