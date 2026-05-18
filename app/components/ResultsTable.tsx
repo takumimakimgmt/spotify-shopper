@@ -84,7 +84,7 @@ function getPrimaryBuyLink(
   const fallback = beatportSearchUrl(track) || bandcampSearchUrl(track);
   const url = primaryUrl || fallback;
   if (!url) return null;
-  return { name: recommended?.name ?? (primaryUrl ? "Buy" : "Search"), url };
+  return { name: recommended?.name ?? (primaryUrl ? "ストア" : "検索"), url };
 }
 
 function StoreLinksInline({ track }: { track: PlaylistRow }) {
@@ -93,7 +93,7 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
   const primary = getPrimaryBuyLink(track);
   const yt = youtubeTopicUrl(track);
 
-  const mainLabel = primary?.name ?? "Buy";
+  const mainLabel = primary?.name ?? "ストア";
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -180,7 +180,7 @@ export default function ResultsTable({
               <th className="px-3 py-2 text-left">Artist</th>
               <th className="px-3 py-2 text-left">Album</th>
               <th className="px-3 py-2 text-left">ISRC</th>
-              <th className="px-3 py-2 text-left">Buy</th>
+              <th className="px-3 py-2 text-left">ストア</th>
               <th className="px-3 py-2 text-left">あとで買う</th>
             </tr>
           </thead>
@@ -212,7 +212,7 @@ export default function ResultsTable({
                         }}
                         className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10 disabled:opacity-40"
                       >
-                        {isQueued ? "追加済み" : "あとで買うに追加"}
+                        {isQueued ? "追加済み" : "あとで買うへ追加"}
                       </button>
                     )}
                   </td>
@@ -273,7 +273,7 @@ function TrackCard({
             }}
             className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10 disabled:opacity-40"
           >
-            {isQueued ? "追加済み" : "あとで買うに追加"}
+            {isQueued ? "追加済み" : "あとで買うへ追加"}
           </button>
         </div>
       ) : null}

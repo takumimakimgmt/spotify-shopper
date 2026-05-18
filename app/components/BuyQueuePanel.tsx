@@ -43,7 +43,7 @@ export default function BuyQueuePanel({ items, onRemove }: BuyQueuePanelProps) {
                   rel="noreferrer"
                   className="rounded-md border border-emerald-500/60 bg-emerald-500/10 px-2 py-1 text-emerald-200 hover:bg-emerald-500/20"
                 >
-                  購入ページを開く
+                  ストアで見る
                 </a>
                 <button
                   type="button"
