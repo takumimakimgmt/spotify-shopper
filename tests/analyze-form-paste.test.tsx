@@ -175,15 +175,15 @@ describe("AnalyzeForm paste button", () => {
     });
     await renderForm(props);
 
-    expect(container.textContent).toContain("Saved Rekordbox XML");
+    expect(container.textContent).toContain("保存済みXML");
     expect(container.textContent).toContain("collection.xml");
     expect(container.textContent).toContain("2 KB");
 
     const useSavedButton = Array.from(
       container.querySelectorAll("button"),
-    ).find((button) => button.textContent === "Use saved XML");
+    ).find((button) => button.textContent === "保存済みを使う");
     const forgetButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Forget",
+      (button) => button.textContent === "保存済みを削除",
     );
 
     await act(async () => {
