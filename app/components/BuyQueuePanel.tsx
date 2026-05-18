@@ -16,7 +16,7 @@ export default function BuyQueuePanel({ items, onRemove }: BuyQueuePanelProps) {
 
       <div className="mt-3 space-y-2">
         {items.length === 0 ? (
-          <p>解析後に、持っていない曲をあとで買うリストへ追加できます。</p>
+          <p>解析後に、持っていない曲をここに追加できます。</p>
         ) : (
           items.map((item) => (
             <div
