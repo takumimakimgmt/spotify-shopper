@@ -269,15 +269,15 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <div className="text-xs text-rose-300">{localXmlError}</div>
           ) : null}
 
-          <div className="rounded-md border border-slate-800 bg-slate-900/30 p-3 text-xs text-slate-400">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="rounded-md border border-slate-800/70 bg-slate-950/20 p-3 text-xs text-slate-500">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
                 <div className="font-medium text-slate-300">保存済みXML</div>
                 <div className="text-slate-500">
                   このブラウザに保存されています
                 </div>
                 {props.savedRekordboxXmlMeta ? (
-                  <div>
+                  <div className="pt-1 leading-5 text-slate-400">
                     {props.savedRekordboxXmlMeta.filename} ·{" "}
                     {formatBytes(props.savedRekordboxXmlMeta.size)}
                     <br />
@@ -288,17 +288,17 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                     {formatDateTime(props.savedRekordboxXmlMeta.lastModified)}
                   </div>
                 ) : (
-                  <div>No saved XML yet.</div>
+                  <div className="pt-1 text-slate-400">No saved XML yet.</div>
                 )}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
                   onClick={() => props.useSavedRekordboxXml?.()}
                   disabled={
                     !props.savedRekordboxXmlMeta || props.savedRekordboxXmlBusy
                   }
-                  className="px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white disabled:opacity-40"
+                  className="rounded-md border border-slate-700/60 bg-transparent px-2 py-1 text-slate-400 hover:border-slate-600 hover:bg-slate-800/40 hover:text-slate-200 disabled:opacity-40"
                 >
                   保存済みを使う
                 </button>
@@ -306,7 +306,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   type="button"
                   onClick={replaceXml}
                   disabled={props.savedRekordboxXmlBusy}
-                  className="px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white disabled:opacity-40"
+                  className="rounded-md border border-slate-700/60 bg-transparent px-2 py-1 text-slate-400 hover:border-slate-600 hover:bg-slate-800/40 hover:text-slate-200 disabled:opacity-40"
                 >
                   入れ替える
                 </button>
@@ -316,7 +316,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   disabled={
                     !props.savedRekordboxXmlMeta || props.savedRekordboxXmlBusy
                   }
-                  className="px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white disabled:opacity-40"
+                  className="rounded-md border border-slate-700/60 bg-transparent px-2 py-1 text-slate-400 hover:border-slate-600 hover:bg-slate-800/40 hover:text-slate-200 disabled:opacity-40"
                 >
                   保存済みを削除
                 </button>
