@@ -110,7 +110,7 @@ describe("AnalyzeForm paste button", () => {
     await clickPaste();
 
     expect(container.textContent).toContain(
-      "Clipboard access blocked. Press ⌘V / Ctrl+V.",
+      "クリップボードにアクセスできません。⌘V / Ctrl+Vで貼り付けてください。",
     );
     expect(props.setPlaylistUrlInput).not.toHaveBeenCalled();
   });
@@ -125,7 +125,7 @@ describe("AnalyzeForm paste button", () => {
     await clickPaste();
 
     expect(container.textContent).toContain(
-      "Clipboard is empty. Press ⌘V / Ctrl+V.",
+      "クリップボードが空です。⌘V / Ctrl+Vで貼り付けてください。",
     );
     expect(props.setPlaylistUrlInput).not.toHaveBeenCalled();
   });
@@ -144,8 +144,10 @@ describe("AnalyzeForm paste button", () => {
     expect(props.setPlaylistUrlInput).toHaveBeenCalledWith(
       "https://open.spotify.com/playlist/abc123",
     );
-    expect(container.textContent).not.toContain("Clipboard access blocked");
-    expect(container.textContent).not.toContain("Clipboard is empty");
+    expect(container.textContent).not.toContain(
+      "クリップボードにアクセスできません",
+    );
+    expect(container.textContent).not.toContain("クリップボードが空です");
   });
 
   test("shows blocked message when readText throws", async () => {
@@ -158,7 +160,7 @@ describe("AnalyzeForm paste button", () => {
     await clickPaste();
 
     expect(container.textContent).toContain(
-      "Clipboard access blocked. Press ⌘V / Ctrl+V.",
+      "クリップボードにアクセスできません。⌘V / Ctrl+Vで貼り付けてください。",
     );
     expect(props.setPlaylistUrlInput).not.toHaveBeenCalled();
   });

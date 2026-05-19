@@ -74,18 +74,19 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const playlistUrlError = useMemo(() => {
     const code = props.errorMeta?.error_code;
     if (code === "PLAYLIST_INVALID")
-      return messageFromMeta ?? "Invalid playlist URL";
+      return messageFromMeta ?? "プレイリストURLが無効です";
     return null;
   }, [props.errorMeta, messageFromMeta]);
 
   const localXmlError = useMemo(() => {
     const file = props.rekordboxFile;
     if (!file) return null;
-    if (file.size > MAX_XML_BYTES) return "XML file too large (max 50MB)";
+    if (file.size > MAX_XML_BYTES)
+      return "XMLファイルが大きすぎます（最大50MB）";
 
     const code = props.errorMeta?.error_code;
     if (code === "XML_TOO_LARGE" || code === "XML_PARSE_FAILED") {
-      return messageFromMeta ?? "XML error";
+      return messageFromMeta ?? "XMLエラー";
     }
     return null;
   }, [props.rekordboxFile, props.errorMeta, messageFromMeta]);
@@ -101,7 +102,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const handlePasteFromClipboard = async () => {
     setClipboardError(null);
     if (!navigator.clipboard?.readText) {
-      setClipboardError("Clipboard access blocked. Press ⌘V / Ctrl+V.");
+      setClipboardError(
+        "クリップボードにアクセスできません。⌘V / Ctrl+Vで貼り付けてください。",
+      );
       playlistInputRef.current?.focus();
       return;
     }
@@ -109,7 +112,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
     try {
       const text = (await navigator.clipboard.readText()).trim();
       if (!text) {
-        setClipboardError("Clipboard is empty. Press ⌘V / Ctrl+V.");
+        setClipboardError(
+          "クリップボードが空です。⌘V / Ctrl+Vで貼り付けてください。",
+        );
         playlistInputRef.current?.focus();
         return;
       }
@@ -117,7 +122,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
       props.setPlaylistUrlInput(text);
       playlistInputRef.current?.focus();
     } catch {
-      setClipboardError("Clipboard access blocked. Press ⌘V / Ctrl+V.");
+      setClipboardError(
+        "クリップボードにアクセスできません。⌘V / Ctrl+Vで貼り付けてください。",
+      );
       playlistInputRef.current?.focus();
     }
   };
@@ -139,7 +146,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 type="button"
                 onClick={props.onDismissBanner}
                 className="text-slate-300 hover:text-white"
-                aria-label="Dismiss"
+                aria-label="閉じる"
               >
                 ✕
               </button>
@@ -174,7 +181,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
 
         <div className="space-y-2.5">
           <label className="block text-sm font-medium text-slate-200">
-            Playlist URL(s)
+            プレイリストURL
           </label>
           <div className="flex items-start gap-2">
             <textarea
@@ -182,7 +189,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               value={props.playlistUrlInput}
               onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
               rows={3}
-              placeholder="Spotify playlist URL"
+              placeholder="SpotifyのプレイリストURL"
               className={`w-full rounded-md bg-slate-900 border px-3 py-2 text-sm outline-none ${
                 props.playlistUrlError || playlistUrlError
                   ? "border-rose-500/60"
@@ -194,11 +201,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               onClick={handlePasteFromClipboard}
               className="shrink-0 px-3 py-2 rounded-md border border-slate-700 text-sm text-slate-200 hover:text-white hover:bg-slate-800"
             >
-              Paste
+              貼り付け
             </button>
           </div>
           <div className="text-xs text-slate-400">
-            Paste a Spotify playlist URL
+            SpotifyのプレイリストURLを貼り付け
           </div>
           <details className="rounded-md border border-slate-800 bg-slate-900/30 px-3 py-2 text-xs text-slate-400">
             <summary className="cursor-pointer font-medium text-slate-300">
@@ -222,10 +229,10 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
 
         <div className="space-y-2.5">
           <label className="block text-sm font-medium text-slate-200">
-            Rekordbox XML (optional)
+            Rekordbox XML（任意）
           </label>
           <div className="text-xs text-slate-400">
-            Optional — attach XML to mark tracks you already own
+            持っている曲を判定するために、任意でXMLを添付できます
           </div>
           <details className="rounded-md border border-slate-800 bg-slate-900/30 px-3 py-2 text-xs text-slate-400">
             <summary className="cursor-pointer font-medium text-slate-300">
@@ -252,13 +259,13 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 onClick={clearXml}
                 className="text-xs px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white"
               >
-                Clear
+                クリア
               </button>
             ) : null}
           </div>
 
           <div className="text-xs text-slate-400">
-            使用中のXML: {props.rekordboxFilename ?? "none"}
+            使用中のXML: {props.rekordboxFilename ?? "なし"}
             {props.rekordboxFilename && props.rekordboxDate
               ? ` · ${props.rekordboxDate}`
               : ""}
@@ -281,14 +288,14 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                     {props.savedRekordboxXmlMeta.filename} ·{" "}
                     {formatBytes(props.savedRekordboxXmlMeta.size)}
                     <br />
-                    Uploaded:{" "}
+                    アップロード:{" "}
                     {formatDateTime(props.savedRekordboxXmlMeta.uploadedAt)}
                     <br />
-                    Last modified:{" "}
+                    最終更新:{" "}
                     {formatDateTime(props.savedRekordboxXmlMeta.lastModified)}
                   </div>
                 ) : (
-                  <div>No saved XML yet.</div>
+                  <div>保存済みXMLはまだありません。</div>
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -335,7 +342,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             type="checkbox"
             className="rounded border-slate-700 bg-slate-900"
           />
-          Unowned only
+          未所有のみ
         </label>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -344,7 +351,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             disabled={props.loading || !!localXmlError}
             className="rounded-md bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-950/30 ring-1 ring-emerald-300/30 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:opacity-40 disabled:shadow-none"
           >
-            {props.isReanalyzing ? "Reanalyze" : "Analyze playlist"}
+            {props.isReanalyzing ? "再照合" : "プレイリストを照合"}
           </button>
 
           {props.cancelAnalyze && props.loading ? (
@@ -353,7 +360,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               onClick={() => props.cancelAnalyze?.()}
               className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-slate-300 hover:border-slate-600 hover:bg-slate-800/50 hover:text-white"
             >
-              Cancel
+              キャンセル
             </button>
           ) : null}
 
@@ -363,12 +370,12 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               onClick={() => props.retryFailed?.()}
               className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-slate-300 hover:border-slate-600 hover:bg-slate-800/50 hover:text-white"
             >
-              Retry
+              再試行
             </button>
           ) : null}
 
           <span className="text-xs text-slate-400">
-            {props.rekordboxFile ? "Spotify + Rekordbox XML" : "Spotify only"}
+            {props.rekordboxFile ? "Spotify + Rekordbox XML" : "Spotifyのみ"}
           </span>
         </div>
 
@@ -385,14 +392,14 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         {props.errorText ? (
           <div className="pt-2">
             <ErrorAlert
-              title="Error"
+              title="エラー"
               message={props.errorText}
               details={
                 props.errorMeta
                   ? JSON.stringify(props.errorMeta, null, 2)
                   : undefined
               }
-              hint="If this looks stale, try a hard refresh."
+              hint="表示が古い場合は、ハードリフレッシュを試してください。"
             />
             <div className="pt-2">
               <button
@@ -400,7 +407,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 onClick={() => props.setForceRefreshHint(true)}
                 className="text-xs px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white"
               >
-                Show refresh tips
+                更新のヒントを表示
               </button>
             </div>
           </div>
