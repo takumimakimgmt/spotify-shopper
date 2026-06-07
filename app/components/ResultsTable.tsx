@@ -87,6 +87,20 @@ function getPrimaryBuyLink(
   return { name: recommended?.name ?? (primaryUrl ? "ストア" : "検索"), url };
 }
 
+function displayMetric(track: PlaylistRow, keys: string[]): string {
+  const row = track as unknown as Record<string, unknown>;
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return String(value);
+    }
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return "—";
+}
+
 function StoreLinksInline({ track }: { track: PlaylistRow }) {
   const recommended = getRecommendedStore(track);
   const others = getOtherStores(track.stores, recommended);
@@ -173,15 +187,23 @@ export default function ResultsTable({
       </div>
 
       <div className="hidden md:block rounded-2xl border border-white/10 overflow-x-auto">
-        <table className="min-w-[980px] w-full text-xs">
-          <thead className="bg-white/5 text-white/70">
+        <table className="min-w-[1040px] w-full table-fixed text-xs">
+          <colgroup>
+            <col className="w-auto" />
+            <col className="w-28" />
+            <col className="w-16" />
+            <col className="w-16" />
+            <col className="w-64" />
+            <col className="w-28" />
+          </colgroup>
+          <thead className="sr-only">
             <tr>
-              <th className="px-3 py-2 text-left">Title</th>
-              <th className="px-3 py-2 text-left">Artist</th>
-              <th className="px-3 py-2 text-left">Album</th>
-              <th className="px-3 py-2 text-left">ISRC</th>
-              <th className="px-3 py-2 text-left">ストア</th>
-              <th className="px-3 py-2 text-left">あとで買う</th>
+              <th scope="col">Title</th>
+              <th scope="col">Owned</th>
+              <th scope="col">BPM</th>
+              <th scope="col">Key</th>
+              <th scope="col">ストア</th>
+              <th scope="col">あとで買う</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
@@ -193,16 +215,42 @@ export default function ResultsTable({
 
               return (
                 <tr key={`${t?.isrc ?? ""}-${i}`} className="hover:bg-white/5">
-                  <td className="px-3 py-2 text-white">{t?.title ?? ""}</td>
-                  <td className="px-3 py-2 text-white/80">{t?.artist ?? ""}</td>
-                  <td className="px-3 py-2 text-white/60">{t?.album ?? ""}</td>
-                  <td className="px-3 py-2 text-white/40">{t?.isrc ?? ""}</td>
-                  <td className="px-3 py-2">
-                    <StoreLinksInline track={t} />
+                  <td className="px-3 py-3 align-middle">
+                    <div className="min-w-0">
+                      <div className="truncate text-white">
+                        {t?.title ?? ""}
+                      </div>
+                      <div className="truncate text-white/70">
+                        {t?.artist ?? ""}
+                      </div>
+                      {t?.album ? (
+                        <div className="truncate text-white/40">{t.album}</div>
+                      ) : null}
+                    </div>
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-3 align-middle text-white/60">
                     {t.owned === true ? (
-                      <span className="text-[11px] text-white/40">Owned</span>
+                      <span className="truncate text-[11px] text-white/40">
+                        Owned
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="px-3 py-3 align-middle text-right tabular-nums text-white/50">
+                    {displayMetric(t, ["bpm", "tempo"])}
+                  </td>
+                  <td className="px-3 py-3 align-middle text-white/50">
+                    {displayMetric(t, ["key", "musicalKey", "camelotKey"])}
+                  </td>
+                  <td className="px-3 py-3 align-middle">
+                    {t.owned === true ? (
+                      <span className="text-[11px] text-white/30">—</span>
+                    ) : (
+                      <StoreLinksInline track={t} />
+                    )}
+                  </td>
+                  <td className="px-3 py-3 align-middle text-right">
+                    {t.owned === true ? (
+                      <span className="text-[11px] text-white/30">—</span>
                     ) : (
                       <button
                         type="button"
