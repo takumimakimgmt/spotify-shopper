@@ -4,10 +4,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import AnalyzeForm from "@/app/components/AnalyzeForm";
 
-type ClipboardMock = {
-  readText: ReturnType<typeof vi.fn>;
-};
-
 function makeProps(
   overrides: Partial<React.ComponentProps<typeof AnalyzeForm>> = {},
 ) {
@@ -41,20 +37,27 @@ function makeProps(
   };
 }
 
-describe("AnalyzeForm paste button", () => {
+function textButton(container: HTMLElement, label: string) {
+  const button = Array.from(container.querySelectorAll("button")).find(
+    (candidate) => candidate.textContent === label,
+  );
+
+  if (!(button instanceof HTMLButtonElement)) {
+    throw new Error(`Button not found: ${label}`);
+  }
+
+  return button;
+}
+
+describe("AnalyzeForm", () => {
   let container: HTMLDivElement;
   let root: Root;
-  let clipboardDescriptor: PropertyDescriptor | undefined;
 
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
-    clipboardDescriptor = Object.getOwnPropertyDescriptor(
-      navigator,
-      "clipboard",
-    );
   });
 
   afterEach(() => {
@@ -62,27 +65,8 @@ describe("AnalyzeForm paste button", () => {
       root.unmount();
     });
     container.remove();
-
-    if (clipboardDescriptor) {
-      Object.defineProperty(navigator, "clipboard", clipboardDescriptor);
-    } else {
-      Reflect.deleteProperty(navigator, "clipboard");
-    }
-
     vi.restoreAllMocks();
   });
-
-  function setClipboard(value: ClipboardMock | undefined) {
-    if (value) {
-      Object.defineProperty(navigator, "clipboard", {
-        configurable: true,
-        value,
-      });
-      return;
-    }
-
-    Reflect.deleteProperty(navigator, "clipboard");
-  }
 
   async function renderForm(props: React.ComponentProps<typeof AnalyzeForm>) {
     await act(async () => {
@@ -90,80 +74,17 @@ describe("AnalyzeForm paste button", () => {
     });
   }
 
-  async function clickPaste() {
-    const button = container.querySelector("button[type='button']");
-    if (!(button instanceof HTMLButtonElement)) {
-      throw new Error("Paste button not found");
-    }
+  test("renders the Library XML row with no XML selected", async () => {
+    await renderForm(makeProps());
 
-    await act(async () => {
-      button.click();
-      await Promise.resolve();
-    });
-  }
-
-  test("shows blocked message when clipboard API is unavailable", async () => {
-    setClipboard(undefined);
-    const props = makeProps();
-    await renderForm(props);
-
-    await clickPaste();
-
-    expect(container.textContent).toContain(
-      "Clipboard access blocked. Press ⌘V / Ctrl+V.",
-    );
-    expect(props.setPlaylistUrlInput).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("Library XML");
+    expect(container.textContent).toContain("No XML selected");
+    expect(container.textContent).toContain("Upload Rekordbox XML");
+    expect(textButton(container, "Upload")).toBeDefined();
+    expect(container.textContent).not.toContain("Paste");
   });
 
-  test("shows empty message when clipboard text trims to empty", async () => {
-    setClipboard({
-      readText: vi.fn().mockResolvedValue("   "),
-    });
-    const props = makeProps();
-    await renderForm(props);
-
-    await clickPaste();
-
-    expect(container.textContent).toContain(
-      "Clipboard is empty. Press ⌘V / Ctrl+V.",
-    );
-    expect(props.setPlaylistUrlInput).not.toHaveBeenCalled();
-  });
-
-  test("populates the input when clipboard text exists", async () => {
-    setClipboard({
-      readText: vi
-        .fn()
-        .mockResolvedValue(" https://open.spotify.com/playlist/abc123 "),
-    });
-    const props = makeProps();
-    await renderForm(props);
-
-    await clickPaste();
-
-    expect(props.setPlaylistUrlInput).toHaveBeenCalledWith(
-      "https://open.spotify.com/playlist/abc123",
-    );
-    expect(container.textContent).not.toContain("Clipboard access blocked");
-    expect(container.textContent).not.toContain("Clipboard is empty");
-  });
-
-  test("shows blocked message when readText throws", async () => {
-    setClipboard({
-      readText: vi.fn().mockRejectedValue(new Error("denied")),
-    });
-    const props = makeProps();
-    await renderForm(props);
-
-    await clickPaste();
-
-    expect(container.textContent).toContain(
-      "Clipboard access blocked. Press ⌘V / Ctrl+V.",
-    );
-    expect(props.setPlaylistUrlInput).not.toHaveBeenCalled();
-  });
-
-  test("shows saved XML metadata and actions", async () => {
+  test("renders saved XML metadata and saved XML actions", async () => {
     const props = makeProps({
       savedRekordboxXmlMeta: {
         filename: "collection.xml",
@@ -173,25 +94,77 @@ describe("AnalyzeForm paste button", () => {
         type: "text/xml",
       },
     });
+
     await renderForm(props);
 
-    expect(container.textContent).toContain("保存済みXML");
+    expect(container.textContent).toContain("Library XML");
     expect(container.textContent).toContain("collection.xml");
     expect(container.textContent).toContain("2 KB");
 
-    const useSavedButton = Array.from(
-      container.querySelectorAll("button"),
-    ).find((button) => button.textContent === "保存済みを使う");
-    const forgetButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "保存済みを削除",
-    );
+    const useSavedButton = textButton(container, "Use saved");
+    const uploadButton = textButton(container, "Upload");
+    const forgetButton = textButton(container, "Forget");
 
     await act(async () => {
-      useSavedButton?.click();
-      forgetButton?.click();
+      useSavedButton.click();
+      forgetButton.click();
     });
 
+    expect(uploadButton).toBeDefined();
     expect(props.useSavedRekordboxXml).toHaveBeenCalledTimes(1);
     expect(props.forgetSavedRekordboxXml).toHaveBeenCalledTimes(1);
+  });
+
+  test("renders the playlist URL input and Analyze button", async () => {
+    await renderForm(makeProps());
+
+    const input = container.querySelector(
+      "textarea[placeholder='Paste Spotify playlist URL']",
+    );
+    const analyzeButton = textButton(container, "Analyze");
+
+    expect(input).toBeInstanceOf(HTMLTextAreaElement);
+    expect(analyzeButton.type).toBe("submit");
+  });
+
+  test("calls setPlaylistUrlInput when the input value changes", async () => {
+    const props = makeProps();
+    await renderForm(props);
+
+    const input = container.querySelector(
+      "textarea[placeholder='Paste Spotify playlist URL']",
+    );
+    if (!(input instanceof HTMLTextAreaElement)) {
+      throw new Error("Playlist input not found");
+    }
+
+    await act(async () => {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        "value",
+      )?.set;
+      valueSetter?.call(input, "https://open.spotify.com/playlist/abc123");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(props.setPlaylistUrlInput).toHaveBeenCalledWith(
+      "https://open.spotify.com/playlist/abc123",
+    );
+  });
+
+  test("keeps Analyze disabled when there is no playlist URL", async () => {
+    await renderForm(makeProps({ playlistUrlInput: "   " }));
+
+    expect(textButton(container, "Analyze").disabled).toBe(true);
+  });
+
+  test("enables Analyze when there is a playlist URL", async () => {
+    await renderForm(
+      makeProps({
+        playlistUrlInput: "https://open.spotify.com/playlist/abc123",
+      }),
+    );
+
+    expect(textButton(container, "Analyze").disabled).toBe(false);
   });
 });
