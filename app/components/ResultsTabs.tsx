@@ -20,7 +20,7 @@ export function ResultsTabs({
   if (multiResults.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-3 pb-2 border-b border-slate-800">
+    <div className="flex items-center gap-3">
       <div className="flex gap-2 overflow-x-auto flex-1">
         {multiResults.map(([url, result]) => {
           const isActive = activeTab === url;
@@ -28,10 +28,10 @@ export function ResultsTabs({
           return (
             <div
               key={url}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap rounded-t-lg transition ${
+              className={`flex items-center gap-1.5 whitespace-nowrap text-[15px] font-medium transition ${
                 isActive
-                  ? "bg-emerald-500/20 border-b-2 border-emerald-500 text-emerald-200"
-                  : "bg-slate-800/50 hover:bg-slate-800 text-slate-300"
+                  ? "text-slate-100"
+                  : "text-slate-500 hover:text-slate-300"
               }`}
             >
               <button
@@ -41,13 +41,13 @@ export function ResultsTabs({
                 <span>
                   {result.title} ({result.total})
                   {isUnparsed && (
-                    <span className="ml-2 text-xs text-yellow-400">未解析</span>
+                    <span className="ml-2 text-xs text-yellow-300">
+                      Not analyzed
+                    </span>
                   )}
                 </span>
                 {result.hasRekordboxData && (
-                  <span className="text-[10px] px-1 py-0.5 bg-emerald-600/30 text-emerald-300 rounded">
-                    XML
-                  </span>
+                  <span className="text-[10px] text-emerald-300/80">XML</span>
                 )}
               </button>
               <button

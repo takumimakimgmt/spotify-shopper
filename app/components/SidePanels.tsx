@@ -56,39 +56,13 @@ export function SidePanels({
   };
 
   return (
-    <div className="space-y-4">
-      <ResultSummaryBar
-        result={currentResult}
-        ownedCount={ownedCount}
-        toBuyCount={toBuyCount}
-      />
-      <div className="rounded-xl border border-slate-800 bg-slate-900/55 p-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold text-slate-100">
-                {currentResult.title}
-              </h2>
-              {currentResult.playlistUrl && (
-                <a
-                  href={currentResult.playlistUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full border border-slate-700 px-2.5 py-1 text-[11px] text-emerald-300 hover:border-emerald-400/40 hover:text-emerald-200"
-                >
-                  Open playlist
-                </a>
-              )}
-            </div>
-
-            <div className="text-sm text-slate-300">
-              Focus the shortlist first, then use XML re-check or export when
-              you are ready to act.
-            </div>
-
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <div className="flex flex-col gap-2 text-xs text-slate-500 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
             {currentResult.rekordboxMeta && (
-              <div className="text-xs text-slate-400">
-                Last XML: {currentResult.rekordboxMeta.filename ?? "—"}
+              <div className="truncate">
+                XML: {currentResult.rekordboxMeta.filename ?? "—"}
                 <span className="ml-2">
                   Updated:{" "}
                   {currentResult.rekordboxMeta.updatedAtISO
@@ -101,8 +75,18 @@ export function SidePanels({
             )}
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
-            <label className="cursor-pointer rounded bg-emerald-600 px-3 py-2 text-xs font-medium text-slate-950 hover:bg-emerald-500">
+          <div className="flex flex-wrap gap-1.5 lg:justify-end">
+            {currentResult.playlistUrl && (
+              <a
+                href={currentResult.playlistUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded border border-slate-800 px-2 py-1 text-slate-300 hover:border-slate-700 hover:text-slate-100"
+              >
+                Open playlist
+              </a>
+            )}
+            <label className="cursor-pointer rounded border border-slate-800 px-2 py-1 text-slate-300 hover:border-slate-700 hover:text-slate-100">
               Re-analyze with XML
               <input
                 type="file"
@@ -112,20 +96,26 @@ export function SidePanels({
               />
             </label>
             <button
+              type="button"
               onClick={handleExportCSV}
-              className="rounded border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700"
+              className="rounded border border-slate-800 px-2 py-1 text-slate-300 hover:border-slate-700 hover:text-slate-100"
             >
-              Export as CSV
+              Export CSV
             </button>
           </div>
         </div>
 
         {xmlError && (
-          <div className="mt-4">
+          <div>
             <ErrorAlert title="XML Error" message={xmlError} />
           </div>
         )}
       </div>
+      <ResultSummaryBar
+        result={currentResult}
+        ownedCount={ownedCount}
+        toBuyCount={toBuyCount}
+      />
     </div>
   );
 }

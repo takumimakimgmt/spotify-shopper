@@ -45,7 +45,6 @@ import AnalyzeForm from "./components/AnalyzeForm";
 import _ProgressList from "./components/ProgressList";
 import { ShopperHeader as _ShopperHeader } from "./components/ShopperHeader";
 import { ResultsTabs } from "./components/ResultsTabs";
-import { FiltersBar } from "./components/FiltersBar";
 import dynamic from "next/dynamic";
 import SkeletonResults from "./components/SkeletonResults";
 const ResultsTable = dynamic(
@@ -57,7 +56,6 @@ const SidePanels = dynamic(
   { ssr: false, loading: () => null },
 );
 import ErrorAlert from "./components/ErrorAlert";
-import BuyQueuePanel from "./components/BuyQueuePanel";
 import { getOwnedStatusStyle } from "../lib/ui/ownedStatus";
 import { z } from "zod";
 // --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
@@ -66,6 +64,131 @@ const TabQuerySchema = z.string().trim().min(1).max(64);
 function parseTabQuery(raw: string | null): string | null {
   const parsed = TabQuerySchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
+}
+
+type QuietBuyLaterItem = {
+  id: string;
+  title: string;
+  artist: string;
+  album?: string;
+  spotifyUrl?: string;
+  buyUrl: string;
+  buyStore: string;
+};
+
+function queueListenUrl(item: QuietBuyLaterItem): string {
+  if (item.spotifyUrl) return item.spotifyUrl;
+
+  const q = [item.artist, item.title, "topic"].filter(Boolean).join(" ");
+  if (!q) return "";
+  const proto = ["ht", "tps", ":", "//"].join("");
+  const host = ["music", "youtube", "com"].join(".");
+  return `${proto}${host}/search?q=${encodeURIComponent(q)}`;
+}
+
+function isQueuePurchaseStore(store: string): boolean {
+  return store === "Beatport" || store === "Bandcamp";
+}
+
+function QueueTitle({ item }: { item: QuietBuyLaterItem }) {
+  const href = queueListenUrl(item);
+
+  if (!href) {
+    return (
+      <div className="truncate text-sm font-medium text-slate-300">
+        {item.title}
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`Listen to ${item.title}`}
+      className="inline-block max-w-full truncate border-b border-white/25 pb-0.5 text-sm font-medium text-slate-200 hover:border-white/60 hover:text-white focus-visible:rounded-sm focus-visible:border-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+    >
+      {item.title}
+    </a>
+  );
+}
+
+function QuietBuyLater({
+  items,
+  onRemove,
+}: {
+  items: QuietBuyLaterItem[];
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <section className="border-t border-white/10 pt-6 text-xs text-slate-500">
+      <div className="flex items-baseline justify-between gap-3">
+        <div>
+          <div className="font-medium text-slate-400">
+            Buy Later {items.length > 0 ? items.length : ""}
+          </div>
+          <div className="mt-2">Saved purchase candidates.</div>
+        </div>
+        {items.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => items.forEach((item) => onRemove(item.id))}
+            className="text-slate-600 hover:text-slate-300"
+          >
+            Clear
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-6 border-b border-white/10">
+        {items.length === 0 ? (
+          <div className="h-px" />
+        ) : (
+          <div className="divide-y divide-white/10">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-[minmax(0,34%)_minmax(0,25%)_9%_minmax(0,20%)_12%] items-center"
+              >
+                <div className="min-w-0 px-3 py-4">
+                  <QueueTitle item={item} />
+                </div>
+                <div className="min-w-0 px-3 py-4">
+                  <div className="truncate text-slate-600">{item.artist}</div>
+                  {item.album ? (
+                    <div className="truncate text-slate-700">{item.album}</div>
+                  ) : null}
+                </div>
+                <div className="px-3 py-4" />
+                <div className="flex flex-wrap gap-2 px-3 py-4">
+                  {isQueuePurchaseStore(item.buyStore) ? (
+                    <a
+                      href={item.buyUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="whitespace-nowrap rounded border border-slate-800 px-2 py-1 text-slate-400 hover:border-slate-700 hover:text-slate-100"
+                    >
+                      {item.buyStore}
+                    </a>
+                  ) : null}
+                </div>
+                <div className="px-3 py-4">
+                  <button
+                    type="button"
+                    onClick={() => onRemove(item.id)}
+                    className="whitespace-nowrap text-slate-600 hover:text-slate-300"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
 function PageInner() {
@@ -93,7 +216,7 @@ function PageInner() {
     if (/music\.apple\.com/i.test(url)) {
       setBanner({
         kind: "error",
-        text: "このURLは未対応です。現在はSpotifyプレイリストURLのみ対応しています。",
+        text: "This URL is not supported yet. Use a Spotify playlist URL.",
       });
       return;
     }
@@ -207,111 +330,66 @@ function PageInner() {
   }, [selection.activeTab, analyzer]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
-        {/* Apple-like minimalist header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-white tracking-tight">
-            Playlist Shopper
-          </h1>
-          <p className="mt-2 text-base text-white/60">
-            Match a Spotify playlist with your Rekordbox library, then open buy
-            links.
-          </p>
-        </div>
-
-        {/* Form */}
-        <section className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-4">
-          {analyzer.isProcessing && (
-            <div className="text-[11px] text-slate-400">
-              {analyzer.phaseLabel || "Processing…"}
-              {analyzer.progress < 10 && (
-                <span className="text-slate-500"> (server starting up…)</span>
-              )}
-            </div>
-          )}
-          {vm.currentResult && selection.formCollapsed ? (
-            <div className="flex items-center justify-between text-sm text-slate-200">
-              <div className="flex items-center gap-3">
-                {vm.currentResult.hasRekordboxData && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/20 px-2 py-0.5 text-[11px] text-emerald-200">
-                    XML attached
-                  </span>
-                )}
-                {/* XML meta info always visible when collapsed (from currentResult) */}
-                {vm.currentResult?.rekordboxMeta && (
-                  <span className="text-xs text-slate-400 ml-2">
-                    XML: {vm.currentResult.rekordboxMeta.filename ?? "—"}
-                    {vm.currentResult.rekordboxMeta.updatedAtISO && (
-                      <span className="ml-2">
-                        Updated:{" "}
-                        {new Date(
-                          vm.currentResult.rekordboxMeta.updatedAtISO,
-                        ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}
-                      </span>
-                    )}
-                  </span>
+    <main className="min-h-screen bg-[#04060a] text-slate-50">
+      <div className="mx-auto max-w-[1024px] px-4 py-12 sm:px-6 lg:py-14">
+        <div className="space-y-12">
+          <section>
+            {analyzer.isProcessing && (
+              <div className="mb-3 rounded-md border border-emerald-400/20 bg-emerald-400/5 px-3 py-2 text-[11px] text-emerald-100/80">
+                {analyzer.phaseLabel || "Processing…"}
+                {analyzer.progress < 10 && (
+                  <span className="text-slate-400"> Server starting up…</span>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => selection.setFormCollapsed(false)}
-                className="px-3 py-1 rounded bg-slate-800 border border-slate-700 hover:bg-slate-700 text-emerald-200 flex items-center gap-2"
-              >
-                <span className="text-base leading-none">＋</span>
-                <span>Add playlist</span>
-              </button>
-            </div>
-          ) : (
-            <>
-              <AnalyzeForm
-                playlistUrlInput={analyzer.playlistUrlInput}
-                setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
-                handleAnalyze={handleAnalyzeWithAppleBlock}
-                rekordboxFile={analyzer.rekordboxFile}
-                setRekordboxFile={analyzer.setRekordboxFile}
-                handleRekordboxChange={analyzer.handleRekordboxChange}
-                rekordboxFilename={
-                  analyzer.rekordboxFile?.name ??
-                  vm.currentResult?.rekordboxMeta?.filename ??
-                  null
-                }
-                rekordboxDate={
-                  analyzer.rekordboxDate ??
-                  (vm.currentResult?.rekordboxMeta?.updatedAtISO
-                    ? new Date(
-                        vm.currentResult.rekordboxMeta.updatedAtISO,
-                      ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
-                    : null)
-                }
-                savedRekordboxXmlMeta={analyzer.savedRekordboxXmlMeta}
-                savedRekordboxXmlBusy={analyzer.savedRekordboxXmlBusy}
-                savedRekordboxXmlError={analyzer.savedRekordboxXmlError}
-                useSavedRekordboxXml={analyzer.useSavedRekordboxXml}
-                forgetSavedRekordboxXml={analyzer.forgetSavedRekordboxXml}
-                loading={analyzer.loading}
-                isReanalyzing={analyzer.isReanalyzing}
-                progress={analyzer.progress}
-                errorText={analyzer.errorText}
-                errorMeta={analyzer.errorMeta}
-                progressItems={analyzer.progressItems}
-                setForceRefreshHint={analyzer.setForceRefreshHint}
-                cancelAnalyze={actions.cancelAnalyze}
-                retryFailed={actions.retryFailed}
-                banner={banner}
-                onDismissBanner={() => setBanner(null)}
-              />
-
-              <BuyQueuePanel
-                items={buyQueue.items}
-                onRemove={buyQueue.removeItem}
-              />
-            </>
+            )}
+            <AnalyzeForm
+              playlistUrlInput={analyzer.playlistUrlInput}
+              setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
+              handleAnalyze={handleAnalyzeWithAppleBlock}
+              rekordboxFile={analyzer.rekordboxFile}
+              setRekordboxFile={analyzer.setRekordboxFile}
+              handleRekordboxChange={analyzer.handleRekordboxChange}
+              rekordboxFilename={
+                analyzer.rekordboxFile?.name ??
+                vm.currentResult?.rekordboxMeta?.filename ??
+                null
+              }
+              rekordboxDate={
+                analyzer.rekordboxDate ??
+                (vm.currentResult?.rekordboxMeta?.updatedAtISO
+                  ? new Date(
+                      vm.currentResult.rekordboxMeta.updatedAtISO,
+                    ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+                  : null)
+              }
+              savedRekordboxXmlMeta={analyzer.savedRekordboxXmlMeta}
+              savedRekordboxXmlBusy={analyzer.savedRekordboxXmlBusy}
+              savedRekordboxXmlError={analyzer.savedRekordboxXmlError}
+              useSavedRekordboxXml={analyzer.useSavedRekordboxXml}
+              forgetSavedRekordboxXml={analyzer.forgetSavedRekordboxXml}
+              loading={analyzer.loading}
+              isReanalyzing={analyzer.isReanalyzing}
+              progress={analyzer.progress}
+              errorText={analyzer.errorText}
+              errorMeta={analyzer.errorMeta}
+              progressItems={analyzer.progressItems}
+              setForceRefreshHint={analyzer.setForceRefreshHint}
+              cancelAnalyze={actions.cancelAnalyze}
+              retryFailed={actions.retryFailed}
+              banner={banner}
+              onDismissBanner={() => setBanner(null)}
+            />
+          </section>
+          {vm.multiResults.length === 0 && (
+            <QuietBuyLater
+              items={buyQueue.items}
+              onRemove={buyQueue.removeItem}
+            />
           )}
-        </section>
+        </div>
         {/* Results */}
         {vm.multiResults.length > 0 && (
-          <section className="space-y-4" id="results-top">
+          <section className="mt-4 space-y-3" id="results-top">
             {vm.storageWarning && (
               <ErrorAlert
                 title="Local data warning"
@@ -327,7 +405,7 @@ function PageInner() {
               onRemoveTab={actions.handleRemoveTab}
             />
             {vm.currentResult && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <SidePanels
                   currentResult={vm.currentResult}
                   ownedCount={vm.ownedCount}
@@ -342,32 +420,66 @@ function PageInner() {
                     actions.downloadCsv(vm.displayedTracks, vm.currentResult)
                   }
                 />
-                <FiltersBar
-                  categoryFilter={filters.categoryFilter}
-                  setCategoryFilter={filters.setCategoryFilter}
-                  searchQuery={filters.searchQuery}
-                  setSearchQuery={filters.setSearchQuery}
-                  sortKey={filters.sortKey}
-                  setSortKey={filters.setSortKey}
-                />
-                <details className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400">
-                  <summary className="cursor-pointer list-none font-medium text-slate-300">
-                    Workspace utilities
-                  </summary>
-                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p>
-                      Results are saved locally (~300KB cap). Clear to free
-                      space.
-                    </p>
+                <div className="flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex gap-1.5">
                     <button
                       type="button"
-                      onClick={() => actions.clearLocalData()}
-                      className="self-start rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700"
+                      onClick={() => filters.setCategoryFilter("all")}
+                      className={`rounded px-2 py-1 ${
+                        filters.categoryFilter === "all"
+                          ? "bg-white/10 text-slate-100"
+                          : "text-slate-500 hover:text-slate-200"
+                      }`}
                     >
-                      Clear saved data
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => filters.setCategoryFilter("toBuy")}
+                      className={`rounded px-2 py-1 ${
+                        filters.categoryFilter === "toBuy"
+                          ? "bg-amber-400/10 text-amber-100"
+                          : "text-slate-500 hover:text-slate-200"
+                      }`}
+                    >
+                      To buy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => filters.setCategoryFilter("owned")}
+                      className={`rounded px-2 py-1 ${
+                        filters.categoryFilter === "owned"
+                          ? "bg-emerald-400/10 text-emerald-100"
+                          : "text-slate-500 hover:text-slate-200"
+                      }`}
+                    >
+                      Owned
                     </button>
                   </div>
-                </details>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <input
+                      type="text"
+                      placeholder="Search tracks"
+                      value={filters.searchQuery}
+                      onChange={(e) => filters.setSearchQuery(e.target.value)}
+                      className="rounded border border-slate-800 bg-transparent px-2 py-1 text-xs text-slate-200 outline-none focus:border-slate-600"
+                    />
+                    <select
+                      value={filters.sortKey}
+                      onChange={(e) =>
+                        filters.setSortKey(
+                          e.target.value as typeof filters.sortKey,
+                        )
+                      }
+                      className="rounded border border-slate-800 bg-[#04060a] px-2 py-1 text-xs text-slate-300 outline-none focus:border-slate-600"
+                    >
+                      <option value="none">Sort: None</option>
+                      <option value="title">Sort: Title</option>
+                      <option value="artist">Sort: Artist</option>
+                      <option value="album">Sort: Album</option>
+                    </select>
+                  </div>
+                </div>
                 <ResultsTable
                   currentResult={vm.currentResult}
                   displayedTracks={vm.displayedTracks}
@@ -382,6 +494,28 @@ function PageInner() {
                   queuedTrackIds={buyQueue.queuedIds}
                   onAddToBuyQueue={buyQueue.addTrack}
                 />
+                <QuietBuyLater
+                  items={buyQueue.items}
+                  onRemove={buyQueue.removeItem}
+                />
+                <details className="text-xs text-slate-500">
+                  <summary className="cursor-pointer list-none font-medium text-slate-400">
+                    Workspace utilities
+                  </summary>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p>
+                      Results are saved locally (~300KB cap). Clear to free
+                      space.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => actions.clearLocalData()}
+                      className="self-start rounded border border-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-slate-700 hover:text-slate-100"
+                    >
+                      Clear saved data
+                    </button>
+                  </div>
+                </details>
               </div>
             )}
           </section>
