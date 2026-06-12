@@ -98,6 +98,14 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const replaceXml = () => {
     fileInputRef.current?.click();
   };
+  const removeXml = () => {
+    if (props.savedRekordboxXmlMeta) {
+      props.forgetSavedRekordboxXml?.();
+      return;
+    }
+
+    props.setRekordboxFile(null);
+  };
 
   return (
     <section className="w-full space-y-8">
@@ -161,16 +169,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-3">
-            {props.savedRekordboxXmlMeta ? (
-              <button
-                type="button"
-                onClick={() => props.useSavedRekordboxXml?.()}
-                disabled={props.savedRekordboxXmlBusy}
-                className="text-slate-500 hover:text-slate-300 disabled:opacity-40"
-              >
-                Use saved
-              </button>
-            ) : null}
             <button
               type="button"
               onClick={replaceXml}
@@ -179,14 +177,14 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             >
               Upload
             </button>
-            {props.savedRekordboxXmlMeta ? (
+            {hasXml ? (
               <button
                 type="button"
-                onClick={() => props.forgetSavedRekordboxXml?.()}
+                onClick={removeXml}
                 disabled={props.savedRekordboxXmlBusy}
                 className="text-slate-600 hover:text-slate-400 disabled:opacity-40"
               >
-                Forget
+                Remove
               </button>
             ) : null}
           </div>

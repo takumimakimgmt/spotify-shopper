@@ -346,7 +346,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     );
   });
 
-  test("Forget deactivates XML so Analyze falls back to plain playlist analysis", async () => {
+  test("Remove deactivates XML so Analyze falls back to plain playlist analysis", async () => {
     const file = new File(["<DJ_PLAYLISTS />"], "collection.xml", {
       type: "text/xml",
       lastModified: Date.UTC(2026, 5, 12, 0, 0, 0),
