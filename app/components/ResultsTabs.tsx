@@ -20,34 +20,42 @@ export function ResultsTabs({
   if (multiResults.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex gap-2 overflow-x-auto flex-1">
+    <div className="min-w-0">
+      <div className="flex min-w-0 flex-wrap gap-2 overflow-x-hidden">
         {multiResults.map(([url, result]) => {
           const isActive = activeTab === url;
           const isUnparsed = !result.tracks || result.tracks.length === 0;
           return (
             <div
               key={url}
-              className={`flex items-center gap-1.5 whitespace-nowrap text-[15px] font-medium transition ${
+              className={`flex min-w-0 max-w-full items-center overflow-hidden rounded-md border text-sm font-medium transition sm:max-w-[18rem] ${
                 isActive
-                  ? "text-slate-100"
-                  : "text-slate-500 hover:text-slate-300"
+                  ? "border-white/15 bg-white/[0.04] text-slate-100"
+                  : "border-white/10 bg-transparent text-slate-500 hover:border-white/15 hover:text-slate-300"
               }`}
             >
               <button
                 onClick={() => onSelectTab(url)}
-                className="text-left min-w-0 flex items-center gap-1.5"
+                className="flex min-w-0 items-center gap-2 px-2.5 py-1.5 text-left"
+                title={result.title}
               >
-                <span>
-                  {result.title} ({result.total})
-                  {isUnparsed && (
-                    <span className="ml-2 text-xs text-yellow-300">
-                      Not analyzed
-                    </span>
-                  )}
+                <span className="min-w-0 truncate">{result.title}</span>
+                <span
+                  className={`shrink-0 tabular-nums ${
+                    isActive ? "text-slate-300" : "text-slate-600"
+                  }`}
+                >
+                  {result.total}
                 </span>
                 {result.hasRekordboxData && (
-                  <span className="text-[10px] text-emerald-300/80">XML</span>
+                  <span className="shrink-0 rounded border border-emerald-400/20 px-1 py-0.5 text-[10px] leading-none text-emerald-300/80">
+                    XML
+                  </span>
+                )}
+                {isUnparsed && (
+                  <span className="shrink-0 text-xs text-yellow-300/80">
+                    Not analyzed
+                  </span>
                 )}
               </button>
               <button
@@ -55,8 +63,9 @@ export function ResultsTabs({
                   e.stopPropagation();
                   onRemoveTab(url);
                 }}
-                className="text-slate-400 hover:text-red-400 transition text-lg leading-none flex-shrink-0"
+                className="self-stretch border-l border-white/10 px-2 text-lg leading-none text-slate-500 transition hover:bg-rose-950/30 hover:text-rose-300"
                 title="Remove this playlist"
+                aria-label={`Remove ${result.title}`}
               >
                 ×
               </button>

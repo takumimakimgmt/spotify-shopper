@@ -125,9 +125,7 @@ function QuietBuyLater({
     <section className="border-t border-white/10 pt-6 text-xs text-slate-500">
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <div className="font-medium text-slate-400">
-            Buy Later {items.length > 0 ? items.length : ""}
-          </div>
+          <div className="font-medium text-slate-400">Buy Later</div>
           <div className="mt-2">Saved purchase candidates.</div>
         </div>
         {items.length > 0 ? (

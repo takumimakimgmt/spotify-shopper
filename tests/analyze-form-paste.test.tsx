@@ -81,6 +81,7 @@ describe("AnalyzeForm", () => {
     expect(container.textContent).toContain("No XML selected");
     expect(container.textContent).toContain("Upload Rekordbox XML");
     expect(textButton(container, "Upload")).toBeDefined();
+    expect(container.textContent).not.toContain("Remove");
     expect(container.textContent).not.toContain("Paste");
   });
 
@@ -101,18 +102,40 @@ describe("AnalyzeForm", () => {
     expect(container.textContent).toContain("collection.xml");
     expect(container.textContent).toContain("2 KB");
 
-    const useSavedButton = textButton(container, "Use saved");
     const uploadButton = textButton(container, "Upload");
-    const forgetButton = textButton(container, "Forget");
+    const removeButton = textButton(container, "Remove");
 
     await act(async () => {
-      useSavedButton.click();
-      forgetButton.click();
+      removeButton.click();
     });
 
     expect(uploadButton).toBeDefined();
-    expect(props.useSavedRekordboxXml).toHaveBeenCalledTimes(1);
     expect(props.forgetSavedRekordboxXml).toHaveBeenCalledTimes(1);
+    expect(container.textContent).not.toContain("Use saved");
+    expect(container.textContent).not.toContain("Forget");
+  });
+
+  test("renders uploaded XML with Upload and Remove actions", async () => {
+    const props = makeProps({
+      rekordboxFile: new File(["<DJ_PLAYLISTS />"], "uploaded.xml", {
+        type: "text/xml",
+      }),
+      rekordboxFilename: "uploaded.xml",
+    });
+
+    await renderForm(props);
+
+    const removeButton = textButton(container, "Remove");
+
+    await act(async () => {
+      removeButton.click();
+    });
+
+    expect(textButton(container, "Upload")).toBeDefined();
+    expect(props.setRekordboxFile).toHaveBeenCalledWith(null);
+    expect(props.forgetSavedRekordboxXml).not.toHaveBeenCalled();
+    expect(container.textContent).not.toContain("Use saved");
+    expect(container.textContent).not.toContain("Forget");
   });
 
   test("renders the playlist URL input and Analyze button", async () => {
