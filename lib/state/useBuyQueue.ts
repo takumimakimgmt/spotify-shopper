@@ -53,14 +53,22 @@ function saveQueue(items: BuyQueueItem[]) {
 }
 
 export function useBuyQueue() {
-  const [items, setItems] = useState<BuyQueueItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    return parseQueue(window.localStorage.getItem(STORAGE_KEY));
-  });
+  const [items, setItems] = useState<BuyQueueItem[]>([]);
+  const [restored, setRestored] = useState(false);
 
   useEffect(() => {
+    const restoreTimer = window.setTimeout(() => {
+      setItems(parseQueue(window.localStorage.getItem(STORAGE_KEY)));
+      setRestored(true);
+    }, 0);
+
+    return () => window.clearTimeout(restoreTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!restored) return;
     saveQueue(items);
-  }, [items]);
+  }, [items, restored]);
 
   const queuedIds = useMemo(
     () => new Set(items.map((item) => item.id)),
