@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef } from "react";
 import ProcessingBar from "./ProcessingBar";
 import ErrorAlert from "./ErrorAlert";
 import type { ProgressItem } from "./ProgressList";
@@ -64,7 +64,13 @@ function formatDateTime(value: string | number) {
 export default function AnalyzeForm(props: AnalyzeFormProps) {
   const playlistInputRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [clipboardError, setClipboardError] = useState<string | null>(null);
+  const xmlName =
+    props.rekordboxFilename ??
+    props.savedRekordboxXmlMeta?.filename ??
+    "No XML selected";
+  const hasXml = Boolean(
+    props.rekordboxFilename || props.savedRekordboxXmlMeta,
+  );
 
   const messageFromMeta = useMemo(() => {
     const m = props.errorMeta?.message;
@@ -89,47 +95,18 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
     }
     return null;
   }, [props.rekordboxFile, props.errorMeta, messageFromMeta]);
-  const clearXml = () => {
-    props.setRekordboxFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
   const replaceXml = () => {
     fileInputRef.current?.click();
   };
 
-  const handlePasteFromClipboard = async () => {
-    setClipboardError(null);
-    if (!navigator.clipboard?.readText) {
-      setClipboardError("Clipboard access blocked. Press ⌘V / Ctrl+V.");
-      playlistInputRef.current?.focus();
-      return;
-    }
-
-    try {
-      const text = (await navigator.clipboard.readText()).trim();
-      if (!text) {
-        setClipboardError("Clipboard is empty. Press ⌘V / Ctrl+V.");
-        playlistInputRef.current?.focus();
-        return;
-      }
-
-      props.setPlaylistUrlInput(text);
-      playlistInputRef.current?.focus();
-    } catch {
-      setClipboardError("Clipboard access blocked. Press ⌘V / Ctrl+V.");
-      playlistInputRef.current?.focus();
-    }
-  };
-
   return (
-    <section className="w-full max-w-4xl mx-auto p-4 space-y-4">
+    <section className="w-full space-y-8">
       {props.banner?.text ? (
         <div
-          className={`rounded-lg p-3 text-sm ${
+          className={`rounded-md border px-3 py-2 text-xs ${
             props.banner.kind === "error"
-              ? "bg-rose-950/50 border border-rose-800"
-              : "bg-slate-900/50 border border-slate-800"
+              ? "border-rose-800/70 bg-rose-950/30 text-rose-100"
+              : "border-slate-800 bg-transparent text-slate-300"
           }`}
         >
           <div className="flex items-start gap-2">
@@ -148,205 +125,115 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         </div>
       ) : null}
 
-      <form onSubmit={props.handleAnalyze} className="space-y-5">
-        <div className="space-y-3">
-          <p className="text-sm leading-6 text-slate-300">
-            Spotifyのプレイリストを、あなたのRekordboxライブラリと照合。
-            <br />
-            持っている曲を除いて、あとで買う曲だけを残せます。
-          </p>
+      <form onSubmit={props.handleAnalyze} className="space-y-8">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xml"
+          onChange={props.handleRekordboxChange}
+          className="hidden"
+        />
 
-          <ol className="grid gap-1.5 rounded-md border border-slate-800 bg-slate-900/30 p-2.5 text-xs text-slate-300 sm:grid-cols-3">
-            <li className="flex gap-2">
-              <span className="font-semibold text-slate-100">1.</span>
-              <span>Spotify URLを貼る</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="font-semibold text-slate-100">2.</span>
-              <span>XMLを使う / アップロードする</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="font-semibold text-slate-100">3.</span>
-              <span>To buyを見て、あとで買うに追加する</span>
-            </li>
-          </ol>
+        <div className="flex flex-col gap-3 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+            <span aria-hidden="true" className="text-slate-600">
+              ▫
+            </span>
+            <span className="font-medium text-slate-500">Library XML</span>
+            <span className="text-slate-700">·</span>
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                hasXml ? "bg-emerald-400" : "bg-slate-700"
+              }`}
+            />
+            <span className="truncate font-medium text-slate-300">
+              {xmlName}
+            </span>
+            <span className="truncate text-slate-600">
+              {props.savedRekordboxXmlMeta
+                ? `${formatBytes(props.savedRekordboxXmlMeta.size)} · updated ${formatDateTime(
+                    props.savedRekordboxXmlMeta.lastModified,
+                  )}`
+                : props.rekordboxDate
+                  ? `updated ${props.rekordboxDate}`
+                  : "Upload Rekordbox XML"}
+            </span>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
+            {props.savedRekordboxXmlMeta ? (
+              <button
+                type="button"
+                onClick={() => props.useSavedRekordboxXml?.()}
+                disabled={props.savedRekordboxXmlBusy}
+                className="text-slate-500 hover:text-slate-300 disabled:opacity-40"
+              >
+                Use saved
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={replaceXml}
+              disabled={props.savedRekordboxXmlBusy}
+              className="text-slate-500 hover:text-slate-300 disabled:opacity-40"
+            >
+              Upload
+            </button>
+            {props.savedRekordboxXmlMeta ? (
+              <button
+                type="button"
+                onClick={() => props.forgetSavedRekordboxXml?.()}
+                disabled={props.savedRekordboxXmlBusy}
+                className="text-slate-600 hover:text-slate-400 disabled:opacity-40"
+              >
+                Forget
+              </button>
+            ) : null}
+          </div>
         </div>
 
-        <div className="space-y-2.5">
-          <label className="block text-sm font-medium text-slate-200">
-            Playlist URL(s)
-          </label>
-          <div className="flex items-start gap-2">
+        <div className="space-y-2">
+          <div className="flex items-stretch gap-3">
             <textarea
               ref={playlistInputRef}
               value={props.playlistUrlInput}
               onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
-              rows={3}
-              placeholder="Spotify playlist URL"
-              className={`w-full rounded-md bg-slate-900 border px-3 py-2 text-sm outline-none ${
+              rows={1}
+              placeholder="Paste Spotify playlist URL"
+              className={`min-h-0 w-full resize-none rounded-lg border bg-transparent px-4 py-3 text-sm font-medium text-slate-100 outline-none placeholder:text-slate-600 ${
                 props.playlistUrlError || playlistUrlError
                   ? "border-rose-500/60"
-                  : "border-slate-700"
+                  : "border-white/10 focus:border-white/20"
               }`}
             />
             <button
-              type="button"
-              onClick={handlePasteFromClipboard}
-              className="shrink-0 px-3 py-2 rounded-md border border-slate-700 text-sm text-slate-200 hover:text-white hover:bg-slate-800"
+              type="submit"
+              disabled={
+                props.loading ||
+                !!localXmlError ||
+                !props.playlistUrlInput.trim()
+              }
+              className="min-w-36 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-200 disabled:bg-white/10 disabled:text-white/20"
             >
-              Paste
+              Analyze
             </button>
           </div>
-          <div className="text-xs text-slate-400">
-            Paste a Spotify playlist URL
-          </div>
-          <details className="rounded-md border border-slate-800 bg-slate-900/30 px-3 py-2 text-xs text-slate-400">
-            <summary className="cursor-pointer font-medium text-slate-300">
-              Spotify URL の取り方
-            </summary>
-            <ol className="mt-2 list-decimal space-y-1 pl-4">
-              <li>Spotifyでプレイリストを開く</li>
-              <li>共有メニューを開く</li>
-              <li>リンクをコピーする</li>
-            </ol>
-          </details>
-          {clipboardError ? (
-            <div className="text-xs text-rose-300">{clipboardError}</div>
-          ) : null}
           {props.playlistUrlError || playlistUrlError ? (
             <div className="text-xs text-rose-300">
               {props.playlistUrlError || playlistUrlError}
             </div>
           ) : null}
-        </div>
-
-        <div className="space-y-2.5">
-          <label className="block text-sm font-medium text-slate-200">
-            Rekordbox XML (optional)
-          </label>
-          <div className="text-xs text-slate-400">
-            Optional — attach XML to mark tracks you already own
-          </div>
-          <details className="rounded-md border border-slate-800 bg-slate-900/30 px-3 py-2 text-xs text-slate-400">
-            <summary className="cursor-pointer font-medium text-slate-300">
-              Rekordbox XML の書き出し方
-            </summary>
-            <ol className="mt-2 list-decimal space-y-1 pl-4">
-              <li>rekordboxを開く</li>
-              <li>File を開く</li>
-              <li>Export Collection in xml format を選ぶ</li>
-              <li>保存したXMLをここにアップロードする</li>
-            </ol>
-          </details>
-          <div className="flex items-center gap-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xml"
-              onChange={props.handleRekordboxChange}
-              className="block w-full text-sm text-slate-200 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-800 file:text-slate-100 hover:file:bg-slate-700"
-            />
-            {props.rekordboxFile ? (
-              <button
-                type="button"
-                onClick={clearXml}
-                className="text-xs px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white"
-              >
-                Clear
-              </button>
-            ) : null}
-          </div>
-
-          <div className="text-xs text-slate-400">
-            使用中のXML: {props.rekordboxFilename ?? "none"}
-            {props.rekordboxFilename && props.rekordboxDate
-              ? ` · ${props.rekordboxDate}`
-              : ""}
-          </div>
-          <div className="text-xs text-slate-500">今回の照合に使うXMLです</div>
-
           {localXmlError ? (
             <div className="text-xs text-rose-300">{localXmlError}</div>
           ) : null}
-
-          <div className="rounded-md border border-slate-800/70 bg-slate-950/20 p-3 text-xs text-slate-500">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <div className="font-medium text-slate-300">保存済みXML</div>
-                <div className="text-slate-500">
-                  このブラウザに保存されています
-                </div>
-                {props.savedRekordboxXmlMeta ? (
-                  <div className="pt-1 leading-5 text-slate-400">
-                    {props.savedRekordboxXmlMeta.filename} ·{" "}
-                    {formatBytes(props.savedRekordboxXmlMeta.size)}
-                    <br />
-                    Uploaded:{" "}
-                    {formatDateTime(props.savedRekordboxXmlMeta.uploadedAt)}
-                    <br />
-                    Last modified:{" "}
-                    {formatDateTime(props.savedRekordboxXmlMeta.lastModified)}
-                  </div>
-                ) : (
-                  <div className="pt-1 text-slate-400">No saved XML yet.</div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => props.useSavedRekordboxXml?.()}
-                  disabled={
-                    !props.savedRekordboxXmlMeta || props.savedRekordboxXmlBusy
-                  }
-                  className="rounded-md border border-slate-700/60 bg-transparent px-2 py-1 text-slate-400 hover:border-slate-600 hover:bg-slate-800/40 hover:text-slate-200 disabled:opacity-40"
-                >
-                  保存済みを使う
-                </button>
-                <button
-                  type="button"
-                  onClick={replaceXml}
-                  disabled={props.savedRekordboxXmlBusy}
-                  className="rounded-md border border-slate-700/60 bg-transparent px-2 py-1 text-slate-400 hover:border-slate-600 hover:bg-slate-800/40 hover:text-slate-200 disabled:opacity-40"
-                >
-                  入れ替える
-                </button>
-                <button
-                  type="button"
-                  onClick={() => props.forgetSavedRekordboxXml?.()}
-                  disabled={
-                    !props.savedRekordboxXmlMeta || props.savedRekordboxXmlBusy
-                  }
-                  className="rounded-md border border-slate-700/60 bg-transparent px-2 py-1 text-slate-400 hover:border-slate-600 hover:bg-slate-800/40 hover:text-slate-200 disabled:opacity-40"
-                >
-                  保存済みを削除
-                </button>
-              </div>
+          {props.savedRekordboxXmlError ? (
+            <div className="text-xs text-rose-300">
+              {props.savedRekordboxXmlError}
             </div>
-            {props.savedRekordboxXmlError ? (
-              <div className="mt-2 text-rose-300">
-                {props.savedRekordboxXmlError}
-              </div>
-            ) : null}
-          </div>
+          ) : null}
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-slate-200">
-          <input
-            type="checkbox"
-            className="rounded border-slate-700 bg-slate-900"
-          />
-          Unowned only
-        </label>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="submit"
-            disabled={props.loading || !!localXmlError}
-            className="rounded-md bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-950/30 ring-1 ring-emerald-300/30 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:opacity-40 disabled:shadow-none"
-          >
-            {props.isReanalyzing ? "Reanalyze" : "Analyze playlist"}
-          </button>
-
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
           {props.cancelAnalyze && props.loading ? (
             <button
               type="button"
@@ -366,10 +253,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               Retry
             </button>
           ) : null}
-
-          <span className="text-xs text-slate-400">
-            {props.rekordboxFile ? "Spotify + Rekordbox XML" : "Spotify only"}
-          </span>
         </div>
 
         {props.loading ? (
