@@ -390,8 +390,33 @@ export function usePlaylistAnalyzer() {
     try {
       await deleteSavedRekordboxXml();
       setSavedRekordboxXmlMeta(null);
+      applyRekordboxFile(null);
     } catch {
       setSavedRekordboxXmlError("Could not forget saved XML.");
+    } finally {
+      setSavedRekordboxXmlBusy(false);
+    }
+  };
+
+  const resolveActiveRekordboxFile = async (): Promise<File | null> => {
+    if (rekordboxFile) return rekordboxFile;
+    if (!savedRekordboxXmlMeta) return null;
+
+    setSavedRekordboxXmlBusy(true);
+    setSavedRekordboxXmlError(null);
+    try {
+      const saved = await getSavedRekordboxXml();
+      if (!saved) {
+        setSavedRekordboxXmlMeta(null);
+        setSavedRekordboxXmlError("No saved XML found.");
+        return null;
+      }
+      applyRekordboxFile(saved.file);
+      setSavedRekordboxXmlMeta(saved.meta);
+      return saved.file;
+    } catch {
+      setSavedRekordboxXmlError("Could not load saved XML.");
+      return null;
     } finally {
       setSavedRekordboxXmlBusy(false);
     }
@@ -580,6 +605,8 @@ export function usePlaylistAnalyzer() {
       return;
     }
 
+    const activeRekordboxFile = await resolveActiveRekordboxFile();
+
     // Initialize progress items for each URL
     setProgressItems(
       urls.map((url) => ({ url, status: "pending" as ProgressStatus })),
@@ -640,11 +667,11 @@ export function usePlaylistAnalyzer() {
         let json: unknown | null = null;
 
         const fetchOnce = async () => {
-          if (rekordboxFile) {
+          if (activeRekordboxFile) {
             return postPlaylistWithRekordboxUpload({
               url,
               source: effectiveSource,
-              file: rekordboxFile,
+              file: activeRekordboxFile,
               refresh: isForceRefresh,
               signal: abortRef.current?.signal ?? undefined,
             });
@@ -707,7 +734,7 @@ export function usePlaylistAnalyzer() {
           throw new Error("Failed to fetch playlist data");
         }
 
-        if (rekordboxFile) {
+        if (activeRekordboxFile) {
           setPhaseLabel("Matching Rekordbox");
           setProgressItems((prev) =>
             prev.map((p) =>
@@ -744,7 +771,7 @@ export function usePlaylistAnalyzer() {
             playlist_name: getStringProp(json, "playlist_name") ?? "(unknown)",
             tracks: rows,
             analyzedAt: Date.now(),
-            hasRekordboxData: !!rekordboxFile,
+            hasRekordboxData: !!activeRekordboxFile,
             meta: metaWithTiming,
           },
         ]);
@@ -882,7 +909,7 @@ export function usePlaylistAnalyzer() {
     }
 
     if (newResults.length > 0) {
-      const rbMeta = makeRekordboxMeta(rekordboxFile);
+      const rbMeta = makeRekordboxMeta(activeRekordboxFile);
       const existingUrls = new Set(newResults.map(([url]) => url));
       const filteredExisting = multiResults.filter(
         ([url]) => !existingUrls.has(url),

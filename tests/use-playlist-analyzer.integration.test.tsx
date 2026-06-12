@@ -3,15 +3,78 @@ import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { usePlaylistAnalyzer } from "@/lib/state/usePlaylistAnalyzer";
 
-const getPlaylistMock = vi.fn();
+const {
+  deleteSavedRekordboxXmlMock,
+  getPlaylistMock,
+  getSavedRekordboxXmlMetaMock,
+  getSavedRekordboxXmlMock,
+  postPlaylistWithRekordboxUploadMock,
+  saveRekordboxXmlFileMock,
+} = vi.hoisted(() => ({
+  deleteSavedRekordboxXmlMock: vi.fn(),
+  getPlaylistMock: vi.fn(),
+  getSavedRekordboxXmlMetaMock: vi.fn(),
+  getSavedRekordboxXmlMock: vi.fn(),
+  postPlaylistWithRekordboxUploadMock: vi.fn(),
+  saveRekordboxXmlFileMock: vi.fn(),
+}));
 
 vi.mock("@/lib/api/playlist", () => ({
   getPlaylist: (...args: unknown[]) => getPlaylistMock(...args),
-  postPlaylistWithRekordboxUpload: vi.fn(),
+  postPlaylistWithRekordboxUpload: (...args: unknown[]) =>
+    postPlaylistWithRekordboxUploadMock(...args),
   matchSnapshotWithXml: vi.fn(),
 }));
 
+vi.mock("@/lib/storage/savedRekordboxXml", () => ({
+  deleteSavedRekordboxXml: (...args: unknown[]) =>
+    deleteSavedRekordboxXmlMock(...args),
+  getSavedRekordboxXml: (...args: unknown[]) =>
+    getSavedRekordboxXmlMock(...args),
+  getSavedRekordboxXmlMeta: (...args: unknown[]) =>
+    getSavedRekordboxXmlMetaMock(...args),
+  saveRekordboxXmlFile: (...args: unknown[]) =>
+    saveRekordboxXmlFileMock(...args),
+}));
+
 type AnalyzerApi = ReturnType<typeof usePlaylistAnalyzer>;
+
+const spotifyPlaylistUrl = "https://open.spotify.com/playlist/abc123";
+
+function playlistResponse(overrides: Record<string, unknown> = {}) {
+  return {
+    playlist_id: "abc123",
+    playlist_name: "My Playlist",
+    playlist_url: spotifyPlaylistUrl,
+    tracks: [
+      {
+        title: "Track A",
+        artist: "Artist A",
+        album: "Album A",
+        isrc: "JP1234567890",
+        spotify_url: "https://open.spotify.com/track/track-a",
+        apple_url: null,
+        links: {
+          beatport: "https://beatport.example/track-a",
+          bandcamp: "",
+          itunes: null,
+        },
+        owned: false,
+        owned_reason: null,
+        track_key_primary: "isrc:JP1234567890",
+        track_key_fallback: "norm:track a|artist a|album a",
+        track_key_primary_type: "isrc",
+        track_key_version: "v1",
+      },
+    ],
+    meta: {
+      cache_hit: true,
+      refresh: false,
+      blocked_hint: null,
+    },
+    ...overrides,
+  };
+}
 
 function Harness(props: { onRender: (api: AnalyzerApi) => void }) {
   const api = usePlaylistAnalyzer();
@@ -43,6 +106,23 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     root = createRoot(container);
     currentApi = null;
     getPlaylistMock.mockReset();
+    postPlaylistWithRekordboxUploadMock.mockReset();
+    getSavedRekordboxXmlMetaMock.mockReset();
+    getSavedRekordboxXmlMock.mockReset();
+    saveRekordboxXmlFileMock.mockReset();
+    deleteSavedRekordboxXmlMock.mockReset();
+    getSavedRekordboxXmlMetaMock.mockResolvedValue(null);
+    getSavedRekordboxXmlMock.mockResolvedValue(null);
+    saveRekordboxXmlFileMock.mockImplementation((file: File) =>
+      Promise.resolve({
+        filename: file.name,
+        uploadedAt: "2026-06-12T00:00:00.000Z",
+        lastModified: file.lastModified,
+        size: file.size,
+        type: file.type || "text/xml",
+      }),
+    );
+    deleteSavedRekordboxXmlMock.mockResolvedValue(undefined);
     rafSpy = vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation((cb: FrameRequestCallback) => {
@@ -62,37 +142,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
   });
 
   test("loads a Spotify playlist and normalizes tracks into multiResults", async () => {
-    getPlaylistMock.mockResolvedValue({
-      playlist_id: "abc123",
-      playlist_name: "My Playlist",
-      playlist_url: "https://open.spotify.com/playlist/abc123",
-      tracks: [
-        {
-          title: "Track A",
-          artist: "Artist A",
-          album: "Album A",
-          isrc: "JP1234567890",
-          spotify_url: "https://open.spotify.com/track/track-a",
-          apple_url: null,
-          links: {
-            beatport: "https://beatport.example/track-a",
-            bandcamp: "",
-            itunes: null,
-          },
-          owned: false,
-          owned_reason: null,
-          track_key_primary: "isrc:JP1234567890",
-          track_key_fallback: "norm:track a|artist a|album a",
-          track_key_primary_type: "isrc",
-          track_key_version: "v1",
-        },
-      ],
-      meta: {
-        cache_hit: true,
-        refresh: false,
-        blocked_hint: null,
-      },
-    });
+    getPlaylistMock.mockResolvedValue(playlistResponse());
 
     await act(async () => {
       root.render(<Harness onRender={(api) => void (currentApi = api)} />);
@@ -101,9 +151,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     expect(currentApi).not.toBeNull();
 
     act(() => {
-      currentApi!.setPlaylistUrlInput(
-        "https://open.spotify.com/playlist/abc123",
-      );
+      currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl);
     });
 
     await act(async () => {
@@ -136,7 +184,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     ]);
 
     const [url, result] = currentApi!.multiResults[0];
-    expect(url).toBe("https://open.spotify.com/playlist/abc123");
+    expect(url).toBe(spotifyPlaylistUrl);
     expect(result.title).toBe("My Playlist");
     expect(result.playlist_id).toBe("abc123");
     expect(result.playlistUrl).toBe("https://open.spotify.com/playlist/abc123");
@@ -176,6 +224,169 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
         trackKeyGuess: "",
       }),
     ]);
+  });
+
+  test("uses uploaded Rekordbox XML on the main Analyze action", async () => {
+    const file = new File(["<DJ_PLAYLISTS />"], "collection.xml", {
+      type: "text/xml",
+      lastModified: Date.UTC(2026, 5, 12, 0, 0, 0),
+    });
+    postPlaylistWithRekordboxUploadMock.mockResolvedValue(
+      playlistResponse({
+        tracks: [
+          {
+            title: "Owned Track",
+            artist: "Artist A",
+            album: "Album A",
+            isrc: "JP1234567890",
+            spotify_url: "https://open.spotify.com/track/track-a",
+            apple_url: null,
+            links: { beatport: "", bandcamp: "", itunes: "" },
+            owned: true,
+            owned_reason: "rekordbox",
+            source: "rekordbox",
+            track_key_primary: "isrc:JP1234567890",
+            track_key_fallback: "norm:owned track|artist a|album a",
+            track_key_primary_type: "isrc",
+            track_key_version: "v1",
+          },
+        ],
+      }),
+    );
+
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+
+    act(() => {
+      currentApi!.setRekordboxFile(file);
+      currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl);
+    });
+
+    await act(async () => {
+      await currentApi!.handleAnalyze({
+        preventDefault() {},
+      } as FormEvent);
+    });
+
+    expect(getPlaylistMock).not.toHaveBeenCalled();
+    expect(postPlaylistWithRekordboxUploadMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: spotifyPlaylistUrl,
+        source: "spotify",
+        file,
+        refresh: false,
+        signal: expect.any(AbortSignal),
+      }),
+    );
+    expect(currentApi!.multiResults[0]?.[1]).toEqual(
+      expect.objectContaining({
+        hasRekordboxData: true,
+        rekordboxMeta: expect.objectContaining({
+          filename: "collection.xml",
+        }),
+      }),
+    );
+    expect(currentApi!.multiResults[0]?.[1].tracks[0]).toEqual(
+      expect.objectContaining({
+        owned: true,
+        ownedReason: "rekordbox",
+      }),
+    );
+  });
+
+  test("loads saved Rekordbox XML and uses it on the main Analyze action", async () => {
+    const file = new File(["<DJ_PLAYLISTS />"], "saved-collection.xml", {
+      type: "text/xml",
+      lastModified: Date.UTC(2026, 5, 11, 0, 0, 0),
+    });
+    const meta = {
+      filename: file.name,
+      uploadedAt: "2026-06-12T00:00:00.000Z",
+      lastModified: file.lastModified,
+      size: file.size,
+      type: file.type,
+    };
+    getSavedRekordboxXmlMetaMock.mockResolvedValue(meta);
+    getSavedRekordboxXmlMock.mockResolvedValue({ file, meta });
+    postPlaylistWithRekordboxUploadMock.mockResolvedValue(playlistResponse());
+
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+    await flush();
+
+    expect(currentApi!.savedRekordboxXmlMeta).toEqual(meta);
+
+    act(() => {
+      currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl);
+    });
+
+    await act(async () => {
+      await currentApi!.handleAnalyze({
+        preventDefault() {},
+      } as FormEvent);
+    });
+
+    expect(getSavedRekordboxXmlMock).toHaveBeenCalledTimes(1);
+    expect(getPlaylistMock).not.toHaveBeenCalled();
+    expect(postPlaylistWithRekordboxUploadMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: spotifyPlaylistUrl,
+        source: "spotify",
+        file,
+        refresh: false,
+        signal: expect.any(AbortSignal),
+      }),
+    );
+    expect(currentApi!.rekordboxFile).toBe(file);
+    expect(currentApi!.multiResults[0]?.[1].hasRekordboxData).toBe(true);
+    expect(currentApi!.multiResults[0]?.[1].rekordboxMeta).toEqual(
+      expect.objectContaining({ filename: "saved-collection.xml" }),
+    );
+  });
+
+  test("Forget deactivates XML so Analyze falls back to plain playlist analysis", async () => {
+    const file = new File(["<DJ_PLAYLISTS />"], "collection.xml", {
+      type: "text/xml",
+      lastModified: Date.UTC(2026, 5, 12, 0, 0, 0),
+    });
+    getPlaylistMock.mockResolvedValue(playlistResponse());
+
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+
+    act(() => {
+      currentApi!.setRekordboxFile(file);
+    });
+
+    await act(async () => {
+      await currentApi!.forgetSavedRekordboxXml();
+    });
+
+    act(() => {
+      currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl);
+    });
+
+    await act(async () => {
+      await currentApi!.handleAnalyze({
+        preventDefault() {},
+      } as FormEvent);
+    });
+
+    expect(deleteSavedRekordboxXmlMock).toHaveBeenCalledTimes(1);
+    expect(currentApi!.rekordboxFile).toBeNull();
+    expect(postPlaylistWithRekordboxUploadMock).not.toHaveBeenCalled();
+    expect(getPlaylistMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: spotifyPlaylistUrl,
+        source: "spotify",
+        refresh: false,
+        signal: expect.any(AbortSignal),
+      }),
+    );
+    expect(currentApi!.multiResults[0]?.[1].hasRekordboxData).toBe(false);
   });
 
   test("surfaces a Spotify fetch failure without inserting multiResults", async () => {

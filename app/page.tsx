@@ -349,19 +349,8 @@ function PageInner() {
               rekordboxFile={analyzer.rekordboxFile}
               setRekordboxFile={analyzer.setRekordboxFile}
               handleRekordboxChange={analyzer.handleRekordboxChange}
-              rekordboxFilename={
-                analyzer.rekordboxFile?.name ??
-                vm.currentResult?.rekordboxMeta?.filename ??
-                null
-              }
-              rekordboxDate={
-                analyzer.rekordboxDate ??
-                (vm.currentResult?.rekordboxMeta?.updatedAtISO
-                  ? new Date(
-                      vm.currentResult.rekordboxMeta.updatedAtISO,
-                    ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
-                  : null)
-              }
+              rekordboxFilename={analyzer.rekordboxFile?.name ?? null}
+              rekordboxDate={analyzer.rekordboxDate}
               savedRekordboxXmlMeta={analyzer.savedRekordboxXmlMeta}
               savedRekordboxXmlBusy={analyzer.savedRekordboxXmlBusy}
               savedRekordboxXmlError={analyzer.savedRekordboxXmlError}
