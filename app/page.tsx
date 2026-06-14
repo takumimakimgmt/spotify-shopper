@@ -332,6 +332,30 @@ function PageInner() {
       <div className="mx-auto max-w-[1024px] px-4 py-12 sm:px-6 lg:py-14">
         <div className="space-y-12">
           <section>
+            <header className="mb-8 max-w-3xl space-y-4">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                Playlist Shopper
+              </p>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                  Find tracks missing from your Rekordbox library.
+                </h1>
+                <p className="max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
+                  Paste a Spotify playlist, upload your Rekordbox XML, and see
+                  what you still need to buy.
+                </p>
+              </div>
+              <div className="space-y-2 text-sm text-slate-500">
+                <div className="font-medium text-slate-400">
+                  Who this is for
+                </div>
+                <ul className="grid gap-1 sm:grid-cols-3">
+                  <li>DJs preparing sets</li>
+                  <li>DJs converting playlists into purchase lists</li>
+                  <li>DJs checking what is already in Rekordbox</li>
+                </ul>
+              </div>
+            </header>
             {analyzer.isProcessing && (
               <div className="mb-3 rounded-md border border-emerald-400/20 bg-emerald-400/5 px-3 py-2 text-[11px] text-emerald-100/80">
                 {analyzer.phaseLabel || "Processing…"}
