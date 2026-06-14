@@ -425,13 +425,13 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     expect(currentApi!.loading).toBe(false);
     expect(currentApi!.multiResults).toEqual([]);
     expect(currentApi!.errorText).toBe(
-      "Spotifyの取得に失敗しました / Spotify request failed: backend exploded",
+      "Something went wrong. Please try again.",
     );
     expect(currentApi!.progressItems).toEqual([
       expect.objectContaining({
         url: "https://open.spotify.com/playlist/abc123",
         status: "error",
-        message: "request failed",
+        message: "Something went wrong. Please try again.",
       }),
     ]);
   });
@@ -528,7 +528,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
       }),
     );
     expect(currentApi!.errorText).toBe(
-      "Spotifyの取得に失敗しました / Spotify request failed: second playlist failed",
+      "Something went wrong. Please try again.",
     );
     expect(currentApi!.progressItems).toEqual([
       expect.objectContaining({
@@ -539,7 +539,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
       expect.objectContaining({
         url: failureUrl,
         status: "error",
-        message: "request failed",
+        message: "Something went wrong. Please try again.",
       }),
     ]);
   });
