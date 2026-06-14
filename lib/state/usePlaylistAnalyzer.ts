@@ -1,6 +1,7 @@
 "use client";
 import { normalizeMeta, normalizeTracks } from "../api/normalize";
 import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
+import { normalizeApiError, type NormalizedApiError } from "../api/errors";
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
@@ -167,6 +168,18 @@ export function categorizeTrack(track: PlaylistRow): TrackCategory {
 function mapTracks(rows: PlaylistRow[]): PlaylistRow[] {
   return rows;
 }
+
+function errorToMeta(error: NormalizedApiError) {
+  return {
+    status: error.status,
+    code: error.code,
+    error_code: error.code,
+    requestId: error.requestId,
+    retryable: error.retryable,
+    detail: error.detail,
+  };
+}
+
 const _sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -220,13 +233,11 @@ export function usePlaylistAnalyzer() {
         ),
       );
     } catch (_err) {
+      const normalized = normalizeApiError(_err);
       setMultiResults((prev) =>
         prev.map(([u, r]) =>
           u === url
-            ? [
-                u,
-                { ...r, errorText: "トラックの取得に失敗しました", tracks: [] },
-              ]
+            ? [u, { ...r, errorText: normalized.message, tracks: [] }]
             : [u, r],
         ),
       );
@@ -506,6 +517,7 @@ export function usePlaylistAnalyzer() {
     setIsReanalyzing(true);
     setLoading(false);
     setErrorText(null);
+    setErrorMeta(null);
 
     try {
       if (isBulk) {
@@ -536,6 +548,7 @@ export function usePlaylistAnalyzer() {
         }
         setMultiResults(updatedResults);
         setErrorText(null);
+        setErrorMeta(null);
         return;
       }
 
@@ -575,9 +588,12 @@ export function usePlaylistAnalyzer() {
         ),
       );
       setErrorText(null);
+      setErrorMeta(null);
     } catch (_err) {
+      const normalized = normalizeApiError(_err);
       console.error("[Re-analyze] Error:", _err);
-      setErrorText("XML照合中にエラーが発生しました");
+      setErrorMeta(errorToMeta(normalized));
+      setErrorText(normalized.message);
     } finally {
       setIsReanalyzing(false);
       setReAnalyzeUrl(null);
@@ -588,6 +604,7 @@ export function usePlaylistAnalyzer() {
   const handleAnalyze = async (e: FormEvent) => {
     e.preventDefault();
     setErrorText(null);
+    setErrorMeta(null);
     setPhaseLabel("Preparing");
     // Use forceRefreshHint from state (set by button onClick) instead of unreliable FormEvent.shiftKey
     const isForceRefresh = forceRefreshHint;
@@ -660,6 +677,26 @@ export function usePlaylistAnalyzer() {
         const isIdOnly = /^[A-Za-z0-9]{22}$/.test(url);
         if (!isSpotifyPlaylistUrl && !isSpotifyUri && !isIdOnly) {
           hasError = true;
+          setErrorText("Enter a valid Spotify playlist URL.");
+          setErrorMeta(
+            errorToMeta({
+              message: "Enter a valid Spotify playlist URL.",
+              code: "PLAYLIST_INVALID",
+              detail: { url: url.substring(0, 80) },
+              retryable: false,
+            }),
+          );
+          setProgressItems((prev) =>
+            prev.map((p) =>
+              p.url === url
+                ? {
+                    ...p,
+                    status: "error",
+                    message: "Invalid Spotify playlist URL",
+                  }
+                : p,
+            ),
+          );
           continue;
         }
 
@@ -801,11 +838,10 @@ export function usePlaylistAnalyzer() {
         });
       } catch (_err: any) {
         hasError = true;
-        // Short error message for progress list
-        const errShort =
-          typeof _err?.message === "string" ? _err.message : "request failed";
+        const normalized = normalizeApiError(_err);
+        const progressMessage = normalized.code ?? normalized.message;
         const reasonTag = false /* apple disabled */
-          ? classifyAppleError(_err?.data?.detail?.error || errShort)
+          ? classifyAppleError(String(normalized.detail ?? progressMessage))
           : null;
         setProgressItems((prev) =>
           prev.map((p) =>
@@ -813,98 +849,19 @@ export function usePlaylistAnalyzer() {
               ? {
                   ...p,
                   status: "error",
-                  message: reasonTag ? `${reasonTag}` : errShort,
+                  message: reasonTag ? `${reasonTag}` : progressMessage,
                 }
               : p,
           ),
         );
-        if (_err?.data?.detail) {
-          const detail = _err.data.detail;
-          const usedSource =
-            typeof detail?.used_source === "string"
-              ? detail.used_source
-              : undefined;
-          const errText =
-            typeof detail?.error === "string" ? detail.error : undefined;
-          const metaFromApi = detail?.meta;
-
-          // Normalize empty objects to null, but always provide minimum context
-          const normalizedMeta =
-            metaFromApi &&
-            typeof metaFromApi === "object" &&
-            Object.keys(metaFromApi).length > 0
-              ? metaFromApi
-              : null;
-
-          const detectedSource = detectSourceFromUrl(url) || "spotify";
-          const minimalContext = {
-            url: url.substring(0, 80),
-            source: usedSource || detectedSource,
-            refresh: isForceRefresh ? 1 : 0,
-            reason: reasonTag || undefined,
-          };
-
-          setErrorMeta(normalizedMeta ?? minimalContext);
-          if (usedSource === "spotify") {
-            if (errText) {
-              const lower = errText.toLowerCase();
-              const isPersonalized =
-                lower.includes("personalized") ||
-                lower.includes("private") ||
-                lower.includes("daily mix") ||
-                lower.includes("blend");
-              const isOfficial =
-                lower.includes("official editorial") ||
-                lower.includes("owner=spotify") ||
-                lower.includes("region-restricted") ||
-                lower.includes("region-locked") ||
-                lower.includes("tried markets") ||
-                lower.includes("37i9") ||
-                lower.includes("create a new public playlist");
-              if (isPersonalized && !isOfficial) {
-                setErrorText(
-                  "【日本語】\nこのSpotifyプレイリストはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\nワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。\n\n【English】\nThis Spotify playlist is personalized/private and cannot be accessed with client credentials.\nWorkaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.",
-                );
-              } else if (isPersonalized && isOfficial) {
-                setErrorText(
-                  "【日本語】\nこのSpotifyプレイリストは公式編集プレイリスト（37i9で始まるID）またはパーソナライズ/非公開のため、クライアントクレデンシャルでは取得できません。\nワークアラウンド: 新しい自分の公開プレイリストを作成し、元のプレイリストから全曲をコピーした上で、その新しいURLを指定してください。\n\n【English】\nThis Spotify playlist is an official editorial playlist (ID starts with 37i9) or personalized/private and cannot be accessed with client credentials.\nWorkaround: Create a new public playlist in your account, copy all tracks from the original playlist, and use the new URL.",
-                );
-              } else if (isOfficial) {
-                setErrorText(
-                  "【日本語】\nこのSpotifyの公式/編集プレイリスト（37i9で始まるID）は、地域制限や提供条件により取得できない場合があります。\nワークアラウンド: Spotifyで新しい自分の公開プレイリストを作成し、元プレイリストの曲を全てコピー、そのURLで解析してください。\n\n【English】\nThis Spotify official/editorial playlist (ID starts with 37i9) cannot be accessed due to regional restrictions or availability conditions.\nWorkaround: Create a new public playlist in Spotify, copy all tracks from the original, and use that URL for analysis.",
-                );
-              } else {
-                setErrorText(
-                  "Spotifyの取得に失敗しました / Spotify request failed: " +
-                    errText,
-                );
-              }
-            } else {
-              setErrorText("Spotifyの取得に失敗しました（詳細不明）");
-            }
-          } else {
-            // 2-3: Musicエラー詳細化
-            const base = errText || "プレイリストの取得に失敗しました";
-            const reasonSuffix =
-              false /* apple disabled */ && reasonTag ? ` (${reasonTag})` : "";
-            let hint = "";
-            if (false /* apple disabled */) {
-              if (reasonTag === "timeout") {
-                hint =
-                  "\n取得元が遅い/失敗しやすい場合があります。単体URLでRetry推奨。時間をおいて再試行してください。";
-              } else if (reasonTag === "region") {
-                hint = "\n地域制限・提供条件により取得できない場合があります。";
-              } else if (reasonTag === "bot-suspected") {
-                hint =
-                  "\n取得元側でbot判定・CAPTCHA等によりブロックされている可能性があります。時間をおいて再試行してください。";
-              }
-            }
-            setErrorText(base + reasonSuffix + hint);
-          }
-        } else {
-          const hint = reasonTag ? ` (${reasonTag})` : "";
-          setErrorText(`プレイリストの取得に失敗しました${hint}`);
-        }
+        setErrorMeta({
+          ...errorToMeta(normalized),
+          url: url.substring(0, 80),
+          source: detectSourceFromUrl(url) || "spotify",
+          refresh: isForceRefresh ? 1 : 0,
+          reason: reasonTag || undefined,
+        });
+        setErrorText(normalized.message);
       }
     }
 
