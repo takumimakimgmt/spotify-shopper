@@ -18,6 +18,7 @@ function makeProps(
     loading: false,
     isReanalyzing: false,
     progress: 0,
+    phaseLabel: null,
     errorText: null,
     errorMeta: undefined,
     banner: null,
@@ -189,5 +190,33 @@ describe("AnalyzeForm", () => {
     );
 
     expect(textButton(container, "Analyze").disabled).toBe(false);
+  });
+
+  test("shows indeterminate Spotify fetch feedback while analysis is running", async () => {
+    const cancelAnalyze = vi.fn();
+
+    await renderForm(
+      makeProps({
+        playlistUrlInput: "https://open.spotify.com/playlist/abc123",
+        loading: true,
+        progress: 35,
+        phaseLabel: "Fetching Spotify...",
+        cancelAnalyze,
+      }),
+    );
+
+    expect(container.textContent).toContain("Fetching Spotify...");
+    expect(container.textContent).toContain(
+      "First run can take a few seconds while the server wakes up.",
+    );
+    expect(container.textContent).toContain("Working...");
+    expect(container.textContent).not.toContain("35%");
+    expect(textButton(container, "Analyze").disabled).toBe(true);
+
+    await act(async () => {
+      textButton(container, "Cancel").click();
+    });
+
+    expect(cancelAnalyze).toHaveBeenCalledTimes(1);
   });
 });

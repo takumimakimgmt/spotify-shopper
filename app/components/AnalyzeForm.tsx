@@ -24,6 +24,7 @@ export interface AnalyzeFormProps {
   loading: boolean;
   isReanalyzing: boolean;
   progress: number;
+  phaseLabel?: string | null;
 
   errorText: string | null;
   errorMeta?: ErrorMeta;
@@ -259,6 +260,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               analyzing={props.loading}
               reanalyzing={props.isReanalyzing}
               progress={props.progress}
+              phaseLabel={props.phaseLabel}
             />
           </div>
         ) : null}
