@@ -359,9 +359,6 @@ function PageInner() {
             {analyzer.isProcessing && (
               <div className="mb-3 rounded-md border border-emerald-400/20 bg-emerald-400/5 px-3 py-2 text-[11px] text-emerald-100/80">
                 {analyzer.phaseLabel || "Processing…"}
-                {analyzer.progress < 10 && (
-                  <span className="text-slate-400"> Server starting up…</span>
-                )}
               </div>
             )}
             <AnalyzeForm
@@ -381,6 +378,7 @@ function PageInner() {
               loading={analyzer.loading}
               isReanalyzing={analyzer.isReanalyzing}
               progress={analyzer.progress}
+              phaseLabel={analyzer.phaseLabel}
               errorText={analyzer.errorText}
               errorMeta={analyzer.errorMeta}
               progressItems={analyzer.progressItems}

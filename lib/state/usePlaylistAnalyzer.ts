@@ -657,7 +657,7 @@ export function usePlaylistAnalyzer() {
         if (isApplePlaylistUrl) {
           effectiveSource = "spotify";
         }
-        setPhaseLabel("Fetching Spotify");
+        setPhaseLabel("Fetching Spotify...");
         setProgressItems((prev) =>
           prev.map((p) =>
             p.url === url
