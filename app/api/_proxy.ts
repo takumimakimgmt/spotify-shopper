@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import net from "node:net";
-import { z } from "zod";
 
 type ErrorShape = {
   error: string;
@@ -13,6 +12,10 @@ type ErrorShape = {
 };
 
 const OPEN_SPOTIFY_HOST = ["open", "spotify", "com"].join(".");
+const SPOTIFY_PLAYLIST_ID_RE = /^[A-Za-z0-9]{22}$/;
+const SPOTIFY_PLAYLIST_URI_RE = /^spotify:playlist:[A-Za-z0-9]{22}$/;
+const INVALID_SPOTIFY_PLAYLIST_MESSAGE =
+  "Enter a valid Spotify playlist URL, URI, or playlist ID.";
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -214,59 +217,38 @@ function checkRateLimit(
   return { ok: true };
 }
 
-// --- Gate-1 / FE-1: zod boundary validation for incoming query params ---
-const PlaylistUrlParamSchema = z.string().trim().min(1).url();
-
 type PlaylistUrlParamValidation = { ok: true } | { ok: false; message: string };
 
-function validatePlaylistUrlParam(
+export function validateSpotifyPlaylistInput(
   raw: string | null,
 ): PlaylistUrlParamValidation {
-  const parsed = PlaylistUrlParamSchema.safeParse(raw);
-  if (!parsed.success) {
-    return { ok: false, message: "Invalid url parameter" };
-  }
-  // keep existing domain/format rules in legacy validator
-  return validatePlaylistUrlParamLegacy(parsed.data);
-}
-
-function validatePlaylistUrlParamLegacy(
-  raw: string | null,
-): { ok: true } | { ok: false; message: string } {
-  if (!raw) return { ok: false, message: "Missing required query param: url" };
+  if (!raw) return { ok: false, message: INVALID_SPOTIFY_PLAYLIST_MESSAGE };
   if (raw.length > 2048) return { ok: false, message: "url is too long" };
 
   const trimmed = raw.trim();
-  if (trimmed.startsWith("spotify:playlist:")) return { ok: true };
+  if (!trimmed) return { ok: false, message: INVALID_SPOTIFY_PLAYLIST_MESSAGE };
+  if (SPOTIFY_PLAYLIST_ID_RE.test(trimmed)) return { ok: true };
+  if (SPOTIFY_PLAYLIST_URI_RE.test(trimmed)) return { ok: true };
 
   let u: URL;
   try {
     u = new URL(trimmed);
   } catch {
-    return { ok: false, message: "url must be a valid URL" };
+    return { ok: false, message: INVALID_SPOTIFY_PLAYLIST_MESSAGE };
   }
 
   if (u.protocol !== "https:" && u.protocol !== "http:") {
-    return { ok: false, message: "url must be http/https" };
+    return { ok: false, message: INVALID_SPOTIFY_PLAYLIST_MESSAGE };
   }
 
   const host = u.hostname.toLowerCase();
   if (host !== OPEN_SPOTIFY_HOST) {
-    const allowApple =
-      (process.env.ALLOW_APPLE_MUSIC ?? "").toLowerCase() === "true";
-    if (
-      !(
-        allowApple &&
-        (host === "music.apple.com" || host === "itunes.apple.com")
-      )
-    ) {
-      return { ok: false, message: "url host is not allowed" };
-    }
+    return { ok: false, message: INVALID_SPOTIFY_PLAYLIST_MESSAGE };
   }
 
-  if (host === OPEN_SPOTIFY_HOST) {
-    const m = u.pathname.match(/^\/playlist\/[A-Za-z0-9]+/);
-    if (!m) return { ok: false, message: "url must be a Spotify playlist URL" };
+  const [, type, id] = u.pathname.split("/");
+  if (type !== "playlist" || !id || !SPOTIFY_PLAYLIST_ID_RE.test(id)) {
+    return { ok: false, message: INVALID_SPOTIFY_PLAYLIST_MESSAGE };
   }
 
   return { ok: true };
@@ -345,7 +327,7 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
 
   const incomingUrl = new URL(req.url);
   if (incomingUrl.searchParams.has("url")) {
-    const v = validatePlaylistUrlParam(incomingUrl.searchParams.get("url"));
+    const v = validateSpotifyPlaylistInput(incomingUrl.searchParams.get("url"));
     if (!v.ok) {
       return NextResponse.json(
         {
