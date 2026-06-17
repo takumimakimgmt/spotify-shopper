@@ -1,4 +1,5 @@
 import type { ZodTypeAny } from "zod";
+import { normalizeApiError } from "./errors";
 
 export class SchemaMismatch extends Error {
   issues: unknown;
@@ -119,16 +120,20 @@ export async function fetchJson<T>(
   const url = resolveApiUrl(path);
   const res = await fetchWithRetry(url, init);
   const text = await res.text();
-  const raw = text ? (JSON.parse(text) as unknown) : {};
+  let raw: unknown = {};
+  try {
+    raw = text ? (JSON.parse(text) as unknown) : {};
+  } catch {
+    raw = text;
+  }
   if (!res.ok) {
-    throw { status: res.status, data: raw };
+    throw normalizeApiError({ status: res.status, data: raw });
   }
   if (!schema) return raw as T;
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
-    throw new SchemaMismatch(
-      "API response schema mismatch",
-      parsed.error.issues,
+    throw normalizeApiError(
+      new SchemaMismatch("API response schema mismatch", parsed.error.issues),
     );
   }
   return parsed.data as T;
