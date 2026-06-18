@@ -436,6 +436,43 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     ]);
   });
 
+  test("Cancel aborts the request without showing a generic failure", async () => {
+    let requestSignal: AbortSignal | undefined;
+    getPlaylistMock.mockImplementation(
+      ({ signal }: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          requestSignal = signal;
+          signal?.addEventListener("abort", () => reject(signal.reason));
+        }),
+    );
+
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+    act(() => {
+      currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl);
+    });
+
+    let analysis: Promise<void>;
+    act(() => {
+      analysis = currentApi!.handleAnalyze({
+        preventDefault() {},
+      } as FormEvent);
+    });
+    await flush();
+    act(() => {
+      currentApi!.cancelAnalyze();
+    });
+    await act(async () => {
+      await analysis!;
+    });
+
+    expect(requestSignal?.aborted).toBe(true);
+    expect(currentApi!.loading).toBe(false);
+    expect(currentApi!.progressItems).toEqual([]);
+    expect(currentApi!.errorText).toBeNull();
+  });
+
   test("keeps only the successful result during a mixed multi-URL run", async () => {
     const successUrl = "https://open.spotify.com/playlist/success123";
     const failureUrl = "https://open.spotify.com/playlist/failure456";
