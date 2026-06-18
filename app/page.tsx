@@ -338,7 +338,7 @@ function PageInner() {
               </p>
               <div className="space-y-3">
                 <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                  Find tracks missing from your Rekordbox library.
+                  Find missing tracks in Rekordbox.
                 </h1>
                 <p className="max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
                   Paste a Spotify playlist, upload your Rekordbox XML, and see
@@ -349,10 +349,10 @@ function PageInner() {
                 <div className="font-medium text-slate-400">
                   Who this is for
                 </div>
-                <ul className="grid gap-1 sm:grid-cols-3">
-                  <li>DJs preparing sets</li>
-                  <li>DJs converting playlists into purchase lists</li>
-                  <li>DJs checking what is already in Rekordbox</li>
+                <ul className="grid max-w-xl gap-x-6 gap-y-1 sm:grid-cols-3">
+                  <li className="whitespace-nowrap">Set prep</li>
+                  <li className="whitespace-nowrap">Purchase lists</li>
+                  <li className="whitespace-nowrap">Library checks</li>
                 </ul>
               </div>
             </header>
