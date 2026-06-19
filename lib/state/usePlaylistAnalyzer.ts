@@ -634,7 +634,8 @@ export function usePlaylistAnalyzer() {
         abortRef.current.abort();
       } catch {}
     }
-    abortRef.current = new AbortController();
+    const requestController = new AbortController();
+    abortRef.current = requestController;
     const localRequestId = requestIdRef.current + 1;
     requestIdRef.current = localRequestId;
 
@@ -710,14 +711,14 @@ export function usePlaylistAnalyzer() {
               source: effectiveSource,
               file: activeRekordboxFile,
               refresh: isForceRefresh,
-              signal: abortRef.current?.signal ?? undefined,
+              signal: requestController.signal,
             });
           }
           return getPlaylist({
             url,
             source: effectiveSource,
             refresh: isForceRefresh,
-            signal: abortRef.current?.signal ?? undefined,
+            signal: requestController.signal,
           });
         };
 
@@ -837,6 +838,12 @@ export function usePlaylistAnalyzer() {
           });
         });
       } catch (_err: any) {
+        if (
+          requestController.signal.aborted ||
+          localRequestId !== requestIdRef.current
+        ) {
+          break;
+        }
         hasError = true;
         const normalized = normalizeApiError(_err);
         const progressMessage = normalized.code ?? normalized.message;
@@ -864,6 +871,8 @@ export function usePlaylistAnalyzer() {
         setErrorText(normalized.message);
       }
     }
+
+    if (localRequestId !== requestIdRef.current) return;
 
     if (newResults.length > 0) {
       const rbMeta = makeRekordboxMeta(activeRekordboxFile);
@@ -1053,6 +1062,7 @@ export function usePlaylistAnalyzer() {
   };
 
   const cancelAnalyze = () => {
+    requestIdRef.current += 1;
     try {
       abortRef.current?.abort();
     } catch {

@@ -18,17 +18,33 @@ function isRetryableStatus(status: number): boolean {
   return status === 429 || status === 502 || status === 503 || status === 504;
 }
 
-async function fetchWithTimeout(
+export async function fetchWithTimeout(
   url: string,
   init: RequestInit,
   timeoutMs: number,
 ): Promise<Response> {
   const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), timeoutMs);
+  const callerSignal = init.signal;
+  const forwardCallerAbort = () => controller.abort(callerSignal?.reason);
+
+  if (callerSignal?.aborted) {
+    forwardCallerAbort();
+  } else {
+    callerSignal?.addEventListener("abort", forwardCallerAbort, { once: true });
+  }
+
+  const t = setTimeout(
+    () =>
+      controller.abort(
+        new DOMException("The operation timed out", "AbortError"),
+      ),
+    timeoutMs,
+  );
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(t);
+    callerSignal?.removeEventListener("abort", forwardCallerAbort);
   }
 }
 
@@ -55,6 +71,7 @@ export async function fetchWithRetry(
       continue;
     } catch (e) {
       lastErr = e;
+      if (init.signal?.aborted) throw e;
       if (attempt === retries) throw e;
 
       const base = 400 * Math.pow(2, attempt);
