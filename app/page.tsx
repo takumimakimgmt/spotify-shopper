@@ -356,11 +356,6 @@ function PageInner() {
                 </ul>
               </div>
             </header>
-            {analyzer.isProcessing && (
-              <div className="mb-3 rounded-md border border-emerald-400/20 bg-emerald-400/5 px-3 py-2 text-[11px] text-emerald-100/80">
-                {analyzer.phaseLabel || "Processing…"}
-              </div>
-            )}
             <AnalyzeForm
               playlistUrlInput={analyzer.playlistUrlInput}
               setPlaylistUrlInput={analyzer.setPlaylistUrlInput}

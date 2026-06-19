@@ -205,7 +205,9 @@ describe("AnalyzeForm", () => {
       }),
     );
 
-    expect(container.textContent).toContain("Fetching Spotify...");
+    expect(
+      container.textContent?.match(/Fetching Spotify\.\.\./g),
+    ).toHaveLength(1);
     expect(container.textContent).toContain(
       "First run can take a few seconds while the server wakes up.",
     );
