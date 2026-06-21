@@ -1,15 +1,14 @@
 import { describe, expect, test } from "vitest";
 import { validateSpotifyPlaylistInput } from "@/app/api/_proxy";
 
-const playlistId = "6ImtrR8i2iwQrk2jrdRGOo";
-const invalidMessage =
-  "Enter a valid Spotify playlist URL, URI, or playlist ID.";
+const playlistId = "588N4Kt4446o660ARpswUD";
+const invalidMessage = "Enter a Spotify playlist URL, URI, or ID.";
 
 describe("validateSpotifyPlaylistInput", () => {
   test.each([
     [
       "full URL with query string",
-      `https://open.spotify.com/playlist/${playlistId}?si=abc123`,
+      `https://open.spotify.com/playlist/${playlistId}?si=99a8b205eabf4bb0`,
     ],
     [
       "full URL without query string",

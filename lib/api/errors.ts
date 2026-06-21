@@ -103,7 +103,7 @@ function userMessage(input: {
       raw,
     )
   ) {
-    return "Enter a valid Spotify playlist URL.";
+    return "Enter a Spotify playlist URL, URI, or ID.";
   }
 
   if (/xml|rekordbox|match_snapshot|matching/.test(raw)) {

@@ -221,4 +221,24 @@ describe("AnalyzeForm", () => {
 
     expect(cancelAnalyze).toHaveBeenCalledTimes(1);
   });
+
+  test("shows invalid playlist errors beside the input", async () => {
+    await renderForm(
+      makeProps({
+        playlistUrlInput:
+          "https://open.spotify.com/album/588N4Kt4446o660ARpswUD",
+        errorText: "Enter a Spotify playlist URL, URI, or ID.",
+        errorMeta: {
+          error_code: "PLAYLIST_INVALID",
+          message: "Enter a Spotify playlist URL, URI, or ID.",
+        },
+      }),
+    );
+
+    expect(container.textContent).toContain("Invalid playlist input");
+    expect(container.textContent).toContain(
+      "Enter a Spotify playlist URL, URI, or ID.",
+    );
+    expect(container.textContent).not.toContain("Show refresh tips");
+  });
 });

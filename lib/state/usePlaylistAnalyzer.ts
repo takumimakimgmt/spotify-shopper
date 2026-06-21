@@ -3,6 +3,26 @@ import { normalizeMeta, normalizeTracks } from "../api/normalize";
 import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
 import { normalizeApiError, type NormalizedApiError } from "../api/errors";
 
+const INVALID_PLAYLIST_MESSAGE = "Enter a Spotify playlist URL, URI, or ID.";
+
+function isSpotifyPlaylistInput(value: string): boolean {
+  if (/^spotify:playlist:[A-Za-z0-9]{22}$/i.test(value)) return true;
+  if (/^[A-Za-z0-9]{22}$/.test(value)) return true;
+
+  try {
+    const url = new URL(value);
+    const [, type, id] = url.pathname.split("/");
+    return (
+      (url.protocol === "https:" || url.protocol === "http:") &&
+      url.hostname.toLowerCase() === "open.spotify.com" &&
+      type === "playlist" &&
+      Boolean(id)
+    );
+  } catch {
+    return false;
+  }
+}
+
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
 }
@@ -622,6 +642,21 @@ export function usePlaylistAnalyzer() {
       return;
     }
 
+    const invalidUrl = urls.find((url) => !isSpotifyPlaylistInput(url));
+    if (invalidUrl) {
+      setErrorText(INVALID_PLAYLIST_MESSAGE);
+      setErrorMeta(
+        errorToMeta({
+          message: INVALID_PLAYLIST_MESSAGE,
+          code: "PLAYLIST_INVALID",
+          detail: { url: invalidUrl.substring(0, 80) },
+          retryable: false,
+        }),
+      );
+      setPhaseLabel(null);
+      return;
+    }
+
     const activeRekordboxFile = await resolveActiveRekordboxFile();
 
     // Initialize progress items for each URL
@@ -670,36 +705,6 @@ export function usePlaylistAnalyzer() {
               : p,
           ),
         );
-
-        const isSpotifyPlaylistUrl = /open\.spotify\.com\/.*playlist\//i.test(
-          url,
-        );
-        const isSpotifyUri = /^spotify:playlist:[A-Za-z0-9]{22}$/i.test(url);
-        const isIdOnly = /^[A-Za-z0-9]{22}$/.test(url);
-        if (!isSpotifyPlaylistUrl && !isSpotifyUri && !isIdOnly) {
-          hasError = true;
-          setErrorText("Enter a valid Spotify playlist URL.");
-          setErrorMeta(
-            errorToMeta({
-              message: "Enter a valid Spotify playlist URL.",
-              code: "PLAYLIST_INVALID",
-              detail: { url: url.substring(0, 80) },
-              retryable: false,
-            }),
-          );
-          setProgressItems((prev) =>
-            prev.map((p) =>
-              p.url === url
-                ? {
-                    ...p,
-                    status: "error",
-                    message: "Invalid Spotify playlist URL",
-                  }
-                : p,
-            ),
-          );
-          continue;
-        }
 
         const t2_api_start = performance.now();
         let json: unknown | null = null;

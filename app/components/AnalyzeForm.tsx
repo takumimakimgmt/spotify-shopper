@@ -81,7 +81,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const playlistUrlError = useMemo(() => {
     const code = props.errorMeta?.error_code;
     if (code === "PLAYLIST_INVALID")
-      return messageFromMeta ?? "Invalid playlist URL";
+      return messageFromMeta ?? "Enter a Spotify playlist URL, URI, or ID.";
     return null;
   }, [props.errorMeta, messageFromMeta]);
 
@@ -219,7 +219,8 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </div>
           {props.playlistUrlError || playlistUrlError ? (
             <div className="text-xs text-rose-300">
-              {props.playlistUrlError || playlistUrlError}
+              <div className="font-semibold">Invalid playlist input</div>
+              <div>{props.playlistUrlError || playlistUrlError}</div>
             </div>
           ) : null}
           {localXmlError ? (
@@ -265,7 +266,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </div>
         ) : null}
 
-        {props.errorText ? (
+        {props.errorText && !playlistUrlError ? (
           <div className="pt-2">
             <ErrorAlert
               title="Error"

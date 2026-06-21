@@ -15,7 +15,7 @@ const OPEN_SPOTIFY_HOST = ["open", "spotify", "com"].join(".");
 const SPOTIFY_PLAYLIST_ID_RE = /^[A-Za-z0-9]{22}$/;
 const SPOTIFY_PLAYLIST_URI_RE = /^spotify:playlist:[A-Za-z0-9]{22}$/;
 const INVALID_SPOTIFY_PLAYLIST_MESSAGE =
-  "Enter a valid Spotify playlist URL, URI, or playlist ID.";
+  "Enter a Spotify playlist URL, URI, or ID.";
 
 const HOP_BY_HOP = new Set([
   "connection",
