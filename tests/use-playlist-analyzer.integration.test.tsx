@@ -226,6 +226,33 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     ]);
   });
 
+  test("rejects a Spotify album URL before analysis starts", async () => {
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+
+    act(() => {
+      currentApi!.setPlaylistUrlInput(
+        "https://open.spotify.com/album/588N4Kt4446o660ARpswUD",
+      );
+    });
+
+    await act(async () => {
+      await currentApi!.handleAnalyze({ preventDefault() {} } as FormEvent);
+    });
+
+    expect(currentApi!.loading).toBe(false);
+    expect(currentApi!.phaseLabel).toBeNull();
+    expect(currentApi!.errorText).toBe(
+      "Enter a Spotify playlist URL, URI, or ID.",
+    );
+    expect(currentApi!.errorMeta).toEqual(
+      expect.objectContaining({ error_code: "PLAYLIST_INVALID" }),
+    );
+    expect(getPlaylistMock).not.toHaveBeenCalled();
+    expect(postPlaylistWithRekordboxUploadMock).not.toHaveBeenCalled();
+  });
+
   test("uses uploaded Rekordbox XML on the main Analyze action", async () => {
     const file = new File(["<DJ_PLAYLISTS />"], "collection.xml", {
       type: "text/xml",

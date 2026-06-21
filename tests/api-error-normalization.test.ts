@@ -22,7 +22,7 @@ describe("normalizeApiError", () => {
         },
       }),
     ).toMatchObject({
-      message: "Enter a valid Spotify playlist URL.",
+      message: "Enter a Spotify playlist URL, URI, or ID.",
       status: 400,
       detail: {
         error: "url must be a Spotify playlist URL",
