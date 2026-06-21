@@ -83,7 +83,10 @@ describe("AnalyzeForm", () => {
     expect(container.textContent).toContain("Upload Rekordbox XML");
     expect(textButton(container, "Upload")).toBeDefined();
     expect(container.textContent).not.toContain("Remove");
-    expect(container.textContent).not.toContain("Paste");
+    expect(container.textContent).toContain("Need your Rekordbox XML?");
+    expect(container.textContent).toContain(
+      "Export your Rekordbox collection as XML, then upload it here.",
+    );
   });
 
   test("renders saved XML metadata and saved XML actions", async () => {
