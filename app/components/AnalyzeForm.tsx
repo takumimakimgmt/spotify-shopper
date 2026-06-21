@@ -15,6 +15,9 @@ type ErrorMeta = {
 
 export interface AnalyzeFormProps {
   playlistUrlInput: string;
+  activePlaylistInput?: string | null;
+  activePlaylistId?: string | null;
+  queryPlaylist?: string | null;
   rekordboxFile: File | null;
   rekordboxDate?: string | null;
   rekordboxFilename?: string | null;
@@ -113,6 +116,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
     <section className="w-full space-y-8">
       <MobileDesktopHandoff
         playlistInput={props.playlistUrlInput}
+        activePlaylistInput={props.activePlaylistInput}
+        activePlaylistId={props.activePlaylistId}
+        queryPlaylist={props.queryPlaylist}
         focusPlaylistInput={() => playlistInputRef.current?.focus()}
       />
       {props.banner?.text ? (

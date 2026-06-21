@@ -3,14 +3,23 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildDesktopHandoffLink,
-  isValidSpotifyPlaylistInput,
+  getHandoffPlaylistSource,
+  hasHandoffPlaylistSource,
 } from "@/lib/utils/desktopHandoff";
 
 export default function MobileDesktopHandoff({
+  handoffInput,
   playlistInput,
+  activePlaylistInput,
+  activePlaylistId,
+  queryPlaylist,
   focusPlaylistInput,
 }: {
+  handoffInput?: string | null;
   playlistInput: string;
+  activePlaylistInput?: string | null;
+  activePlaylistId?: string | null;
+  queryPlaylist?: string | null;
   focusPlaylistInput: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -21,11 +30,21 @@ export default function MobileDesktopHandoff({
     },
     [],
   );
-  const valid = isValidSpotifyPlaylistInput(playlistInput);
+  const playlistSources = {
+    handoffInput,
+    playlistInput,
+    activePlaylist: {
+      sourceInput: activePlaylistInput,
+      id: activePlaylistId,
+    },
+    queryPlaylist,
+  };
+  const sourcePlaylistInput = getHandoffPlaylistSource(playlistSources);
+  const hasPlaylistSource = hasHandoffPlaylistSource(playlistSources);
   const desktopLink = useMemo(() => {
-    if (!valid || typeof window === "undefined") return "";
-    return buildDesktopHandoffLink(window.location.origin, playlistInput);
-  }, [playlistInput, valid]);
+    if (!sourcePlaylistInput || typeof window === "undefined") return "";
+    return buildDesktopHandoffLink(window.location.origin, sourcePlaylistInput);
+  }, [sourcePlaylistInput]);
 
   const copyDesktopLink = async () => {
     if (!desktopLink) return;
@@ -83,11 +102,11 @@ export default function MobileDesktopHandoff({
           Email to myself
         </a>
       </div>
-      {!playlistInput.trim() ? (
+      {!hasPlaylistSource ? (
         <p className="mt-3 text-xs text-slate-400">
           Paste a playlist first to create your desktop link.
         </p>
-      ) : !valid ? (
+      ) : !sourcePlaylistInput ? (
         <p className="mt-3 text-xs text-rose-300">
           Enter a valid Spotify playlist URL, URI, or ID first.
         </p>

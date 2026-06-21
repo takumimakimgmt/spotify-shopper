@@ -25,6 +25,50 @@ export function buildDesktopHandoffLink(origin: string, input: string): string {
   return `${origin}?playlist=${encodeURIComponent(input.trim())}`;
 }
 
+export type HandoffPlaylistSources = {
+  handoffInput?: string | null;
+  playlistInput?: string | null;
+  activePlaylist?: {
+    sourceInput?: string | null;
+    playlistInput?: string | null;
+    id?: string | null;
+  } | null;
+  queryPlaylist?: string | null;
+};
+
+function handoffPlaylistCandidates({
+  handoffInput,
+  playlistInput,
+  activePlaylist,
+  queryPlaylist,
+}: HandoffPlaylistSources) {
+  return [
+    handoffInput,
+    playlistInput,
+    activePlaylist?.sourceInput,
+    activePlaylist?.playlistInput,
+    activePlaylist?.id,
+    queryPlaylist,
+  ];
+}
+
+export function hasHandoffPlaylistSource(sources: HandoffPlaylistSources) {
+  return handoffPlaylistCandidates(sources).some((candidate) =>
+    Boolean(candidate?.trim()),
+  );
+}
+
+export function getHandoffPlaylistSource(
+  sources: HandoffPlaylistSources,
+): string | null {
+  for (const candidate of handoffPlaylistCandidates(sources)) {
+    const source = candidate?.trim();
+    if (source && isValidSpotifyPlaylistInput(source)) return source;
+  }
+
+  return null;
+}
+
 export function playlistFromSearchParams(
   searchParams: Pick<URLSearchParams, "get">,
 ): string | null {
