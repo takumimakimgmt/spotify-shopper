@@ -362,6 +362,11 @@ function PageInner() {
             </header>
             <AnalyzeForm
               playlistUrlInput={analyzer.playlistUrlInput}
+              activePlaylistInput={
+                selection.activeTab ?? vm.currentResult?.playlistUrl
+              }
+              activePlaylistId={vm.currentResult?.playlist_id}
+              queryPlaylist={searchParams.get("playlist")}
               setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
               handleAnalyze={handleAnalyzeWithAppleBlock}
               rekordboxFile={analyzer.rekordboxFile}
