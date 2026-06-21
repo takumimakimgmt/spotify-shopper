@@ -5,6 +5,7 @@ import ProcessingBar from "./ProcessingBar";
 import ErrorAlert from "./ErrorAlert";
 import type { ProgressItem } from "./ProgressList";
 import type { SavedRekordboxXmlMeta } from "@/lib/storage/savedRekordboxXml";
+import MobileDesktopHandoff from "./MobileDesktopHandoff";
 
 type ErrorMeta = {
   error_code: string;
@@ -110,6 +111,10 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
 
   return (
     <section className="w-full space-y-8">
+      <MobileDesktopHandoff
+        playlistInput={props.playlistUrlInput}
+        focusPlaylistInput={() => playlistInputRef.current?.focus()}
+      />
       {props.banner?.text ? (
         <div
           className={`rounded-md border px-3 py-2 text-xs ${
@@ -189,6 +194,13 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               </button>
             ) : null}
           </div>
+        </div>
+
+        <div className="-mt-6 text-xs leading-5 text-slate-500">
+          <span className="font-medium text-slate-400">
+            Need your Rekordbox XML?
+          </span>{" "}
+          Export your Rekordbox collection as XML, then upload it here.
         </div>
 
         <div className="space-y-2">

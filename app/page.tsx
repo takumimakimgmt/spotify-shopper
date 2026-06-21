@@ -42,6 +42,7 @@ import { useBuyQueue } from "../lib/state/useBuyQueue";
 import { categoryLabels } from "../lib/ui/selectors";
 import { getOtherStores as _getOtherStores } from "../lib/playlist/stores";
 import AnalyzeForm from "./components/AnalyzeForm";
+import PlaylistQueryPrefill from "./components/PlaylistQueryPrefill";
 import _ProgressList from "./components/ProgressList";
 import { ShopperHeader as _ShopperHeader } from "./components/ShopperHeader";
 import { ResultsTabs } from "./components/ResultsTabs";
@@ -329,6 +330,9 @@ function PageInner() {
 
   return (
     <main className="min-h-screen bg-[#04060a] text-slate-50">
+      <PlaylistQueryPrefill
+        setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
+      />
       <div className="mx-auto max-w-[1024px] px-4 py-12 sm:px-6 lg:py-14">
         <div className="space-y-12">
           <section>
