@@ -154,12 +154,26 @@ export interface components {
        * Refresh
        * @description Bypass cache when set to 1
        */
-      refresh?: boolean;
+      refresh?: number | null;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
       detail?: components["schemas"]["ValidationError"][];
+    };
+    /** LibraryMatchModel */
+    LibraryMatchModel: {
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "matched" | "not_found" | "review";
+      /** Reason */
+      reason: string;
+      /** Matched Title */
+      matched_title?: string | null;
+      /** Matched Artist */
+      matched_artist?: string | null;
     };
     /** PlaylistMetaModel */
     PlaylistMetaModel: {
@@ -167,8 +181,11 @@ export interface components {
       cache_hit?: boolean | null;
       /** Cache Ttl S */
       cache_ttl_s?: number | null;
-      /** Refresh */
-      refresh?: boolean;
+      /**
+       * Refresh
+       * @default false
+       */
+      refresh: boolean;
       /** Fetch Ms */
       fetch_ms?: number | null;
       /** Enrich Ms */
@@ -264,6 +281,7 @@ export interface components {
       owned?: boolean | null;
       /** Owned Reason */
       owned_reason?: string | null;
+      library_match?: components["schemas"]["LibraryMatchModel"] | null;
       /** Track Key Primary */
       track_key_primary?: string | null;
       /** Track Key Fallback */
@@ -288,6 +306,10 @@ export interface components {
       msg: string;
       /** Error Type */
       type: string;
+      /** Input */
+      input?: unknown;
+      /** Context */
+      ctx?: Record<string, never>;
     };
   };
   responses: never;
@@ -335,7 +357,6 @@ export interface operations {
         isrc_limit?: number | null;
         /** @description For Apple: 1 to enrich via Spotify, 0 to skip (default 0 for apple) */
         enrich_spotify?: number | null;
-        /** @description Bypass cache when set to 1 */
         refresh?: boolean;
       };
       header?: never;

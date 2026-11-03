@@ -44,20 +44,20 @@ export function FiltersBar({
             onClick={() => setCategoryFilter("toBuy")}
             className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === "toBuy" ? "bg-amber-500/30 border-amber-500 text-amber-200" : "bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20"}`}
           >
-            To buy
+            Not in XML
           </button>
           <button
             onClick={() => setCategoryFilter("owned")}
             className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === "owned" ? "bg-emerald-500/30 border-emerald-500 text-emerald-100" : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20"}`}
           >
-            Owned
+            Matches XML
           </button>
           <button
             onClick={() => setCategoryFilter("unknown")}
             aria-pressed={categoryFilter === "unknown"}
             className="flex-1 px-3 py-1 rounded border text-xs"
           >
-            Unverified
+            Not confirmed
           </button>
         </div>
       </div>

@@ -67,9 +67,20 @@ export type ApiMeta = {
   payload_bytes?: number;
   rekordbox?: {
     track_total?: number;
+    library_track_count?: number;
+    library_sha256?: string;
+    scope?: "selected_xml";
+    matched_at?: string;
     fuzzy_count?: number;
     match_ms?: number;
   };
+};
+
+export type LibraryMatch = {
+  status: "matched" | "not_found" | "review";
+  reason: string;
+  matched_title?: string | null;
+  matched_artist?: string | null;
 };
 
 export type PlaylistRow = {
@@ -84,6 +95,7 @@ export type PlaylistRow = {
   stores: StoreLinks;
   owned?: boolean | null;
   ownedReason?: string | null;
+  libraryMatch?: LibraryMatch | null;
   trackKeyPrimary?: string;
   trackKeyFallback?: string;
   trackKeyPrimaryType?: "isrc" | "norm";

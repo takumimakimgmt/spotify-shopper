@@ -7,7 +7,7 @@ Playlist Shopper is a focused DJ purchase-decision workflow. Upload a Rekordbox 
 ## What It Does
 
 - Compares a Spotify playlist against a Rekordbox XML library export.
-- Splits results into `To buy`, `Owned`, and `Unverified`.
+- Splits results into `Not in XML`, `Matches XML`, and `Not confirmed`.
 - Opens available Beatport or Bandcamp links for purchase research.
 - Saves purchase candidates to `Buy Later` in the browser.
 - Keeps the workflow local-first in the frontend, with saved analysis snapshots capped in local storage.
@@ -24,7 +24,7 @@ Playlist Shopper is a focused DJ purchase-decision workflow. Upload a Rekordbox 
 2. Upload the XML file.
 3. Paste a Spotify playlist URL.
 4. Analyze.
-5. Review `To buy` and `Owned`.
+5. Review `Not in XML` and `Matches XML`.
 6. Open Beatport or Bandcamp, or save tracks to `Buy Later`.
 
 ## Current MVP Scope
@@ -32,7 +32,7 @@ Playlist Shopper is a focused DJ purchase-decision workflow. Upload a Rekordbox 
 - Spotify playlist input.
 - Rekordbox XML upload.
 - Track ownership matching using the existing frontend/backend ownership logic.
-- Results table with `All`, `To buy`, and `Owned` filters.
+- Results table with `All`, `Not in XML`, and `Matches XML` filters.
 - Search and basic sorting by title, artist, or album.
 - CSV export for displayed results.
 - Browser-local saved results and `Buy Later` queue.
@@ -40,7 +40,7 @@ Playlist Shopper is a focused DJ purchase-decision workflow. Upload a Rekordbox 
 ## Known Limitations
 
 - Matching depends on playlist metadata and the exported Rekordbox XML.
-- Large XML files are limited to 3 MB in the frontend.
+- Original XML files up to 50 MiB are processed in the browser. Only recording metadata is sent, with a 3 MiB transfer limit; no library entries are silently omitted.
 - Saved results use browser local storage and may be cleared by the browser.
 - Purchase links are best-effort search or store links when available.
 - Only Spotify playlist URLs are supported in the current sharing flow.
@@ -100,8 +100,8 @@ After deployment:
 2. Upload a valid Rekordbox XML export.
 3. Paste a Spotify playlist URL.
 4. Run analysis and confirm progress completes.
-5. Confirm results show `To buy` and `Owned` counts.
-6. Filter between `All`, `To buy`, and `Owned`.
+5. Confirm results show `Not in XML` and `Matches XML` counts.
+6. Filter between `All`, `Not in XML`, and `Matches XML`.
 7. Open a Beatport or Bandcamp link when present.
 8. Add a track to `Buy Later`, then remove it.
 9. Export CSV for the displayed results.

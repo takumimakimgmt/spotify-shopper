@@ -120,11 +120,9 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Bypass cache when set to 1",
               "default": false,
               "title": "Refresh"
-            },
-            "description": "Bypass cache when set to 1"
+            }
           }
         ],
         "responses": {
@@ -154,7 +152,7 @@
     "/api/playlist-with-rekordbox": {
       "post": {
         "summary": "Playlist With Rekordbox",
-        "description": "JSON で Rekordbox XML のパスを受け取る版（ローカル用）。\n{\n  \"url\": \"...\",\n  \"rekordbox_xml_path\": \"/Users/xxx/Desktop/rekordbox_collection.xml\"\n}",
+        "description": "JSON \u3067 Rekordbox XML \u306e\u30d1\u30b9\u3092\u53d7\u3051\u53d6\u308b\u7248\uff08\u30ed\u30fc\u30ab\u30eb\u7528\uff09\u3002\n{\n  \"url\": \"...\",\n  \"rekordbox_xml_path\": \"/Users/xxx/Desktop/rekordbox_collection.xml\"\n}",
         "operationId": "playlist_with_rekordbox_api_playlist_with_rekordbox_post",
         "requestBody": {
           "content": {
@@ -193,7 +191,7 @@
     "/api/match-snapshot-with-xml": {
       "post": {
         "summary": "Match Snapshot With Xml",
-        "description": "与えられた PlaylistSnapshotV1（JSON）に対して、Rekordbox XML を用いて owned/owned_reason を付与して返す。\nURL の再入力は不要。\n\n制限：\n- snapshot: 最大 1MB\n- XML: MAX_UPLOAD_SIZE（環境変数、デフォルト 3MB）",
+        "description": "\u4e0e\u3048\u3089\u308c\u305f PlaylistSnapshotV1\uff08JSON\uff09\u306b\u5bfe\u3057\u3066\u3001Rekordbox XML \u3092\u7528\u3044\u3066 owned/owned_reason \u3092\u4ed8\u4e0e\u3057\u3066\u8fd4\u3059\u3002\nURL \u306e\u518d\u5165\u529b\u306f\u4e0d\u8981\u3002\n\n\u5236\u9650\uff1a\n- snapshot: \u6700\u5927 1MB\n- XML: MAX_UPLOAD_SIZE\uff08\u74b0\u5883\u5909\u6570\u3001\u30c7\u30d5\u30a9\u30eb\u30c8 3MB\uff09",
         "operationId": "match_snapshot_with_xml_api_match_snapshot_with_xml_post",
         "requestBody": {
           "content": {
@@ -230,7 +228,7 @@
     "/api/playlist-with-rekordbox-upload": {
       "post": {
         "summary": "Playlist With Rekordbox Upload",
-        "description": "フロントからの XML ファイルアップロード版。\n- フロントは multipart/form-data で url と file を送る。\n- アップロードされた XML を一時ファイルに保存し、Rekordbox 突き合わせ。",
+        "description": "\u30d5\u30ed\u30f3\u30c8\u304b\u3089\u306e XML \u30d5\u30a1\u30a4\u30eb\u30a2\u30c3\u30d7\u30ed\u30fc\u30c9\u7248\u3002\n- \u30d5\u30ed\u30f3\u30c8\u306f multipart/form-data \u3067 url \u3068 file \u3092\u9001\u308b\u3002\n- \u30a2\u30c3\u30d7\u30ed\u30fc\u30c9\u3055\u308c\u305f XML \u3092\u4e00\u6642\u30d5\u30a1\u30a4\u30eb\u306b\u4fdd\u5b58\u3057\u3001Rekordbox \u7a81\u304d\u5408\u308f\u305b\u3002",
         "operationId": "playlist_with_rekordbox_upload_api_playlist_with_rekordbox_upload_post",
         "requestBody": {
           "content": {
@@ -280,7 +278,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "format": "binary"
+                "contentMediaType": "application/octet-stream"
               },
               {
                 "type": "null"
@@ -317,7 +315,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "format": "binary"
+                "contentMediaType": "application/octet-stream"
               },
               {
                 "type": "null"
@@ -367,6 +365,44 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "LibraryMatchModel": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["matched", "not_found", "review"],
+            "title": "Status"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "matched_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Title"
+          },
+          "matched_artist": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Artist"
+          }
+        },
+        "type": "object",
+        "required": ["status", "reason"],
+        "title": "LibraryMatchModel"
       },
       "PlaylistMetaModel": {
         "properties": {
@@ -824,6 +860,16 @@
             ],
             "title": "Owned Reason"
           },
+          "library_match": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LibraryMatchModel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "track_key_primary": {
             "anyOf": [
               {
@@ -885,6 +931,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",

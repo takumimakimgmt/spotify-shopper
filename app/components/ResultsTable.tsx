@@ -3,6 +3,10 @@
 import React from "react";
 import type { PlaylistRow, StoreLinks } from "../../lib/types";
 import { withBeatportAid } from "../../lib/affiliates/beatport";
+import {
+  libraryMatchLabel,
+  libraryMatchExplanation,
+} from "@/lib/domain/libraryMatch";
 import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
 
 const BEATPORT_A_AID = process.env.NEXT_PUBLIC_BEATPORT_A_AID;
@@ -18,25 +22,6 @@ type Props = {
     buyLink: { name: string; url: string },
   ) => void;
 };
-
-function reviewHint(track: PlaylistRow): string {
-  switch (track.ownedReason) {
-    case "artist_mismatch":
-      return "Artist credits differ. Confirm the recording in your library.";
-    case "title_annotation_mismatch":
-      return "Title details differ. Check the intro, outro or other recording details.";
-    case "version_mismatch":
-      return "A different mix or version was found. Check the recording before buying.";
-    case "isrc_conflict":
-      return "Recording identifiers differ. Check which recording you own.";
-    case "album":
-      return "Title and album match, but the artist needs confirmation.";
-    case "fuzzy":
-      return "A similar title was found. Confirm the track before buying.";
-    default:
-      return "Upload or re-analyze with XML to check ownership.";
-  }
-}
 
 function purchaseLinks(
   track: PlaylistRow,
@@ -245,6 +230,7 @@ export default function ResultsTable({
                   <td className="px-3 py-3 align-middle">
                     <div className="min-w-0">
                       <TrackTitle track={t} />
+                      <MatchDetails track={t} />
                     </div>
                   </td>
                   <td className="px-3 py-3 align-middle">
@@ -260,14 +246,18 @@ export default function ResultsTable({
                   <td className="px-3 py-3 align-middle text-white/60">
                     {isOwned ? (
                       <span className="truncate rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
-                        Owned
+                        Matches XML
                       </span>
                     ) : (
                       <span
-                        title={t.owned == null ? reviewHint(t) : undefined}
+                        title={
+                          t.owned == null
+                            ? libraryMatchExplanation(t)
+                            : undefined
+                        }
                         className="text-xs text-slate-300"
                       >
-                        {t.owned === false ? "Not owned" : "Unverified"}
+                        {libraryMatchLabel(t)}
                       </span>
                     )}
                   </td>
@@ -293,7 +283,9 @@ export default function ResultsTable({
                     ) : (
                       <span className="text-sm text-slate-400">
                         {t.owned == null ? (
-                          <span title={reviewHint(t)}>Review needed</span>
+                          <span title={libraryMatchExplanation(t)}>
+                            Review needed
+                          </span>
                         ) : (
                           "Unavailable"
                         )}
@@ -343,17 +335,15 @@ function TrackCard({
         </div>
         {isOwned ? (
           <div className="shrink-0 rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
-            Owned
+            Matches XML
           </div>
         ) : (
           <div className="shrink-0 text-xs text-slate-300">
-            {track.owned === false ? "Not owned" : "Unverified"}
+            {libraryMatchLabel(track)}
           </div>
         )}
       </div>
-      {track.owned == null && (
-        <p className="mt-2 text-xs text-amber-200">{reviewHint(track)}</p>
-      )}
+      <MatchDetails track={track} />
       {isOwned ? null : primary ? (
         <div className="mt-2">
           <StoreLinksInline track={track} />
@@ -376,5 +366,21 @@ function TrackCard({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function MatchDetails({ track }: { track: PlaylistRow }) {
+  const candidate = track.libraryMatch;
+  return (
+    <details className="mt-2 text-xs text-slate-300">
+      <summary className="cursor-pointer">Matching details</summary>
+      <p className="mt-1">{libraryMatchExplanation(track)}</p>
+      {candidate?.matched_title && (
+        <p className="mt-1 break-words">
+          XML candidate: {candidate.matched_title} —{" "}
+          {candidate.matched_artist || "Artist not supplied"}
+        </p>
+      )}
+    </details>
   );
 }

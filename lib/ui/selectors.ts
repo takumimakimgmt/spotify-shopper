@@ -1,5 +1,5 @@
 import type { PlaylistRow, TrackCategory } from "../types";
-import { categorizeTrack } from "../state/usePlaylistAnalyzer";
+import { categorizeTrack } from "../domain/libraryMatch";
 import { buildSearchHaystack } from "@/lib/utils/normalize";
 import { normalizeTitle, normalizeArtist } from "../utils/normalize";
 
@@ -76,7 +76,7 @@ export function selectTrackCounts(tracks: PlaylistRow[]): {
  */
 export const categoryLabels: Record<"all" | TrackCategory, string> = {
   all: "All",
-  checkout: "To buy",
-  owned: "Owned",
-  unknown: "Unverified",
+  checkout: "Not in XML",
+  owned: "Matches XML",
+  unknown: "Not confirmed",
 };

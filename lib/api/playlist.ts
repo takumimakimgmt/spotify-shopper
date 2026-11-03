@@ -1,3 +1,4 @@
+import { prepareXmlUpload } from "../rekordbox/prepareXmlUpload";
 import type { PlaylistSnapshotV1 } from "../types";
 import type { PlaylistResponse } from "./schema";
 import { PlaylistResponseSchema } from "./responseSchemas";
@@ -80,7 +81,7 @@ export async function fetchPlaylistWithRekordbox(
     form.append("source", "spotify");
     if (params.rekordboxXmlPath)
       form.append("rekordbox_xml_path", params.rekordboxXmlPath);
-    form.append("file", params.file);
+    form.append("file", await prepareXmlUpload(params.file, params.signal));
     if (params.refresh) form.append("refresh", "1");
 
     return fetchJson<PlaylistResponse>(
@@ -175,7 +176,7 @@ export async function matchSnapshotWithXml(
   const form = new FormData();
   form.append("snapshot", JSON.stringify(snapshot));
   if (rekordboxXmlPath) form.append("rekordbox_xml_path", rekordboxXmlPath);
-  if (file) form.append("file", file);
+  if (file) form.append("file", await prepareXmlUpload(file, signal));
 
   await warmupBackend(signal);
   return fetchJson<MatchSnapshotWithXmlResponse>(

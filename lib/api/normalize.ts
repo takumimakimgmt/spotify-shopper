@@ -1,3 +1,4 @@
+import { LibraryMatchSchema } from "./responseSchemas";
 import type { PlaylistRow } from "../types";
 
 function stripNullsDeep(input: unknown): unknown {
@@ -32,6 +33,7 @@ type TrackLike = {
   links?: unknown;
   owned?: unknown;
   owned_reason?: unknown;
+  library_match?: unknown;
   track_key_primary?: unknown;
   track_key_fallback?: unknown;
   track_key_primary_type?: unknown;
@@ -83,6 +85,7 @@ function normalizeTrack(t: TrackLike, index: number): PlaylistRow {
     stores: links,
     owned: asBool(t.owned) ?? null,
     ownedReason: asString(t.owned_reason),
+    libraryMatch: parseLibraryMatch(t.library_match),
     trackKeyPrimary: asString(t.track_key_primary),
     trackKeyFallback: asString(t.track_key_fallback),
     trackKeyPrimaryType: primaryType,
@@ -98,4 +101,9 @@ export function normalizeTracks(input: unknown): PlaylistRow[] {
   return tracks
     .filter(isRecord)
     .map((t, idx) => normalizeTrack(t as TrackLike, idx + 1));
+}
+
+export function parseLibraryMatch(value: unknown) {
+  const parsed = LibraryMatchSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }

@@ -44,7 +44,7 @@ export function SidePanels({
     if (file.size > MAX_XML_BYTES) {
       const mb = (file.size / (1024 * 1024)).toFixed(1);
       setXmlError(
-        `XML is too large (${mb} MB). Maximum 3 MB. Choose a smaller export and check which library tracks it covers.`,
+        `XML is too large (${mb} MB). Maximum 50 MB. Choose a smaller export and check which library tracks it covers.`,
       );
       ev.target.value = "";
       return;

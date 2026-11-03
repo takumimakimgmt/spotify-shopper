@@ -89,24 +89,24 @@ describe("restoreResultsFromStorage", () => {
     expect(storage.removed).toEqual([]);
   });
 
-  it("discards unrecognized payload and removes key (schema mismatch / fallback)", () => {
+  it("preserves unrecognized payload for explicit recovery", () => {
     const storage = makeStorage({
       [STORAGE_RESULTS]: JSON.stringify({ foo: "bar" }),
     });
 
     const restored = restoreResultsFromStorage(storage);
     expect(restored).toBeNull();
-    expect(storage.removed).toEqual([STORAGE_RESULTS]);
+    expect(storage.removed).toEqual([]);
   });
 
-  it("discards invalid JSON and removes key", () => {
+  it("preserves invalid JSON for explicit recovery", () => {
     const storage = makeStorage({
       [STORAGE_RESULTS]: "{not-json",
     });
 
     const restored = restoreResultsFromStorage(storage);
     expect(restored).toBeNull();
-    expect(storage.removed).toEqual([STORAGE_RESULTS]);
+    expect(storage.removed).toEqual([]);
   });
 });
 
