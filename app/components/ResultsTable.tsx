@@ -17,6 +17,21 @@ type Props = {
   ) => void;
 };
 
+function reviewHint(track: PlaylistRow): string {
+  switch (track.ownedReason) {
+    case "version_mismatch":
+      return "A different mix or version was found. Check the recording before buying.";
+    case "isrc_conflict":
+      return "Recording identifiers differ. Check which recording you own.";
+    case "album":
+      return "Title and album match, but the artist needs confirmation.";
+    case "fuzzy":
+      return "A similar title was found. Confirm the track before buying.";
+    default:
+      return "Upload or re-analyze with XML to check ownership.";
+  }
+}
+
 function purchaseLinks(
   track: PlaylistRow,
 ): Array<{ name: string; url: string }> {
@@ -222,7 +237,10 @@ export default function ResultsTable({
                         Owned
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-300">
+                      <span
+                        title={t.owned == null ? reviewHint(t) : undefined}
+                        className="text-xs text-slate-300"
+                      >
                         {t.owned === false ? "Not owned" : "Unverified"}
                       </span>
                     )}
@@ -248,7 +266,11 @@ export default function ResultsTable({
                       </button>
                     ) : (
                       <span className="text-sm text-slate-400">
-                        {t.owned == null ? "Check with XML" : "Unavailable"}
+                        {t.owned == null ? (
+                          <span title={reviewHint(t)}>Review needed</span>
+                        ) : (
+                          "Unavailable"
+                        )}
                       </span>
                     )}
                   </td>
@@ -304,9 +326,7 @@ function TrackCard({
         )}
       </div>
       {track.owned == null && (
-        <p className="mt-2 text-xs text-amber-200">
-          Check ownership with XML before adding to Buy Later.
-        </p>
+        <p className="mt-2 text-xs text-amber-200">{reviewHint(track)}</p>
       )}
       {isOwned ? null : primary ? (
         <div className="mt-2">
