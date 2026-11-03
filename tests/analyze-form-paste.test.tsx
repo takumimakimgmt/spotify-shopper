@@ -88,7 +88,7 @@ describe("AnalyzeForm", () => {
       textButton(container, "Upload").compareDocumentPosition(submit) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    expect(container.textContent).toContain("up to 50 MB");
+    expect(container.textContent).toContain("up to 3 MB");
     expect(container.textContent).toContain("ownership stays unverified");
     expect(
       Array.from(container.querySelectorAll("button")).some(
@@ -261,5 +261,19 @@ describe("AnalyzeForm", () => {
     expect(input?.getAttribute("aria-invalid")).toBe("true");
     expect(input?.getAttribute("aria-describedby")).toBe("playlist-url-error");
     expect(container.textContent).not.toContain("Retry");
+  });
+  test("blocks a selected file over the hosted XML limit before submission", async () => {
+    const file = new File(["xml"], "large.xml", { type: "text/xml" });
+    Object.defineProperty(file, "size", { value: 3 * 1024 * 1024 + 1 });
+    await renderForm(
+      makeProps({
+        playlistUrlInput:
+          "https://open.spotify.com/playlist/0jKqvXbsroCPdccFmORnPz",
+        rekordboxFile: file,
+        rekordboxFilename: file.name,
+      }),
+    );
+    expect(textButton(container, "Check ownership").disabled).toBe(true);
+    expect(container.textContent).toContain("max 3MB");
   });
 });

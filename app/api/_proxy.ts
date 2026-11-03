@@ -17,8 +17,8 @@ const SPOTIFY_PLAYLIST_ID_RE = /^[A-Za-z0-9]{22}$/;
 const SPOTIFY_PLAYLIST_URI_RE = /^spotify:playlist:[A-Za-z0-9]{22}$/;
 const INVALID_SPOTIFY_PLAYLIST_MESSAGE =
   "Enter a Spotify playlist URL, URI, or ID.";
-const DEFAULT_MAX_PROXY_BODY_BYTES = 55 * 1024 * 1024;
-const DEFAULT_MAX_PROXY_RESPONSE_BYTES = 25 * 1024 * 1024;
+const DEFAULT_MAX_PROXY_BODY_BYTES = 4_400_000;
+const DEFAULT_MAX_PROXY_RESPONSE_BYTES = 4_400_000;
 const MAX_RATE_LIMIT_BUCKETS = 10_000;
 const RATE_LIMIT_PRUNE_INTERVAL = 256;
 const PLAYLIST_URL_ENDPOINTS = new Set([
@@ -499,9 +499,9 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
     }
   }
 
-  const maxBodyBytes = byteLimitFromEnv(
-    "PROXY_MAX_BODY_BYTES",
+  const maxBodyBytes = Math.min(
     DEFAULT_MAX_PROXY_BODY_BYTES,
+    byteLimitFromEnv("PROXY_MAX_BODY_BYTES", DEFAULT_MAX_PROXY_BODY_BYTES),
   );
   const requestContentLength = parseContentLength(req.headers);
   if (requestContentLength !== null && requestContentLength > maxBodyBytes) {
@@ -595,16 +595,19 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
     upstreamHeaders.set("x-backend-token", backendProxyToken);
   }
 
-  const maxAttempts = boundedIntegerFromEnv("PROXY_MAX_ATTEMPTS", 2, 1, 3);
+  const maxAttempts = boundedIntegerFromEnv("PROXY_MAX_ATTEMPTS", 1, 1, 1);
   const timeoutMs = boundedIntegerFromEnv(
     "PROXY_TIMEOUT_MS",
     25_000,
     1_000,
     120_000,
   );
-  const maxResponseBytes = byteLimitFromEnv(
-    "PROXY_MAX_RESPONSE_BYTES",
+  const maxResponseBytes = Math.min(
     DEFAULT_MAX_PROXY_RESPONSE_BYTES,
+    byteLimitFromEnv(
+      "PROXY_MAX_RESPONSE_BYTES",
+      DEFAULT_MAX_PROXY_RESPONSE_BYTES,
+    ),
   );
   const backoffMs = [0, 400, 900];
 
@@ -612,6 +615,9 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
     if (attempt > 1) await sleep(backoffMs[attempt - 1] ?? 500);
 
     const ac = new AbortController();
+    const forwardAbort = () => ac.abort(req.signal.reason);
+    if (req.signal.aborted) forwardAbort();
+    else req.signal.addEventListener("abort", forwardAbort, { once: true });
     const timer = setTimeout(
       () => ac.abort(new Error("upstream_timeout")),
       timeoutMs,
@@ -699,6 +705,7 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
             : undefined,
       } satisfies ErrorShape);
     } finally {
+      req.signal.removeEventListener("abort", forwardAbort);
       clearTimeout(timer);
     }
   }

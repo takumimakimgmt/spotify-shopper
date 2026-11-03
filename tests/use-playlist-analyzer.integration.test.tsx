@@ -1,7 +1,10 @@
 import { act, type FormEvent, useEffect } from "react";
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
-import { usePlaylistAnalyzer } from "@/lib/state/usePlaylistAnalyzer";
+import {
+  usePlaylistAnalyzer,
+  STORAGE_RESULTS,
+} from "@/lib/state/usePlaylistAnalyzer";
 
 const {
   deleteSavedRekordboxXmlMock,
@@ -10,7 +13,9 @@ const {
   getSavedRekordboxXmlMock,
   postPlaylistWithRekordboxUploadMock,
   saveRekordboxXmlFileMock,
+  matchSnapshotWithXmlMock,
 } = vi.hoisted(() => ({
+  matchSnapshotWithXmlMock: vi.fn(),
   deleteSavedRekordboxXmlMock: vi.fn(),
   getPlaylistMock: vi.fn(),
   getSavedRekordboxXmlMetaMock: vi.fn(),
@@ -23,7 +28,8 @@ vi.mock("@/lib/api/playlist", () => ({
   getPlaylist: (...args: unknown[]) => getPlaylistMock(...args),
   postPlaylistWithRekordboxUpload: (...args: unknown[]) =>
     postPlaylistWithRekordboxUploadMock(...args),
-  matchSnapshotWithXml: vi.fn(),
+  matchSnapshotWithXml: (...args: unknown[]) =>
+    matchSnapshotWithXmlMock(...args),
 }));
 
 vi.mock("@/lib/storage/savedRekordboxXml", () => ({
@@ -107,6 +113,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     root = createRoot(container);
     currentApi = null;
     getPlaylistMock.mockReset();
+    matchSnapshotWithXmlMock.mockReset();
     postPlaylistWithRekordboxUploadMock.mockReset();
     getSavedRekordboxXmlMetaMock.mockReset();
     getSavedRekordboxXmlMock.mockReset();
@@ -140,6 +147,90 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     container.remove();
     rafSpy?.mockRestore();
     logSpy?.mockRestore();
+  });
+
+  test("rechecks the full playlist despite a filtered view and updates XML metadata", async () => {
+    const response = playlistResponse();
+    response.tracks.push({
+      ...response.tracks[0],
+      title: "Track B",
+      track_key_primary: "other",
+    });
+    getPlaylistMock.mockResolvedValue(response);
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+    act(() => currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl));
+    await act(async () => {
+      await currentApi!.handleAnalyze({ preventDefault() {} } as FormEvent);
+    });
+    const result = currentApi!.multiResults[0][1];
+    matchSnapshotWithXmlMock.mockImplementation(async (raw: string) => {
+      const snapshot = JSON.parse(raw);
+      return {
+        ...snapshot,
+        tracks: snapshot.tracks.map((t: Record<string, unknown>) => ({
+          ...t,
+          owned: true,
+          owned_reason: "exact",
+        })),
+        meta: { ownership_rules_version: 3 },
+      };
+    });
+    const file = new File(["<DJ_PLAYLISTS/>"], "new-library.xml", {
+      type: "text/xml",
+    });
+    await act(async () => {
+      await currentApi!.applySnapshotWithXml(file, result, [result.tracks[0]]);
+    });
+    expect(
+      JSON.parse(matchSnapshotWithXmlMock.mock.calls[0][0]).tracks,
+    ).toHaveLength(2);
+    expect(
+      currentApi!.multiResults[0][1].tracks.every((t) => t.owned === true),
+    ).toBe(true);
+    expect(currentApi!.multiResults[0][1].rekordboxMeta?.filename).toBe(
+      "new-library.xml",
+    );
+    expect(saveRekordboxXmlFileMock).toHaveBeenCalledWith(file);
+  });
+
+  test("a failed restored playlist can be retried without retaining old XML claims", async () => {
+    localStorage.setItem(
+      STORAGE_RESULTS,
+      JSON.stringify({
+        version: 2,
+        results: [
+          {
+            url: spotifyPlaylistUrl,
+            summary: {
+              title: "Saved",
+              total: 1,
+              hasRekordboxData: true,
+              rekordboxMeta: { filename: "old.xml" },
+            },
+          },
+        ],
+      }),
+    );
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+    expect(currentApi!.multiResults).toHaveLength(1);
+    const url = currentApi!.multiResults[0][0];
+    getPlaylistMock
+      .mockRejectedValueOnce(new Error("Network error"))
+      .mockResolvedValueOnce(playlistResponse());
+    await act(async () => {
+      await currentApi!.ensureHydrated(url);
+    });
+    expect(currentApi!.multiResults[0][1].errorText).toBeTruthy();
+    await act(async () => {
+      await currentApi!.ensureHydrated(url, true);
+    });
+    expect(currentApi!.multiResults[0][1].tracks).toHaveLength(1);
+    expect(currentApi!.multiResults[0][1].hasRekordboxData).toBe(false);
+    expect(currentApi!.multiResults[0][1].rekordboxMeta).toBeNull();
   });
 
   test("loads a Spotify playlist and normalizes tracks into multiResults", async () => {
@@ -833,7 +924,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
       ]);
     });
     await flush();
-    window.localStorage.setItem("spotify-shopper-results", "stale");
+    window.localStorage.setItem(STORAGE_RESULTS, "stale");
 
     act(() => {
       currentApi!.setMultiResults([]);

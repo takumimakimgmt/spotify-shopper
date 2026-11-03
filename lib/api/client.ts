@@ -10,12 +10,23 @@ export class SchemaMismatch extends Error {
   }
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
+function sleep(ms: number, signal?: AbortSignal | null): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      clearTimeout(timer);
+      reject(signal?.reason ?? new DOMException("Aborted", "AbortError"));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", abort);
+      resolve();
+    }, ms);
+    if (signal?.aborted) abort();
+    else signal?.addEventListener("abort", abort, { once: true });
+  });
 }
 
 function isRetryableStatus(status: number): boolean {
-  return status === 429 || status === 502 || status === 503 || status === 504;
+  return [429, 502, 503, 504].includes(status);
 }
 
 export async function fetchWithTimeout(
@@ -24,27 +35,43 @@ export async function fetchWithTimeout(
   timeoutMs: number,
 ): Promise<Response> {
   const controller = new AbortController();
-  const callerSignal = init.signal;
-  const forwardCallerAbort = () => controller.abort(callerSignal?.reason);
-
-  if (callerSignal?.aborted) {
-    forwardCallerAbort();
-  } else {
-    callerSignal?.addEventListener("abort", forwardCallerAbort, { once: true });
-  }
-
-  const t = setTimeout(
+  const forwardAbort = () => controller.abort(init.signal?.reason);
+  if (init.signal?.aborted) forwardAbort();
+  else init.signal?.addEventListener("abort", forwardAbort, { once: true });
+  const timer = setTimeout(
     () =>
       controller.abort(
         new DOMException("The operation timed out", "AbortError"),
       ),
     timeoutMs,
   );
+  let rejectAbort: () => void = () => {};
+  const aborted = new Promise<never>((_resolve, reject) => {
+    rejectAbort = () => reject(controller.signal.reason);
+    controller.signal.addEventListener("abort", rejectAbort, { once: true });
+    if (controller.signal.aborted) rejectAbort();
+  });
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    const work = (async () => {
+      const response = await fetch(url, { ...init, signal: controller.signal });
+      // Keep timeout and caller cancellation active until the complete body arrives.
+      const bytes = await response.arrayBuffer();
+      return new Response(
+        [204, 205, 304].includes(response.status) || init.method === "HEAD"
+          ? null
+          : bytes,
+        {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        },
+      );
+    })();
+    return await Promise.race([work, aborted]);
   } finally {
-    clearTimeout(t);
-    callerSignal?.removeEventListener("abort", forwardCallerAbort);
+    clearTimeout(timer);
+    init.signal?.removeEventListener("abort", forwardAbort);
+    controller.signal.removeEventListener("abort", rejectAbort);
   }
 }
 
@@ -53,57 +80,53 @@ export async function fetchWithRetry(
   init: RequestInit = {},
   opts: { retries?: number; timeoutMs?: number } = {},
 ): Promise<Response> {
-  const retries = opts.retries ?? 4;
-  const timeoutMs = opts.timeoutMs ?? 25000;
-
-  let lastErr: unknown = null;
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  // Uploads are not automatically repeated: a timed-out server may still be working.
+  const safeMethod = ["GET", "HEAD"].includes(
+    (init.method ?? "GET").toUpperCase(),
+  );
+  const retries = safeMethod ? (opts.retries ?? 1) : 0;
+  const timeoutMs = opts.timeoutMs ?? 30000;
+  for (let attempt = 0; ; attempt++) {
+    let waitMs = 400 * 2 ** attempt + Math.floor(Math.random() * 250);
     try {
-      const res = await fetchWithTimeout(url, init, timeoutMs);
-      if (res.ok) return res;
-
-      if (!isRetryableStatus(res.status) || attempt === retries) return res;
-
-      const base = 400 * Math.pow(2, attempt);
-      const jitter = Math.floor(Math.random() * 250);
-      await sleep(base + jitter);
-      continue;
-    } catch (e) {
-      lastErr = e;
-      if (init.signal?.aborted) throw e;
-      if (attempt === retries) throw e;
-
-      const base = 400 * Math.pow(2, attempt);
-      const jitter = Math.floor(Math.random() * 250);
-      await sleep(base + jitter);
+      const response = await fetchWithTimeout(url, init, timeoutMs);
+      if (
+        response.ok ||
+        !isRetryableStatus(response.status) ||
+        attempt >= retries
+      )
+        return response;
+      const retryAfter = response.headers.get("retry-after");
+      if (retryAfter) {
+        const seconds = Number(retryAfter);
+        const delay = Number.isFinite(seconds)
+          ? seconds * 1000
+          : Date.parse(retryAfter) - Date.now();
+        if (delay > 30000) return response;
+        if (Number.isFinite(delay)) waitMs = Math.max(waitMs, delay);
+      }
+    } catch (error) {
+      if (init.signal?.aborted || attempt >= retries) throw error;
     }
+    await sleep(Math.max(0, waitMs), init.signal);
   }
-
-  throw lastErr ?? new Error("fetchWithRetry failed");
 }
 
-let warmupPromise: Promise<void> | null = null;
-
-export function warmupBackend(): Promise<void> {
-  if (warmupPromise) return warmupPromise;
-
-  // Uses same base-building behavior as fetchJsonWithBase (below), because we call it via the same URL.
-  warmupPromise = (async () => {
-    try {
-      const res = await fetchWithRetry(
-        "/api/health",
-        { cache: "no-store" },
-        { retries: 6, timeoutMs: 15000 },
-      );
-      // Even 404 would be “backend reachable”, but we now expect 200.
-      await res.text().catch(() => {});
-    } catch {
-      // swallow: warmup is best-effort
-    }
-  })();
-
-  return warmupPromise;
+let lastWarmupSuccess = 0;
+export async function warmupBackend(signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) throw signal.reason;
+  if (lastWarmupSuccess && Date.now() - lastWarmupSuccess < 60000) return;
+  try {
+    const response = await fetchWithTimeout(
+      "/api/backend-health",
+      { cache: "no-store", signal },
+      3000,
+    );
+    if (response.ok) lastWarmupSuccess = Date.now();
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    // Warmup is best effort; normal requests retain their own deadlines.
+  }
 }
 
 const DEFAULT_BACKEND_ORIGIN = [

@@ -60,7 +60,7 @@ export async function fetchPlaylist(
   if (params.refresh !== undefined)
     search.set("refresh", String(params.refresh));
 
-  await warmupBackend();
+  await warmupBackend(params.signal);
   return fetchJson<PlaylistResponse>(
     directApi(`/api/playlist?${search.toString()}`),
     { signal: params.signal },
@@ -71,7 +71,7 @@ export async function fetchPlaylist(
 export async function fetchPlaylistWithRekordbox(
   params: PostPlaylistWithRekordboxUploadParams,
 ): Promise<PlaylistResponse> {
-  await warmupBackend();
+  await warmupBackend(params.signal);
 
   // file があるときだけ upload エンドポイント（multipart）
   if (params.file) {
@@ -177,7 +177,7 @@ export async function matchSnapshotWithXml(
   if (rekordboxXmlPath) form.append("rekordbox_xml_path", rekordboxXmlPath);
   if (file) form.append("file", file);
 
-  await warmupBackend();
+  await warmupBackend(signal);
   return fetchJson<MatchSnapshotWithXmlResponse>(
     directApi(`/api/match-snapshot-with-xml`),
     {

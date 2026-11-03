@@ -134,3 +134,87 @@ describe("fetchWithTimeout", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+describe("complete-response deadlines", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+  test("times out a stalled response body after headers have arrived", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(new ReadableStream({ start() {} })),
+    );
+    const rejection = expect(
+      fetchWithTimeout("/api/playlist", {}, 100),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    await vi.advanceTimersByTimeAsync(100);
+    await rejection;
+  });
+  test("caller cancellation still works while reading the body", async () => {
+    const caller = new AbortController();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(new ReadableStream({ start() {} })),
+    );
+    const request = fetchWithTimeout(
+      "/api/playlist",
+      { signal: caller.signal },
+      10000,
+    );
+    await Promise.resolve();
+    caller.abort();
+    await expect(request).rejects.toMatchObject({ name: "AbortError" });
+  });
+  test("does not automatically repeat a failed upload", async () => {
+    const { fetchWithRetry } = await import("@/lib/api/client");
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("busy", { status: 503 }));
+    expect(
+      (await fetchWithRetry("/api/upload", { method: "POST" })).status,
+    ).toBe(503);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+  test("cancels retry backoff immediately", async () => {
+    vi.useFakeTimers();
+    const { fetchWithRetry } = await import("@/lib/api/client");
+    const caller = new AbortController();
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("busy", { status: 503 }));
+    const request = fetchWithRetry("/api/playlist", { signal: caller.signal });
+    const rejection = expect(request).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    caller.abort();
+    await rejection;
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe("Retry-After", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+  test("waits for the server's retry window", async () => {
+    vi.useFakeTimers();
+    const { fetchWithRetry } = await import("@/lib/api/client");
+    const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(
+      async () =>
+        new Response("busy", {
+          status: 429,
+          headers: { "retry-after": "5" },
+        }),
+    );
+    const request = fetchWithRetry("/api/playlist");
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(4999);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect((await request).status).toBe(429);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+});

@@ -73,7 +73,7 @@ export interface paths {
      *
      *     制限：
      *     - snapshot: 最大 1MB
-     *     - XML: MAX_UPLOAD_SIZE（環境変数、デフォルト 50MB）
+     *     - XML: MAX_UPLOAD_SIZE（環境変数、デフォルト 3MB）
      */
     post: operations["match_snapshot_with_xml_api_match_snapshot_with_xml_post"];
     delete?: never;

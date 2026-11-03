@@ -58,3 +58,27 @@ describe("XML snapshot ownership", () => {
     ).toThrow();
   });
 });
+
+describe("large playlist rematching", () => {
+  it("batches all tracks within snapshot count and payload limits", async () => {
+    const { splitSnapshot } = await import("@/lib/playlist/snapshotOwnership");
+    const snapshot = {
+      schema: "playlist_snapshot" as const,
+      version: 1 as const,
+      created_at: "now",
+      playlist: { source: "spotify" as const, url: "u", track_count: 1201 },
+      tracks: Array.from({ length: 1201 }, (_, i) => ({
+        title: `Song ${i}`,
+        artist: "Artist",
+      })),
+    };
+    const batches = splitSnapshot(snapshot);
+    expect(batches.flatMap((b) => b.tracks)).toEqual(snapshot.tracks);
+    for (const batch of batches) {
+      expect(batch.tracks.length).toBeLessThanOrEqual(500);
+      expect(new Blob([JSON.stringify(batch)]).size).toBeLessThanOrEqual(
+        900000,
+      );
+    }
+  });
+});
