@@ -39,7 +39,6 @@ import { useSelectionState } from "../lib/state/useSelectionState";
 import { useViewModel } from "../lib/state/useViewModel";
 import { useActions } from "../lib/state/useActions";
 import { useBuyQueue } from "../lib/state/useBuyQueue";
-import { categoryLabels } from "../lib/ui/selectors";
 import { getOtherStores as _getOtherStores } from "../lib/playlist/stores";
 import AnalyzeForm from "./components/AnalyzeForm";
 import PlaylistQueryPrefill from "./components/PlaylistQueryPrefill";
@@ -57,8 +56,8 @@ const SidePanels = dynamic(
   { ssr: false, loading: () => null },
 );
 import ErrorAlert from "./components/ErrorAlert";
-import { getOwnedStatusStyle } from "../lib/ui/ownedStatus";
 import { z } from "zod";
+import { withBeatportAid } from "../lib/affiliates/beatport";
 // --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
 const TabQuerySchema = z.string().trim().min(1).max(64);
 
@@ -122,69 +121,65 @@ function QuietBuyLater({
   items: QuietBuyLaterItem[];
   onRemove: (id: string) => void;
 }) {
+  if (items.length === 0) return null;
+
   return (
-    <section className="border-t border-white/10 pt-6 text-xs text-slate-500">
+    <section className="border-t border-white/15 pt-6 text-sm text-slate-400">
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <div className="font-medium text-slate-400">Buy Later</div>
+          <div className="font-semibold text-slate-200">Buy Later</div>
           <div className="mt-2">Saved purchase candidates.</div>
         </div>
-        {items.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => items.forEach((item) => onRemove(item.id))}
-            className="text-slate-600 hover:text-slate-300"
-          >
-            Clear
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={() => items.forEach((item) => onRemove(item.id))}
+          className="text-slate-400 hover:text-slate-100"
+        >
+          Clear
+        </button>
       </div>
 
       <div className="mt-6 border-b border-white/10">
-        {items.length === 0 ? (
-          <div className="h-px" />
-        ) : (
-          <div className="divide-y divide-white/10">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="grid grid-cols-[minmax(0,34%)_minmax(0,25%)_9%_minmax(0,20%)_12%] items-center"
-              >
-                <div className="min-w-0 px-3 py-4">
-                  <QueueTitle item={item} />
-                </div>
-                <div className="min-w-0 px-3 py-4">
-                  <div className="truncate text-slate-600">{item.artist}</div>
-                  {item.album ? (
-                    <div className="truncate text-slate-700">{item.album}</div>
-                  ) : null}
-                </div>
-                <div className="px-3 py-4" />
-                <div className="flex flex-wrap gap-2 px-3 py-4">
-                  {isQueuePurchaseStore(item.buyStore) ? (
-                    <a
-                      href={item.buyUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="whitespace-nowrap rounded border border-slate-800 px-2 py-1 text-slate-400 hover:border-slate-700 hover:text-slate-100"
-                    >
-                      {item.buyStore}
-                    </a>
-                  ) : null}
-                </div>
-                <div className="px-3 py-4">
-                  <button
-                    type="button"
-                    onClick={() => onRemove(item.id)}
-                    className="whitespace-nowrap text-slate-600 hover:text-slate-300"
-                  >
-                    Remove
-                  </button>
-                </div>
+        <div className="divide-y divide-white/10">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="grid grid-cols-[minmax(0,34%)_minmax(0,25%)_9%_minmax(0,20%)_12%] items-center"
+            >
+              <div className="min-w-0 px-3 py-4">
+                <QueueTitle item={item} />
               </div>
-            ))}
-          </div>
-        )}
+              <div className="min-w-0 px-3 py-4">
+                <div className="truncate text-slate-600">{item.artist}</div>
+                {item.album ? (
+                  <div className="truncate text-slate-700">{item.album}</div>
+                ) : null}
+              </div>
+              <div className="px-3 py-4" />
+              <div className="flex flex-wrap gap-2 px-3 py-4">
+                {isQueuePurchaseStore(item.buyStore) ? (
+                  <a
+                    href={withBeatportAid(item.buyUrl)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="whitespace-nowrap rounded border border-slate-800 px-2 py-1 text-slate-400 hover:border-slate-700 hover:text-slate-100"
+                  >
+                    {item.buyStore}
+                  </a>
+                ) : null}
+              </div>
+              <div className="px-3 py-4">
+                <button
+                  type="button"
+                  onClick={() => onRemove(item.id)}
+                  className="whitespace-nowrap text-slate-600 hover:text-slate-300"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -201,7 +196,9 @@ function PageInner() {
   const analyzer = usePlaylistAnalyzer();
   const filters = useFiltersState();
   const selection = useSelectionState(null, false);
+  const { activeTab, setActiveTab } = selection;
   const buyQueue = useBuyQueue();
+  const resultsSectionRef = useRef<HTMLElement | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -231,16 +228,16 @@ function PageInner() {
   // activeTab fallback logic after hydration
   useEffect(() => {
     if (!analyzer.multiResults || analyzer.multiResults.length === 0) {
-      selection.setActiveTab(null);
+      setActiveTab(null);
       return;
     }
     const keys = analyzer.multiResults.map(([key]) => key);
-    if (!selection.activeTab || !keys.includes(selection.activeTab)) {
-      selection.setActiveTab(keys[keys.length - 1]);
+    if (!activeTab || !keys.includes(activeTab)) {
+      setActiveTab(keys[keys.length - 1]);
     }
-  }, [analyzer.multiResults, selection]);
+  }, [analyzer.multiResults, activeTab, setActiveTab]);
 
-  const vm = useViewModel(analyzer, filters, selection.activeTab);
+  const vm = useViewModel(analyzer, filters, activeTab);
   const TAB_QS_KEY = "t";
   // URL(ASCII)を短く安全にクエリ化（base64url）
   const encodeTab = (url: string) =>
@@ -271,18 +268,29 @@ function PageInner() {
       next = vm.multiResults[vm.multiResults.length - 1][0];
     }
 
-    if (!selection.activeTab || (decoded && next === decoded)) {
-      selection.setActiveTab(next);
+    if (initialTabRef.current === null) {
+      initialTabRef.current = next;
+    }
+
+    if (!activeTab || (decoded && next === decoded)) {
+      setActiveTab(next);
     }
 
     if (t) {
       router.replace(pathname, { scroll: false });
     }
-  }, [vm.multiResults, pathname, searchParams, selection, router]);
+  }, [
+    vm.multiResults,
+    pathname,
+    searchParams,
+    activeTab,
+    setActiveTab,
+    router,
+  ]);
 
   // (2) タブ変更をURLへ同期（リロード耐性）
   useEffect(() => {
-    const tab = selection.activeTab;
+    const tab = activeTab;
     if (!tab) return;
 
     // 初回はクリーン維持：initialTabから変わるまでURL同期を許可しない
@@ -297,7 +305,7 @@ function PageInner() {
     const params = new URLSearchParams(searchParams.toString());
     params.set(TAB_QS_KEY, encodeTab(tab));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [selection.activeTab, router, pathname, searchParams]);
+  }, [activeTab, router, pathname, searchParams]);
 
   // === ACTIONS: All operations ===
   const actions = useActions(analyzer, selection);
@@ -312,21 +320,32 @@ function PageInner() {
     if (r !== prevResultRef.current) {
       setFormCollapsed(true);
       prevResultRef.current = r;
+      window.requestAnimationFrame(() => {
+        resultsSectionRef.current?.focus({ preventScroll: true });
+        resultsSectionRef.current?.scrollIntoView({ block: "start" });
+      });
     }
   }, [vm.currentResult, setFormCollapsed]);
 
+  useEffect(() => {
+    if (vm.multiResults.length === 0) setFormCollapsed(false);
+  }, [vm.multiResults.length, setFormCollapsed]);
+
   // タブ切替時にtracksが空ならensureHydratedで埋める
   useEffect(() => {
-    const tab = selection.activeTab;
+    const tab = activeTab;
     if (!tab) return;
     const result = analyzer.multiResults.find(([url]) => url === tab)?.[1];
-    if (!result || result.tracks.length !== 0) return;
+    if (
+      !result ||
+      result.tracks.length !== 0 ||
+      result.total === 0 ||
+      result.errorText
+    )
+      return;
 
-    const ensureHydrated = (
-      analyzer as Partial<{ ensureHydrated: (t: string) => void }>
-    ).ensureHydrated;
-    if (typeof ensureHydrated === "function") ensureHydrated(tab);
-  }, [selection.activeTab, analyzer]);
+    void analyzer.ensureHydrated(tab);
+  }, [activeTab, analyzer]);
 
   return (
     <main className="min-h-screen bg-[#04060a] text-slate-50">
@@ -334,64 +353,79 @@ function PageInner() {
         setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
       />
       <div className="mx-auto max-w-[1024px] px-4 py-12 sm:px-6 lg:py-14">
-        <div className="space-y-12">
+        <div className="space-y-10">
           <section>
-            <header className="mb-8 max-w-3xl space-y-4">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
-                Playlist Shopper
-              </p>
-              <div className="space-y-3">
-                <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                  Find missing tracks in Rekordbox.
-                </h1>
-                <p className="max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-                  Paste a Spotify playlist, upload your Rekordbox XML, and see
-                  what you still need to buy.
-                </p>
-              </div>
-              <div className="space-y-2 text-sm text-slate-500">
-                <div className="font-medium text-slate-400">
-                  Who this is for
+            {selection.formCollapsed && vm.multiResults.length > 0 ? (
+              <div className="flex items-center justify-between gap-4 border-b border-white/15 pb-5">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white">
+                    Playlist Shopper
+                  </p>
+                  <p className="mt-1 truncate text-sm text-slate-400">
+                    {vm.currentResult?.title ?? "Analysis results"}
+                  </p>
                 </div>
-                <ul className="grid max-w-xl gap-x-6 gap-y-1 sm:grid-cols-3">
-                  <li className="whitespace-nowrap">Set prep</li>
-                  <li className="whitespace-nowrap">Purchase lists</li>
-                  <li className="whitespace-nowrap">Library checks</li>
-                </ul>
+                <button
+                  type="button"
+                  onClick={() => {
+                    selection.setFormCollapsed(false);
+                    window.requestAnimationFrame(() => {
+                      document.getElementById("playlist-url")?.focus();
+                    });
+                  }}
+                  className="shrink-0 rounded-md border border-white/20 px-3 py-2 text-sm font-medium text-slate-100 hover:border-white/40 hover:bg-white/5"
+                >
+                  New analysis
+                </button>
               </div>
-            </header>
-            <AnalyzeForm
-              playlistUrlInput={analyzer.playlistUrlInput}
-              activePlaylistInput={
-                selection.activeTab ?? vm.currentResult?.playlistUrl
-              }
-              activePlaylistId={vm.currentResult?.playlist_id}
-              queryPlaylist={searchParams.get("playlist")}
-              setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
-              handleAnalyze={handleAnalyzeWithAppleBlock}
-              rekordboxFile={analyzer.rekordboxFile}
-              setRekordboxFile={analyzer.setRekordboxFile}
-              handleRekordboxChange={analyzer.handleRekordboxChange}
-              rekordboxFilename={analyzer.rekordboxFile?.name ?? null}
-              rekordboxDate={analyzer.rekordboxDate}
-              savedRekordboxXmlMeta={analyzer.savedRekordboxXmlMeta}
-              savedRekordboxXmlBusy={analyzer.savedRekordboxXmlBusy}
-              savedRekordboxXmlError={analyzer.savedRekordboxXmlError}
-              useSavedRekordboxXml={analyzer.useSavedRekordboxXml}
-              forgetSavedRekordboxXml={analyzer.forgetSavedRekordboxXml}
-              loading={analyzer.loading}
-              isReanalyzing={analyzer.isReanalyzing}
-              progress={analyzer.progress}
-              phaseLabel={analyzer.phaseLabel}
-              errorText={analyzer.errorText}
-              errorMeta={analyzer.errorMeta}
-              progressItems={analyzer.progressItems}
-              setForceRefreshHint={analyzer.setForceRefreshHint}
-              cancelAnalyze={actions.cancelAnalyze}
-              retryFailed={actions.retryFailed}
-              banner={banner}
-              onDismissBanner={() => setBanner(null)}
-            />
+            ) : (
+              <>
+                <header className="mb-8 max-w-3xl space-y-3">
+                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-400">
+                    Playlist Shopper
+                  </p>
+                  <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                    Find missing tracks in Rekordbox.
+                  </h1>
+                  <p className="max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+                    Check a Spotify playlist against your library and build a
+                    focused purchase list.
+                  </p>
+                </header>
+                <AnalyzeForm
+                  playlistUrlInput={analyzer.playlistUrlInput}
+                  activePlaylistInput={
+                    selection.activeTab ?? vm.currentResult?.playlistUrl
+                  }
+                  activePlaylistId={vm.currentResult?.playlist_id}
+                  queryPlaylist={searchParams.get("playlist")}
+                  setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
+                  handleAnalyze={handleAnalyzeWithAppleBlock}
+                  rekordboxFile={analyzer.rekordboxFile}
+                  setRekordboxFile={analyzer.setRekordboxFile}
+                  handleRekordboxChange={analyzer.handleRekordboxChange}
+                  rekordboxFilename={analyzer.rekordboxFile?.name ?? null}
+                  rekordboxDate={analyzer.rekordboxDate}
+                  savedRekordboxXmlMeta={analyzer.savedRekordboxXmlMeta}
+                  savedRekordboxXmlBusy={analyzer.savedRekordboxXmlBusy}
+                  savedRekordboxXmlError={analyzer.savedRekordboxXmlError}
+                  useSavedRekordboxXml={analyzer.useSavedRekordboxXml}
+                  forgetSavedRekordboxXml={analyzer.forgetSavedRekordboxXml}
+                  loading={analyzer.loading}
+                  isReanalyzing={analyzer.isReanalyzing}
+                  progress={analyzer.progress}
+                  phaseLabel={analyzer.phaseLabel}
+                  errorText={analyzer.errorText}
+                  errorMeta={analyzer.errorMeta}
+                  progressItems={analyzer.progressItems}
+                  setForceRefreshHint={analyzer.setForceRefreshHint}
+                  cancelAnalyze={actions.cancelAnalyze}
+                  retryFailed={actions.retryFailed}
+                  banner={banner}
+                  onDismissBanner={() => setBanner(null)}
+                />
+              </>
+            )}
           </section>
           {vm.multiResults.length === 0 && (
             <QuietBuyLater
@@ -402,7 +436,13 @@ function PageInner() {
         </div>
         {/* Results */}
         {vm.multiResults.length > 0 && (
-          <section className="mt-4 space-y-3" id="results-top">
+          <section
+            ref={resultsSectionRef}
+            className="scroll-mt-4 space-y-4 outline-none"
+            id="results-top"
+            tabIndex={-1}
+            aria-label="Analysis results"
+          >
             {vm.storageWarning && (
               <ErrorAlert
                 title="Local data warning"
@@ -423,6 +463,7 @@ function PageInner() {
                   currentResult={vm.currentResult}
                   ownedCount={vm.ownedCount}
                   toBuyCount={vm.toBuyCount}
+                  unknownCount={vm.unknownCount}
                   displayedTracks={vm.displayedTracks}
                   rekordboxFile={analyzer.rekordboxFile}
                   rekordboxDate={analyzer.rekordboxDate}
@@ -433,77 +474,92 @@ function PageInner() {
                     actions.downloadCsv(vm.displayedTracks, vm.currentResult)
                   }
                 />
-                <div className="flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => filters.setCategoryFilter("all")}
-                      className={`rounded px-2 py-1 ${
-                        filters.categoryFilter === "all"
-                          ? "bg-white/10 text-slate-100"
-                          : "text-slate-500 hover:text-slate-200"
-                      }`}
+                <div className="flex flex-col gap-4 border-y border-white/10 py-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <div className="mb-2 text-sm font-medium text-slate-300">
+                      Show tracks
+                    </div>
+                    <div
+                      className="flex flex-wrap gap-1.5"
+                      role="group"
+                      aria-label="Track status filter"
                     >
-                      All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => filters.setCategoryFilter("toBuy")}
-                      className={`rounded px-2 py-1 ${
-                        filters.categoryFilter === "toBuy"
-                          ? "bg-amber-400/10 text-amber-100"
-                          : "text-slate-500 hover:text-slate-200"
-                      }`}
-                    >
-                      To buy
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => filters.setCategoryFilter("owned")}
-                      className={`rounded px-2 py-1 ${
-                        filters.categoryFilter === "owned"
-                          ? "bg-emerald-400/10 text-emerald-100"
-                          : "text-slate-500 hover:text-slate-200"
-                      }`}
-                    >
-                      Owned
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => filters.setCategoryFilter("all")}
+                        className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${
+                          filters.categoryFilter === "all"
+                            ? "bg-white/10 text-slate-100"
+                            : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                        }`}
+                      >
+                        All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => filters.setCategoryFilter("toBuy")}
+                        className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${
+                          filters.categoryFilter === "toBuy"
+                            ? "bg-amber-400/10 text-amber-100"
+                            : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                        }`}
+                      >
+                        To buy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => filters.setCategoryFilter("owned")}
+                        className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${
+                          filters.categoryFilter === "owned"
+                            ? "bg-emerald-400/10 text-emerald-100"
+                            : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                        }`}
+                      >
+                        Owned
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={filters.categoryFilter === "unknown"}
+                        onClick={() => filters.setCategoryFilter("unknown")}
+                        className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${filters.categoryFilter === "unknown" ? "bg-amber-400/10 text-amber-100" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"}`}
+                      >
+                        Unverified
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                      type="text"
-                      placeholder="Search tracks"
-                      value={filters.searchQuery}
-                      onChange={(e) => filters.setSearchQuery(e.target.value)}
-                      className="rounded border border-slate-800 bg-transparent px-2 py-1 text-xs text-slate-200 outline-none focus:border-slate-600"
-                    />
-                    <select
-                      value={filters.sortKey}
-                      onChange={(e) =>
-                        filters.setSortKey(
-                          e.target.value as typeof filters.sortKey,
-                        )
-                      }
-                      className="rounded border border-slate-800 bg-[#04060a] px-2 py-1 text-xs text-slate-300 outline-none focus:border-slate-600"
-                    >
-                      <option value="none">Sort: None</option>
-                      <option value="title">Sort: Title</option>
-                      <option value="artist">Sort: Artist</option>
-                      <option value="album">Sort: Album</option>
-                    </select>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(12rem,1fr)_auto]">
+                    <label className="text-sm font-medium text-slate-300">
+                      <span className="mb-2 block">Search</span>
+                      <input
+                        type="search"
+                        placeholder="Title, artist, or album"
+                        value={filters.searchQuery}
+                        onChange={(e) => filters.setSearchQuery(e.target.value)}
+                        className="min-h-9 w-full rounded-md border border-white/15 bg-transparent px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-white/40"
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-slate-300">
+                      <span className="mb-2 block">Sort</span>
+                      <select
+                        value={filters.sortKey}
+                        onChange={(e) =>
+                          filters.setSortKey(
+                            e.target.value as typeof filters.sortKey,
+                          )
+                        }
+                        className="min-h-9 w-full rounded-md border border-white/15 bg-[#04060a] px-3 py-2 text-sm text-slate-200 outline-none focus:border-white/40"
+                      >
+                        <option value="none">Sort: None</option>
+                        <option value="title">Sort: Title</option>
+                        <option value="artist">Sort: Artist</option>
+                        <option value="album">Sort: Album</option>
+                      </select>
+                    </label>
                   </div>
                 </div>
                 <ResultsTable
                   currentResult={vm.currentResult}
                   displayedTracks={vm.displayedTracks}
-                  categoryLabels={categoryLabels}
-                  openStoreDropdown={selection.openStoreDropdown}
-                  setOpenStoreDropdown={selection.setOpenStoreDropdown}
-                  getOwnedStatusStyle={getOwnedStatusStyle}
-                  // recommendedStore/otherStoresはResultsTable内でtrackごとに計算
-                  isLoading={analyzer.isProcessing}
-                  errorText={analyzer.errorText}
-                  errorMeta={analyzer.errorMeta}
                   queuedTrackIds={buyQueue.queuedIds}
                   onAddToBuyQueue={buyQueue.addTrack}
                 />

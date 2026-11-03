@@ -2,8 +2,8 @@ import React from "react";
 import type { SortKey } from "../../lib/types";
 
 interface FiltersBarProps {
-  categoryFilter: "all" | "toBuy" | "owned";
-  setCategoryFilter: (value: "all" | "toBuy" | "owned") => void;
+  categoryFilter: "all" | "toBuy" | "owned" | "unknown";
+  setCategoryFilter: (value: "all" | "toBuy" | "owned" | "unknown") => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   sortKey: SortKey;
@@ -27,7 +27,8 @@ export function FiltersBar({
               Review tracks
             </div>
             <div className="text-xs text-slate-400">
-              Start with To buy, then scan all or owned as needed.
+              Review unverified tracks with XML before adding purchase
+              candidates.
             </div>
           </div>
         </div>
@@ -50,6 +51,13 @@ export function FiltersBar({
             className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === "owned" ? "bg-emerald-500/30 border-emerald-500 text-emerald-100" : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20"}`}
           >
             Owned
+          </button>
+          <button
+            onClick={() => setCategoryFilter("unknown")}
+            aria-pressed={categoryFilter === "unknown"}
+            className="flex-1 px-3 py-1 rounded border text-xs"
+          >
+            Unverified
           </button>
         </div>
       </div>

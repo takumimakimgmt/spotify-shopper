@@ -7,12 +7,14 @@ export interface ResultSummaryBarProps {
   result: ResultState | null;
   ownedCount: number;
   toBuyCount: number;
+  unknownCount: number;
 }
 
 export default function ResultSummaryBar({
   result,
   ownedCount,
   toBuyCount,
+  unknownCount,
 }: ResultSummaryBarProps) {
   if (!result) return null;
 
@@ -24,14 +26,19 @@ export default function ResultSummaryBar({
   // Prepare debug info
   const debugInfo = result.meta ? JSON.stringify(result.meta, null, 2) : "";
   const hasDebugInfo = debugInfo.length > 0;
-  const reviewCount = Math.max(total - toBuyCount - ownedCount, 0);
 
   return (
-    <div className="space-y-1 text-xs text-slate-500">
+    <div className="space-y-1 text-sm text-slate-300">
       <div>
         {total} tracks · {toBuyCount} not owned · {ownedCount} owned ·{" "}
-        {reviewCount} review
+        {unknownCount} unverified
       </div>
+      {unknownCount > 0 && (
+        <p className="text-amber-200">
+          Unverified tracks are excluded from To buy. Upload or re-analyze with
+          XML to check ownership.
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         {showPerf && cacheHit && (
           <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 px-2.5 py-1 text-xs text-blue-300">

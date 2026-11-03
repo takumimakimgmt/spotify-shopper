@@ -75,18 +75,27 @@ describe("AnalyzeForm", () => {
     });
   }
 
-  test("renders the Library XML row with no XML selected", async () => {
+  test("renders the ordered playlist and Rekordbox steps", async () => {
     await renderForm(makeProps());
 
-    expect(container.textContent).toContain("Library XML");
+    expect(container.textContent).toContain("1.Spotify playlist");
+    expect(container.textContent).toContain("2.Rekordbox library");
     expect(container.textContent).toContain("No XML selected");
     expect(container.textContent).toContain("Upload Rekordbox XML");
     expect(textButton(container, "Upload")).toBeDefined();
-    expect(container.textContent).not.toContain("Remove");
-    expect(container.textContent).toContain("Need your Rekordbox XML?");
-    expect(container.textContent).toContain(
-      "Export your Rekordbox collection as XML, then upload it here.",
-    );
+    const submit = textButton(container, "Browse playlist");
+    expect(
+      textButton(container, "Upload").compareDocumentPosition(submit) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(container.textContent).toContain("up to 50 MB");
+    expect(container.textContent).toContain("ownership stays unverified");
+    expect(
+      Array.from(container.querySelectorAll("button")).some(
+        (button) => button.textContent === "Remove",
+      ),
+    ).toBe(false);
+    expect(container.textContent).not.toContain("Continue on your computer");
   });
 
   test("renders saved XML metadata and saved XML actions", async () => {
@@ -102,12 +111,14 @@ describe("AnalyzeForm", () => {
 
     await renderForm(props);
 
-    expect(container.textContent).toContain("Library XML");
+    expect(container.textContent).toContain("Rekordbox library");
     expect(container.textContent).toContain("collection.xml");
     expect(container.textContent).toContain("2 KB");
+    expect(textButton(container, "Check ownership").type).toBe("submit");
 
     const uploadButton = textButton(container, "Upload");
     const removeButton = textButton(container, "Remove");
+    expect(textButton(container, "Check ownership").type).toBe("submit");
 
     await act(async () => {
       removeButton.click();
@@ -130,6 +141,7 @@ describe("AnalyzeForm", () => {
     await renderForm(props);
 
     const removeButton = textButton(container, "Remove");
+    expect(textButton(container, "Check ownership").type).toBe("submit");
 
     await act(async () => {
       removeButton.click();
@@ -142,15 +154,17 @@ describe("AnalyzeForm", () => {
     expect(container.textContent).not.toContain("Forget");
   });
 
-  test("renders the playlist URL input and Analyze button", async () => {
+  test("renders the playlist URL input and Browse playlist button", async () => {
     await renderForm(makeProps());
 
     const input = container.querySelector(
       "textarea[placeholder='Paste Spotify playlist URL']",
     );
-    const analyzeButton = textButton(container, "Analyze");
+    const analyzeButton = textButton(container, "Browse playlist");
 
     expect(input).toBeInstanceOf(HTMLTextAreaElement);
+    expect(input?.getAttribute("id")).toBe("playlist-url");
+    expect(container.querySelector("label[for='playlist-url']")).not.toBeNull();
     expect(analyzeButton.type).toBe("submit");
   });
 
@@ -179,20 +193,20 @@ describe("AnalyzeForm", () => {
     );
   });
 
-  test("keeps Analyze disabled when there is no playlist URL", async () => {
+  test("keeps Browse playlist disabled when there is no playlist URL", async () => {
     await renderForm(makeProps({ playlistUrlInput: "   " }));
 
-    expect(textButton(container, "Analyze").disabled).toBe(true);
+    expect(textButton(container, "Browse playlist").disabled).toBe(true);
   });
 
-  test("enables Analyze when there is a playlist URL", async () => {
+  test("enables Browse playlist when there is a playlist URL", async () => {
     await renderForm(
       makeProps({
         playlistUrlInput: "https://open.spotify.com/playlist/abc123",
       }),
     );
 
-    expect(textButton(container, "Analyze").disabled).toBe(false);
+    expect(textButton(container, "Browse playlist").disabled).toBe(false);
   });
 
   test("shows indeterminate Spotify fetch feedback while analysis is running", async () => {
@@ -216,7 +230,7 @@ describe("AnalyzeForm", () => {
     );
     expect(container.textContent).toContain("Working...");
     expect(container.textContent).not.toContain("35%");
-    expect(textButton(container, "Analyze").disabled).toBe(true);
+    expect(textButton(container, "Browse playlist").disabled).toBe(true);
 
     await act(async () => {
       textButton(container, "Cancel").click();
@@ -243,5 +257,9 @@ describe("AnalyzeForm", () => {
       "Enter a Spotify playlist URL, URI, or ID.",
     );
     expect(container.textContent).not.toContain("Show refresh tips");
+    const input = container.querySelector("#playlist-url");
+    expect(input?.getAttribute("aria-invalid")).toBe("true");
+    expect(input?.getAttribute("aria-describedby")).toBe("playlist-url-error");
+    expect(container.textContent).not.toContain("Retry");
   });
 });

@@ -21,7 +21,12 @@ export function getOwnedStatusStyle(
       tooltip,
     };
   }
-  // All other cases (false, null, undefined) are "To Buy"
+  if (owned == null) {
+    return {
+      borderClass: "border-l-4 border-amber-500",
+      tooltip: "Unverified: Check ownership with XML",
+    };
+  }
   return {
     borderClass: "border-l-4 border-slate-600",
     tooltip: "⬛ To Buy: Not found in library",

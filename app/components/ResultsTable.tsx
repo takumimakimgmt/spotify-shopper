@@ -15,10 +15,6 @@ type Props = {
     track: PlaylistRow,
     buyLink: { name: string; url: string },
   ) => void;
-
-  // page.tsx が渡してくる余計な props を許容（互換のため）
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
 };
 
 function purchaseLinks(
@@ -47,7 +43,7 @@ function beatportSearchUrl(track: PlaylistRow): string {
   if (!q) return "";
 
   try {
-    const u = new URL("https:");
+    const u = new URL("https://beatport.com");
     u.hostname = "beatport.com";
     u.pathname = "/search";
     u.searchParams.set("q", q);
@@ -66,7 +62,7 @@ function bandcampSearchUrl(track: PlaylistRow): string {
   if (!q) return "";
 
   try {
-    const u = new URL("https:");
+    const u = new URL("https://bandcamp.com");
     u.hostname = "bandcamp.com";
     u.pathname = "/search";
     u.searchParams.set("q", q);
@@ -107,7 +103,7 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
           href={s.url}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-white/10 bg-white/10 px-2 py-1 text-[11px] text-white hover:bg-white/15"
+          className="inline-flex min-h-9 items-center gap-1 whitespace-nowrap rounded-md border border-white/15 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/15"
         >
           {s.name}
         </a>
@@ -152,7 +148,7 @@ export default function ResultsTable({
     <div className="space-y-2">
       <div className="md:hidden space-y-2">
         {rows.length === 0 ? (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-white/50 text-center">
+          <div className="rounded-lg border border-white/15 bg-white/5 p-4 text-sm text-slate-300 text-center">
             No tracks
           </div>
         ) : (
@@ -168,7 +164,7 @@ export default function ResultsTable({
       </div>
 
       <div className="hidden md:block">
-        <table className="w-full table-fixed text-xs">
+        <table className="w-full table-fixed text-sm">
           <colgroup>
             <col className="w-[34%]" />
             <col className="w-[25%]" />
@@ -176,20 +172,30 @@ export default function ResultsTable({
             <col className="w-[20%]" />
             <col className="w-[12%]" />
           </colgroup>
-          <thead className="sr-only">
+          <thead className="border-b border-white/15 text-left text-xs font-semibold uppercase text-slate-400">
             <tr>
-              <th scope="col">Title</th>
-              <th scope="col">Artist and album</th>
-              <th scope="col">Owned</th>
-              <th scope="col">Store</th>
-              <th scope="col">Buy Later</th>
+              <th scope="col" className="px-3 py-2">
+                Track
+              </th>
+              <th scope="col" className="px-3 py-2">
+                Artist / album
+              </th>
+              <th scope="col" className="px-3 py-2">
+                Status
+              </th>
+              <th scope="col" className="px-3 py-2">
+                Store
+              </th>
+              <th scope="col" className="px-3 py-2">
+                Save
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
             {rows.map((t, i) => {
               const primary = getPrimaryBuyLink(t);
               const isOwned = t.owned === true;
-              const canQueue = !isOwned && Boolean(primary);
+              const canQueue = t.owned === false && Boolean(primary);
               const isQueued =
                 queuedTrackIds?.has(getBuyQueueItemId(t)) ?? false;
 
@@ -212,26 +218,38 @@ export default function ResultsTable({
                   </td>
                   <td className="px-3 py-3 align-middle text-white/60">
                     {isOwned ? (
-                      <span className="truncate text-[11px] text-white/40">
+                      <span className="truncate rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
                         Owned
                       </span>
-                    ) : null}
+                    ) : (
+                      <span className="text-xs text-slate-300">
+                        {t.owned === false ? "Not owned" : "Unverified"}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-3 align-middle">
-                    {isOwned ? null : <StoreLinksInline track={t} />}
+                    {isOwned ? null : primary ? (
+                      <StoreLinksInline track={t} />
+                    ) : (
+                      <span className="text-sm text-slate-400">Not found</span>
+                    )}
                   </td>
                   <td className="px-3 py-3 align-middle">
-                    {isOwned ? null : (
+                    {isOwned ? null : canQueue ? (
                       <button
                         type="button"
-                        disabled={!canQueue || isQueued}
+                        disabled={isQueued}
                         onClick={() => {
                           if (primary) onAddToBuyQueue?.(t, primary);
                         }}
-                        className="whitespace-nowrap rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10 disabled:opacity-40"
+                        className="min-h-9 whitespace-nowrap rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-slate-100 hover:bg-white/10 disabled:text-slate-400"
                       >
                         {isQueued ? "Saved" : "Buy Later"}
                       </button>
+                    ) : (
+                      <span className="text-sm text-slate-400">
+                        {t.owned == null ? "Check with XML" : "Unavailable"}
+                      </span>
                     )}
                   </td>
                 </tr>
@@ -259,10 +277,10 @@ function TrackCard({
   const primary = getPrimaryBuyLink(track);
   const isOwned = track.owned === true;
   const isQueued = queuedTrackIds?.has(getBuyQueueItemId(track)) ?? false;
-  const canQueue = !isOwned && Boolean(primary);
+  const canQueue = track.owned === false && Boolean(primary);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+    <div className="rounded-lg border border-white/15 bg-white/5 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-sm font-medium">
@@ -275,24 +293,37 @@ function TrackCard({
             {track?.album ?? ""}
           </div>
         </div>
-        <div className="shrink-0 text-[11px] text-white/40">
-          {isOwned ? "Owned" : (track?.isrc ?? "")}
-        </div>
+        {isOwned ? (
+          <div className="shrink-0 rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
+            Owned
+          </div>
+        ) : (
+          <div className="shrink-0 text-xs text-slate-300">
+            {track.owned === false ? "Not owned" : "Unverified"}
+          </div>
+        )}
       </div>
-      {isOwned ? null : (
+      {track.owned == null && (
+        <p className="mt-2 text-xs text-amber-200">
+          Check ownership with XML before adding to Buy Later.
+        </p>
+      )}
+      {isOwned ? null : primary ? (
         <div className="mt-2">
           <StoreLinksInline track={track} />
         </div>
+      ) : (
+        <div className="mt-3 text-sm text-slate-400">No store found</div>
       )}
-      {!isOwned ? (
+      {!isOwned && canQueue ? (
         <div className="mt-2">
           <button
             type="button"
-            disabled={!canQueue || isQueued}
+            disabled={isQueued}
             onClick={() => {
               if (primary) onAddToBuyQueue?.(track, primary);
             }}
-            className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10 disabled:opacity-40"
+            className="min-h-9 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-slate-100 hover:bg-white/10 disabled:text-slate-400"
           >
             {isQueued ? "Saved" : "Buy Later"}
           </button>

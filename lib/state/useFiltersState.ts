@@ -3,8 +3,8 @@ import { useState } from "react";
 import type { SortKey } from "../types";
 
 export interface FiltersState {
-  categoryFilter: "all" | "toBuy" | "owned";
-  setCategoryFilter: (value: "all" | "toBuy" | "owned") => void;
+  categoryFilter: "all" | "toBuy" | "owned" | "unknown";
+  setCategoryFilter: (value: "all" | "toBuy" | "owned" | "unknown") => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   sortKey: SortKey;
@@ -17,8 +17,8 @@ export interface FiltersState {
  */
 export function useFiltersState() {
   const [categoryFilter, setCategoryFilter] = useState<
-    "all" | "toBuy" | "owned"
-  >("toBuy");
+    "all" | "toBuy" | "owned" | "unknown"
+  >("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("none");
   return {

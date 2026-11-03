@@ -47,9 +47,23 @@ function parseQueue(raw: string | null): BuyQueueItem[] {
   }
 }
 
-function saveQueue(items: BuyQueueItem[]) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+function loadQueue(): BuyQueueItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return parseQueue(window.localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return [];
+  }
+}
+
+function saveQueue(items: BuyQueueItem[]): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function useBuyQueue() {
@@ -58,7 +72,7 @@ export function useBuyQueue() {
 
   useEffect(() => {
     const restoreTimer = window.setTimeout(() => {
-      setItems(parseQueue(window.localStorage.getItem(STORAGE_KEY)));
+      setItems(loadQueue());
       setRestored(true);
     }, 0);
 

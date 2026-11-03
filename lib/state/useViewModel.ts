@@ -22,6 +22,7 @@ export interface ViewModel {
   displayedTracks: PlaylistRow[];
   ownedCount: number;
   toBuyCount: number;
+  unknownCount: number;
 
   // Quick access to current result and all results (from analyzer)
   currentResult: ResultState | null;
@@ -74,8 +75,9 @@ export function useViewModel(
   ]);
 
   // Derive counts
-  const { ownedCount, toBuyCount } = useMemo(() => {
-    if (!currentResult) return { ownedCount: 0, toBuyCount: 0 };
+  const { ownedCount, toBuyCount, unknownCount } = useMemo(() => {
+    if (!currentResult)
+      return { ownedCount: 0, toBuyCount: 0, unknownCount: 0 };
     return selectTrackCounts(currentResult.tracks);
   }, [currentResult]);
 
@@ -88,6 +90,7 @@ export function useViewModel(
       displayedTracks,
       ownedCount,
       toBuyCount,
+      unknownCount,
       currentResult,
       multiResults,
       storageWarning,
@@ -98,6 +101,7 @@ export function useViewModel(
       displayedTracks,
       ownedCount,
       toBuyCount,
+      unknownCount,
       currentResult,
       multiResults,
       storageWarning,

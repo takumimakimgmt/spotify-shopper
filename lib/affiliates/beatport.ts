@@ -1,4 +1,7 @@
-export function withBeatportAid(url: string, aid?: string): string {
+export function withBeatportAid(
+  url: string,
+  aid: string | undefined = process.env.NEXT_PUBLIC_BEATPORT_A_AID,
+): string {
   const a = (aid ?? "").trim();
   if (!url || !a) return url;
 
@@ -7,9 +10,7 @@ export function withBeatportAid(url: string, aid?: string): string {
     const host = u.hostname.replace(/^www\./, "");
     if (host !== "beatport.com") return url;
 
-    // already has a_aid -> keep
-    if (u.searchParams.get("a_aid")) return u.toString();
-
+    // Apply this site's configured attribution, including restored links.
     u.searchParams.set("a_aid", a);
     return u.toString();
   } catch {

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 
 // --- Gate-1 / FE-1: zod boundary validation for localStorage ---
-const ActiveTabStorageSchema = z.string().trim().min(1).max(64);
+const ActiveTabStorageSchema = z.string().trim().min(1).max(2048);
 const BoolStringSchema = z.enum(["true", "false"]);
 
 function parseStoredActiveTab(v: string | null): string | null {
@@ -19,8 +19,6 @@ function parseStoredBool(v: string | null): boolean | null {
 export interface SelectionState {
   activeTab: string | null;
   setActiveTab: (value: string | null) => void;
-  openStoreDropdown: string | null;
-  setOpenStoreDropdown: (value: string | null) => void;
   formCollapsed: boolean;
   setFormCollapsed: (value: boolean) => void;
 }
@@ -38,8 +36,8 @@ export function useSelectionState(
     if (typeof window === "undefined") return initialActiveTab;
     try {
       const stored = localStorage.getItem("spotify-shopper-active-tab");
-      const _parsedTab = parseStoredActiveTab(stored);
-      return stored !== null ? stored : initialActiveTab;
+      const parsedTab = parseStoredActiveTab(stored);
+      return parsedTab ?? initialActiveTab;
     } catch {
       return initialActiveTab;
     }
@@ -54,16 +52,13 @@ export function useSelectionState(
       }
     } catch {}
   }, [activeTab]);
-  const [openStoreDropdown, setOpenStoreDropdown] = useState<string | null>(
-    null,
-  );
   // Persist formCollapsed in localStorage
   const [formCollapsed, setFormCollapsed] = useState(() => {
     if (typeof window === "undefined") return initialFormCollapsed;
     try {
       const stored = localStorage.getItem("spotify-shopper-form-collapsed");
-      const _parsedCollapsed = parseStoredBool(stored);
-      return stored !== null ? stored === "true" : initialFormCollapsed;
+      const parsedCollapsed = parseStoredBool(stored);
+      return parsedCollapsed ?? initialFormCollapsed;
     } catch {
       return initialFormCollapsed;
     }
@@ -81,8 +76,6 @@ export function useSelectionState(
   return {
     activeTab,
     setActiveTab,
-    openStoreDropdown,
-    setOpenStoreDropdown,
     formCollapsed,
     setFormCollapsed,
   };

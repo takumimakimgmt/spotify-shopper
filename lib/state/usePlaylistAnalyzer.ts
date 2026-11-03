@@ -1,6 +1,5 @@
 "use client";
 import { normalizeMeta, normalizeTracks } from "../api/normalize";
-import { ENABLE_APPLE_MUSIC } from "@/lib/config/features";
 import { normalizeApiError, type NormalizedApiError } from "../api/errors";
 
 const INVALID_PLAYLIST_MESSAGE = "Enter a Spotify playlist URL, URI, or ID.";
@@ -146,6 +145,7 @@ import {
   TrackCategory,
   PlaylistSnapshotV1,
 } from "../types";
+import { MAX_XML_BYTES } from "../constants";
 import { canonicalizeKey } from "@/lib/utils/normalize";
 import {
   getPlaylist,
@@ -164,25 +164,45 @@ import { detectSourceFromUrl, sanitizeUrl } from "../utils/playlistUrl";
 export const STORAGE_RESULTS = "spotify-shopper-results";
 const MAX_STORAGE_BYTES = 300 * 1024; // ~300KB guard
 
-const ENABLE_LOCAL_PERSIST = false;
+const ENABLE_LOCAL_PERSIST = true;
 type StorageLike = {
   getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-  removeItem(key: string): void;
+  setItem(key: string, value: string): boolean;
+  removeItem(key: string): boolean;
 };
 const safeStorage: StorageLike = {
-  getItem: (k) => (ENABLE_LOCAL_PERSIST ? safeStorage.getItem(k) : null),
+  getItem: (k) => {
+    if (!ENABLE_LOCAL_PERSIST || typeof window === "undefined") return null;
+    try {
+      return window.localStorage.getItem(k);
+    } catch {
+      return null;
+    }
+  },
   setItem: (k, v) => {
-    if (ENABLE_LOCAL_PERSIST) safeStorage.setItem(k, v);
+    if (!ENABLE_LOCAL_PERSIST || typeof window === "undefined") return false;
+    try {
+      window.localStorage.setItem(k, v);
+      return true;
+    } catch {
+      return false;
+    }
   },
   removeItem: (k) => {
-    if (ENABLE_LOCAL_PERSIST) safeStorage.removeItem(k);
+    if (!ENABLE_LOCAL_PERSIST || typeof window === "undefined") return false;
+    try {
+      window.localStorage.removeItem(k);
+      return true;
+    } catch {
+      return false;
+    }
   },
 };
 
 export function categorizeTrack(track: PlaylistRow): TrackCategory {
   if (track.owned === true) return "owned";
-  return "checkout";
+  if (track.owned === false) return "checkout";
+  return "unknown";
 }
 
 function mapTracks(rows: PlaylistRow[]): PlaylistRow[] {
@@ -202,6 +222,16 @@ function errorToMeta(error: NormalizedApiError) {
 
 const _sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+function xmlTooLargeMessage(file: File): string {
+  const mb = (file.size / (1024 * 1024)).toFixed(1);
+  return `XML is too large (${mb} MB). Please export a smaller Rekordbox XML and try again.`;
+}
+
+function validateXmlSize(file: File | null): string | null {
+  if (!file) return null;
+  return file.size > MAX_XML_BYTES ? xmlTooLargeMessage(file) : null;
+}
 
 function classifyAppleError(
   message: string | undefined,
@@ -232,12 +262,26 @@ function classifyAppleError(
 }
 
 export function usePlaylistAnalyzer() {
+  const hydrateInFlightRef = useRef<Set<string>>(new Set());
+  const hydrateAttemptedRef = useRef<Set<string>>(new Set());
+  const [multiResults, setMultiResults] = useState<
+    Array<[string, ResultState]>
+  >([]);
+  const [storageHydrated, setStorageHydrated] = useState(false);
+
   // タブ切替時にtracks未定義ならAPIでhydrate
   const _ensureHydrated = async (url: string) => {
+    if (
+      hydrateInFlightRef.current.has(url) ||
+      hydrateAttemptedRef.current.has(url)
+    )
+      return;
     const idx = multiResults.findIndex(([u]) => u === url);
     if (idx === -1) return;
     const [_, result] = multiResults[idx];
     if (result.tracks && result.tracks.length > 0) return;
+    hydrateAttemptedRef.current.add(url);
+    hydrateInFlightRef.current.add(url);
     try {
       setMultiResults((prev) =>
         prev.map(([u, r]) => (u === url ? [u, { ...r, tracks: [] }] : [u, r])),
@@ -248,7 +292,16 @@ export function usePlaylistAnalyzer() {
       setMultiResults((prev) =>
         prev.map(([u, r]) =>
           u === url
-            ? [u, { ...r, tracks: rows, analyzedAt: Date.now() }]
+            ? [
+                u,
+                {
+                  ...r,
+                  tracks: rows,
+                  total: rows.length,
+                  errorText: null,
+                  analyzedAt: Date.now(),
+                },
+              ]
             : [u, r],
         ),
       );
@@ -261,13 +314,15 @@ export function usePlaylistAnalyzer() {
             : [u, r],
         ),
       );
+    } finally {
+      hydrateInFlightRef.current.delete(url);
     }
   };
 
   // Robust restore: always arrayify tracks, auto-discard broken/legacy data
   useEffect(() => {
+    if (typeof window === "undefined") return;
     try {
-      if (typeof window === "undefined") return;
       const saved = safeStorage.getItem(STORAGE_RESULTS);
       if (!saved) return;
       const parsed = safeJsonParse<any>(saved);
@@ -279,35 +334,16 @@ export function usePlaylistAnalyzer() {
         safeStorage.removeItem(STORAGE_RESULTS);
       }
     } finally {
+      setStorageHydrated(true);
     }
   }, []);
 
-  // 1-1: STORAGE_RESULTSへ保存時はtracksを絶対に含めない
-  function _saveResultsToStorage(results: Array<[string, ResultState]>) {
-    if (typeof window === "undefined") return;
-    // tracksを除外したLightResultのみ保存
-    const lightResults = results.map(([url, r]) => [
-      url,
-      {
-        title: r.title,
-        total: r.total,
-        playlistUrl: r.playlistUrl,
-        playlist_id: r.playlist_id,
-        playlist_name: r.playlist_name,
-        analyzedAt: r.analyzedAt,
-        hasRekordboxData: r.hasRekordboxData,
-        rekordboxMeta: r.rekordboxMeta,
-        meta: r.meta,
-        // tracksは絶対に保存しない
-      },
-    ]);
-    safeStorage.setItem(
-      STORAGE_RESULTS,
-      JSON.stringify({ results: lightResults }),
-    );
-  }
-
-  const [playlistUrlInput, setPlaylistUrlInput] = useState("");
+  const [playlistUrlInput, setPlaylistUrlInputState] = useState("");
+  const playlistUrlInputRef = useRef("");
+  const setPlaylistUrlInput = (value: string) => {
+    playlistUrlInputRef.current = value;
+    setPlaylistUrlInputState(value);
+  };
   const [rekordboxFile, setRekordboxFile] = useState<File | null>(null);
   const [rekordboxDate, setRekordboxDate] = useState<string | null>(null);
   const [savedRekordboxXmlMeta, setSavedRekordboxXmlMeta] =
@@ -316,17 +352,22 @@ export function usePlaylistAnalyzer() {
   const [savedRekordboxXmlError, setSavedRekordboxXmlError] = useState<
     string | null
   >(null);
-  const [multiResults, setMultiResults] = useState<
-    Array<[string, ResultState]>
-  >([]);
   const [loading, setLoading] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!multiResults.length) return;
-    if (localStorageDebounceRef.current)
+    if (typeof window === "undefined" || !storageHydrated) return;
+    if (localStorageDebounceRef.current) {
       clearTimeout(localStorageDebounceRef.current);
+      localStorageDebounceRef.current = null;
+    }
+
+    if (!multiResults.length) {
+      const removed = safeStorage.removeItem(STORAGE_RESULTS);
+      setStorageWarning(removed ? null : "ローカルデータの削除に失敗しました");
+      return;
+    }
+
     localStorageDebounceRef.current = setTimeout(() => {
       // summary-only: url, snapshotId, summaryのみ
       const results = multiResults.map(([url, r]) => ({
@@ -349,9 +390,18 @@ export function usePlaylistAnalyzer() {
         setStorageWarning("保存容量上限を超えました");
         return;
       }
-      safeStorage.setItem(STORAGE_RESULTS, payload);
+      const saved = safeStorage.setItem(STORAGE_RESULTS, payload);
+      setStorageWarning(saved ? null : "ローカル保存に失敗しました");
+      localStorageDebounceRef.current = null;
     }, 500);
-  }, [multiResults]);
+
+    return () => {
+      if (localStorageDebounceRef.current) {
+        clearTimeout(localStorageDebounceRef.current);
+        localStorageDebounceRef.current = null;
+      }
+    };
+  }, [multiResults, storageHydrated]);
 
   // rekordboxファイルと日付をセットで管理する共通関数
   const applyRekordboxFile = (file: File | null) => {
@@ -384,6 +434,12 @@ export function usePlaylistAnalyzer() {
   }, []);
 
   const persistRekordboxFile = async (file: File) => {
+    const sizeError = validateXmlSize(file);
+    if (sizeError) {
+      setSavedRekordboxXmlError(sizeError);
+      return;
+    }
+
     setSavedRekordboxXmlBusy(true);
     setSavedRekordboxXmlError(null);
     try {
@@ -404,6 +460,11 @@ export function usePlaylistAnalyzer() {
       if (!saved) {
         setSavedRekordboxXmlMeta(null);
         setSavedRekordboxXmlError("No saved XML found.");
+        return;
+      }
+      const sizeError = validateXmlSize(saved.file);
+      if (sizeError) {
+        setSavedRekordboxXmlError(sizeError);
         return;
       }
       applyRekordboxFile(saved.file);
@@ -442,6 +503,11 @@ export function usePlaylistAnalyzer() {
         setSavedRekordboxXmlError("No saved XML found.");
         return null;
       }
+      const sizeError = validateXmlSize(saved.file);
+      if (sizeError) {
+        setSavedRekordboxXmlError(sizeError);
+        return null;
+      }
       applyRekordboxFile(saved.file);
       setSavedRekordboxXmlMeta(saved.meta);
       return saved.file;
@@ -472,16 +538,11 @@ export function usePlaylistAnalyzer() {
   const localStorageDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const clearLocalData = () => {
-    try {
-      safeStorage.removeItem(STORAGE_RESULTS);
-      setMultiResults([]);
-      setPlaylistUrlInput("");
-      applyRekordboxFile(null);
-      setStorageWarning(null);
-    } catch (_err) {
-      console.error("[Storage] Failed to clear local data:", _err);
-      setStorageWarning("Failed to clear local data.");
-    }
+    const removed = safeStorage.removeItem(STORAGE_RESULTS);
+    setMultiResults([]);
+    setPlaylistUrlInput("");
+    applyRekordboxFile(null);
+    setStorageWarning(removed ? null : "ローカルデータの削除に失敗しました");
   };
 
   // selectedKey is managed by selection, not analyzer
@@ -516,14 +577,18 @@ export function usePlaylistAnalyzer() {
 
   const handleRekordboxChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
+    const sizeError = validateXmlSize(file);
+    if (sizeError) {
+      applyRekordboxFile(null);
+      setSavedRekordboxXmlError(sizeError);
+      e.target.value = "";
+      return;
+    }
+    setSavedRekordboxXmlError(null);
     applyRekordboxFile(file);
     if (file) {
       void persistRekordboxFile(file);
     }
-  };
-
-  const handleRemoveTab = (urlToRemove: string) => {
-    setMultiResults((prev) => prev.filter(([url]) => url !== urlToRemove));
   };
 
   const handleReAnalyzeFileChange = async (
@@ -531,6 +596,13 @@ export function usePlaylistAnalyzer() {
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const sizeError = validateXmlSize(file);
+    if (sizeError) {
+      setErrorText(sizeError);
+      setErrorMeta(errorToMeta({ message: sizeError, code: "XML_TOO_LARGE" }));
+      e.target.value = "";
+      return;
+    }
     // Re-analyze/BulkでもXML日時を更新
     applyRekordboxFile(file);
     const isBulk = reAnalyzeUrl === "__BULK__";
@@ -632,7 +704,7 @@ export function usePlaylistAnalyzer() {
       window.setTimeout(() => setForceRefreshHint(false), 2000);
     }
 
-    const urls = playlistUrlInput
+    const urls = playlistUrlInputRef.current
       .split("\n")
       .map((line) => sanitizeUrl(line))
       .filter((url) => url.length > 0);
@@ -658,6 +730,15 @@ export function usePlaylistAnalyzer() {
     }
 
     const activeRekordboxFile = await resolveActiveRekordboxFile();
+    const xmlSizeError = validateXmlSize(activeRekordboxFile);
+    if (xmlSizeError) {
+      setErrorText(xmlSizeError);
+      setErrorMeta(
+        errorToMeta({ message: xmlSizeError, code: "XML_TOO_LARGE" }),
+      );
+      setPhaseLabel(null);
+      return;
+    }
 
     // Initialize progress items for each URL
     setProgressItems(
@@ -947,7 +1028,7 @@ export function usePlaylistAnalyzer() {
           artist: t.artist,
           album: t.album ?? "",
           isrc: t.isrc ?? null,
-          owned: t.owned === true,
+          owned: typeof t.owned === "boolean" ? t.owned : undefined,
           owned_reason: t.ownedReason ?? null,
           track_key_primary: primaryKey,
           track_key_fallback: fallbackKey,
@@ -1009,7 +1090,7 @@ export function usePlaylistAnalyzer() {
           const m = picked?.m ?? null;
           return {
             ...t,
-            owned: Boolean(m?.owned),
+            owned: typeof m?.owned === "boolean" ? m.owned : null,
             ownedSource: m?.source ?? null,
             ownedReason:
               (m?.reason ?? null) +
@@ -1020,50 +1101,6 @@ export function usePlaylistAnalyzer() {
       }
       return next;
     });
-  };
-
-  const handleExportCSV = (tracks: PlaylistRow[], currentTitle: string) => {
-    if (!tracks.length) {
-      alert("No tracks to export.");
-      return;
-    }
-    const headers = [
-      "#",
-      "Title",
-      "Artist",
-      "Album",
-      "ISRC",
-      "Owned",
-      "Beatport",
-      "Bandcamp",
-    ];
-    if (ENABLE_APPLE_MUSIC) headers.push("iTunes");
-    const rows = tracks.map((t) => [
-      t.index,
-      t.title,
-      t.artist,
-      t.album,
-      t.isrc || "",
-      t.owned === true ? "Yes" : "No",
-      t.stores.beatport,
-      t.stores.bandcamp,
-      ...(ENABLE_APPLE_MUSIC ? [t.stores.itunes] : []),
-    ]);
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
-      )
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const safePlaylistName = currentTitle
-      .replace(/[^a-zA-Z0-9_-]/g, "_")
-      .substring(0, 50);
-    a.href = url;
-    a.download = `playlist_${safePlaylistName}_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const cancelAnalyze = () => {
@@ -1085,7 +1122,8 @@ export function usePlaylistAnalyzer() {
       .filter((p) => p.status === "error")
       .map((p) => p.url);
     if (failedUrls.length === 0) return;
-    setPlaylistUrlInput(failedUrls.join("\n"));
+    playlistUrlInputRef.current = failedUrls.join("\n");
+    setPlaylistUrlInputState(playlistUrlInputRef.current);
     handleAnalyze({ preventDefault: () => {} } as unknown as FormEvent);
   };
 
@@ -1125,8 +1163,7 @@ export function usePlaylistAnalyzer() {
     handleAnalyze,
     handleRekordboxChange,
     handleReAnalyzeFileChange,
-    handleRemoveTab,
     applySnapshotWithXml,
-    handleExportCSV,
+    ensureHydrated: _ensureHydrated,
   };
 }
