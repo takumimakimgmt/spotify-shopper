@@ -50,7 +50,7 @@ export function FiltersBar({
             onClick={() => setCategoryFilter("owned")}
             className={`flex-1 px-3 py-1 rounded border text-xs transition ${categoryFilter === "owned" ? "bg-emerald-500/30 border-emerald-500 text-emerald-100" : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20"}`}
           >
-            Matches XML
+            Matched / confirmed
           </button>
           <button
             onClick={() => setCategoryFilter("unknown")}

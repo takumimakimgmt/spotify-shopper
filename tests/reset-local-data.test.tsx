@@ -14,6 +14,7 @@ const keys = [
   "spotify-shopper-form-collapsed",
   "playlist-shopper-buy-queue",
   "playlist-shopper-analysis-draft",
+  "playlist-shopper-review-decisions",
 ];
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;

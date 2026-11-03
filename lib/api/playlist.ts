@@ -1,4 +1,4 @@
-import { prepareXmlUpload } from "../rekordbox/prepareXmlUpload";
+import { matchInBrowser, readLocalLibrary } from "../rekordbox/browserMatch";
 import type { PlaylistSnapshotV1 } from "../types";
 import type { PlaylistResponse } from "./schema";
 import { PlaylistResponseSchema } from "./responseSchemas";
@@ -72,45 +72,28 @@ export async function fetchPlaylist(
 export async function fetchPlaylistWithRekordbox(
   params: PostPlaylistWithRekordboxUploadParams,
 ): Promise<PlaylistResponse> {
-  await warmupBackend(params.signal);
-
-  // file があるときだけ upload エンドポイント（multipart）
-  if (params.file) {
-    const form = new FormData();
-    form.append("url", params.url);
-    form.append("source", "spotify");
-    if (params.rekordboxXmlPath)
-      form.append("rekordbox_xml_path", params.rekordboxXmlPath);
-    form.append("file", await prepareXmlUpload(params.file, params.signal));
-    if (params.refresh) form.append("refresh", "1");
-
-    return fetchJson<PlaylistResponse>(
-      directApi(`/api/playlist-with-rekordbox-upload`),
-      {
-        method: "POST",
-        body: form,
-        signal: params.signal,
-      },
-      PlaylistResponseSchema,
-    );
-  }
-
-  // file がないときは JSON エンドポイント（軽い・確実）
-  return fetchJson<PlaylistResponse>(
-    directApi(`/api/playlist-with-rekordbox`),
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        url: params.url,
-        source: "spotify",
-        rekordbox_xml_path: params.rekordboxXmlPath,
-        refresh: params.refresh,
-      }),
-      signal: params.signal,
-    },
-    PlaylistResponseSchema,
+  if (!params.file)
+    throw new Error("Choose a local XML file to match your library.");
+  // Validate locally before requesting Spotify. No XML or library metadata leaves the browser.
+  await readLocalLibrary(params.file, params.signal);
+  const playlist = await fetchPlaylist(params);
+  const { matches, meta } = await matchInBrowser(
+    playlist.tracks,
+    params.file,
+    params.signal,
   );
+  return {
+    ...playlist,
+    tracks: playlist.tracks.map((track, index) => ({
+      ...track,
+      ...matches[index],
+    })),
+    meta: {
+      ...playlist.meta,
+      ...meta,
+      refresh: playlist.meta?.refresh ?? false,
+    },
+  };
 }
 
 /**
@@ -173,18 +156,21 @@ export async function matchSnapshotWithXml(
     rekordboxXmlPath = a.rekordboxXmlPath;
   }
 
-  const form = new FormData();
-  form.append("snapshot", JSON.stringify(snapshot));
-  if (rekordboxXmlPath) form.append("rekordbox_xml_path", rekordboxXmlPath);
-  if (file) form.append("file", await prepareXmlUpload(file, signal));
-
-  await warmupBackend(signal);
-  return fetchJson<MatchSnapshotWithXmlResponse>(
-    directApi(`/api/match-snapshot-with-xml`),
-    {
-      method: "POST",
-      body: form,
-      signal,
-    },
-  );
+  if (!file || rekordboxXmlPath)
+    throw new Error("Choose a local XML file. Server paths are not supported.");
+  if (
+    snapshot.schema !== "playlist_snapshot" ||
+    snapshot.version !== 1 ||
+    !Array.isArray(snapshot.tracks)
+  )
+    throw new Error("Invalid playlist snapshot.");
+  const { matches, meta } = await matchInBrowser(snapshot.tracks, file, signal);
+  return {
+    ...snapshot,
+    tracks: snapshot.tracks.map((track, index) => ({
+      ...track,
+      ...matches[index],
+    })),
+    meta,
+  };
 }

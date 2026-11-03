@@ -31,6 +31,7 @@ export type StoreLinks = {
 
 export type ApiMeta = {
   ownership_rules_version?: number;
+  match_engine?: "browser-v1";
   source_track_count?: number;
   analyzed_track_count?: number;
   skipped_track_count?: number;
@@ -95,6 +96,14 @@ export type PlaylistRow = {
   stores: StoreLinks;
   owned?: boolean | null;
   ownedReason?: string | null;
+  reviewDecision?: {
+    action: "owned" | "different_version";
+    updatedAt: string;
+    libraryFingerprint?: string;
+    candidate?: string;
+    rulesVersion?: number;
+  };
+  changeStatus?: "added" | "changed" | "rechecked" | "unchanged";
   libraryMatch?: LibraryMatch | null;
   trackKeyPrimary?: string;
   trackKeyFallback?: string;
@@ -103,6 +112,14 @@ export type PlaylistRow = {
 };
 
 export type ResultState = {
+  changeSummary?: {
+    hasPrevious: boolean;
+    added: number;
+    changed: number;
+    rechecked: number;
+    removed: number;
+    unchanged: number;
+  };
   title: string;
   total: number;
   playlistUrl: string;

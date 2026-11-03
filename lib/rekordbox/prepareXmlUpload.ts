@@ -1,9 +1,10 @@
+import type { LibraryEntry } from "./localMatcher";
 import { MAX_XML_BYTES, MAX_XML_UPLOAD_BYTES } from "../constants";
 
 const prepared = new WeakMap<File, Promise<File>>();
 const fields = ["Name", "Artist", "Album", "ISRC"] as const;
 
-function readFile(file: File): Promise<string> {
+export function readXmlFile(file: File): Promise<string> {
   if (typeof file.text === "function") return file.text();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -15,7 +16,7 @@ function readFile(file: File): Promise<string> {
 }
 
 /** Retain every collection entry, but never send local file paths, cues or playlists. */
-export function compactLibraryXml(text: string): string {
+export function parseLibraryXml(text: string): LibraryEntry[] {
   if (/<!\s*(DOCTYPE|ENTITY)\b/i.test(text)) {
     throw new Error("XML document types and entities are not supported.");
   }
@@ -26,9 +27,7 @@ export function compactLibraryXml(text: string): string {
   if (collections.length !== 1)
     throw new Error("XML must contain one COLLECTION.");
   const collection = collections[0];
-  const output = document.implementation.createDocument(null, "DJ_PLAYLISTS");
-  const target = output.createElement("COLLECTION");
-  output.documentElement.appendChild(target);
+  const entries: LibraryEntry[] = [];
   let count = 0;
   // Reject excessive structure before copying. No truncation or partial library matching.
   const stack: Array<[Element, number]> = [[document.documentElement, 1]];
@@ -43,16 +42,36 @@ export function compactLibraryXml(text: string): string {
     if (child.tagName !== "TRACK") continue;
     if (++count > 100_000)
       throw new Error("XML exceeds 100,000 library entries.");
-    const track = output.createElement("TRACK");
+    const track: LibraryEntry = { title: "", artist: "", album: "" };
     for (const field of fields) {
       const value = child.getAttribute(field);
       if ((value?.length ?? 0) > 2048)
         throw new Error("XML track metadata is too long.");
-      if (value !== null) track.setAttribute(field, value);
+      if (field === "Name") track.title = value || "";
+      if (field === "Artist") track.artist = value || "";
+      if (field === "Album") track.album = value || "";
+      if (field === "ISRC") track.isrc = value;
     }
+    entries.push(track);
+  }
+  return entries;
+}
+
+/** Legacy transfer helper; the browser matching path does not upload XML. */
+export function compactLibraryXml(text: string): string {
+  const entries = parseLibraryXml(text);
+  const output = document.implementation.createDocument(null, "DJ_PLAYLISTS");
+  const target = output.createElement("COLLECTION");
+  output.documentElement.appendChild(target);
+  for (const entry of entries) {
+    const track = output.createElement("TRACK");
+    track.setAttribute("Name", entry.title);
+    track.setAttribute("Artist", entry.artist);
+    track.setAttribute("Album", entry.album);
+    if (entry.isrc != null) track.setAttribute("ISRC", entry.isrc);
     target.appendChild(track);
   }
-  target.setAttribute("Entries", String(count));
+  target.setAttribute("Entries", String(entries.length));
   const serialized = new XMLSerializer().serializeToString(output);
   if (new Blob([serialized]).size > MAX_XML_UPLOAD_BYTES) {
     throw new Error(
@@ -71,7 +90,7 @@ export async function prepareXmlUpload(
     throw new Error("XML file too large (max 50MB).");
   let promise = prepared.get(file);
   if (!promise) {
-    promise = readFile(file).then(
+    promise = readXmlFile(file).then(
       (text) =>
         new File([compactLibraryXml(text)], "library-metadata.xml", {
           type: "text/xml",

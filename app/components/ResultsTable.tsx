@@ -4,6 +4,7 @@ import React from "react";
 import type { PlaylistRow, StoreLinks } from "../../lib/types";
 import { withBeatportAid } from "../../lib/affiliates/beatport";
 import {
+  effectiveOwned,
   libraryMatchLabel,
   libraryMatchExplanation,
 } from "@/lib/domain/libraryMatch";
@@ -11,7 +12,11 @@ import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
 
 const BEATPORT_A_AID = process.env.NEXT_PUBLIC_BEATPORT_A_AID;
 
+type ReviewAction = "owned" | "different_version" | null;
+type ReviewHandler = (track: PlaylistRow, action: ReviewAction) => void;
 type Props = {
+  onReviewDecision?: ReviewHandler;
+  reviewReady?: boolean;
   currentResult: unknown | null;
   emptyMessage?: string;
   onResetFilters?: () => void;
@@ -148,6 +153,8 @@ export default function ResultsTable({
   onAddToBuyQueue,
   emptyMessage,
   onResetFilters,
+  onReviewDecision,
+  reviewReady = true,
 }: Props) {
   if (!currentResult) return null;
   const rows = Array.isArray(displayedTracks) ? displayedTracks : [];
@@ -184,6 +191,8 @@ export default function ResultsTable({
               track={t}
               queuedTrackIds={queuedTrackIds}
               onAddToBuyQueue={onAddToBuyQueue}
+              onReviewDecision={onReviewDecision}
+              reviewReady={reviewReady}
             />
           ))
         )}
@@ -220,8 +229,8 @@ export default function ResultsTable({
           <tbody className="divide-y divide-white/10">
             {rows.map((t, i) => {
               const primary = getPrimaryBuyLink(t);
-              const isOwned = t.owned === true;
-              const canQueue = t.owned === false && Boolean(primary);
+              const isOwned = effectiveOwned(t) === true;
+              const canQueue = effectiveOwned(t) === false && Boolean(primary);
               const isQueued =
                 queuedTrackIds?.has(getBuyQueueItemId(t)) ?? false;
 
@@ -230,7 +239,11 @@ export default function ResultsTable({
                   <td className="px-3 py-3 align-middle">
                     <div className="min-w-0">
                       <TrackTitle track={t} />
-                      <MatchDetails track={t} />
+                      <MatchDetails
+                        track={t}
+                        onReviewDecision={onReviewDecision}
+                        reviewReady={reviewReady}
+                      />
                     </div>
                   </td>
                   <td className="px-3 py-3 align-middle">
@@ -246,7 +259,7 @@ export default function ResultsTable({
                   <td className="px-3 py-3 align-middle text-white/60">
                     {isOwned ? (
                       <span className="truncate rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
-                        Matches XML
+                        {libraryMatchLabel(t)}
                       </span>
                     ) : (
                       <span
@@ -306,7 +319,11 @@ function TrackCard({
   track,
   queuedTrackIds,
   onAddToBuyQueue,
+  onReviewDecision,
+  reviewReady,
 }: {
+  onReviewDecision?: ReviewHandler;
+  reviewReady?: boolean;
   track: PlaylistRow;
   queuedTrackIds?: Set<string>;
   onAddToBuyQueue?: (
@@ -315,9 +332,9 @@ function TrackCard({
   ) => void;
 }) {
   const primary = getPrimaryBuyLink(track);
-  const isOwned = track.owned === true;
+  const isOwned = effectiveOwned(track) === true;
   const isQueued = queuedTrackIds?.has(getBuyQueueItemId(track)) ?? false;
-  const canQueue = track.owned === false && Boolean(primary);
+  const canQueue = effectiveOwned(track) === false && Boolean(primary);
 
   return (
     <div className="rounded-lg border border-white/15 bg-white/5 p-4">
@@ -335,7 +352,7 @@ function TrackCard({
         </div>
         {isOwned ? (
           <div className="shrink-0 rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
-            Matches XML
+            {libraryMatchLabel(track)}
           </div>
         ) : (
           <div className="shrink-0 text-xs text-slate-300">
@@ -343,7 +360,11 @@ function TrackCard({
           </div>
         )}
       </div>
-      <MatchDetails track={track} />
+      <MatchDetails
+        track={track}
+        onReviewDecision={onReviewDecision}
+        reviewReady={reviewReady}
+      />
       {isOwned ? null : primary ? (
         <div className="mt-2">
           <StoreLinksInline track={track} />
@@ -369,12 +390,60 @@ function TrackCard({
   );
 }
 
-function MatchDetails({ track }: { track: PlaylistRow }) {
+function MatchDetails({
+  track,
+  onReviewDecision,
+  reviewReady,
+}: {
+  track: PlaylistRow;
+  onReviewDecision?: ReviewHandler;
+  reviewReady?: boolean;
+}) {
   const candidate = track.libraryMatch;
   return (
     <details className="mt-2 text-xs text-slate-300">
-      <summary className="cursor-pointer">Matching details</summary>
+      <summary className="cursor-pointer">
+        Matching details
+        {track.changeStatus && track.changeStatus !== "unchanged"
+          ? ` · ${track.changeStatus}`
+          : ""}
+      </summary>
       <p className="mt-1">{libraryMatchExplanation(track)}</p>
+      {track.reviewDecision && (
+        <p>
+          Automatic XML result:{" "}
+          {libraryMatchLabel({ ...track, reviewDecision: undefined })}
+        </p>
+      )}
+      {onReviewDecision && (
+        <div className="mt-2 flex flex-wrap gap-3">
+          <button
+            disabled={!reviewReady}
+            type="button"
+            onClick={() => onReviewDecision(track, "owned")}
+          >
+            I own this recording
+          </button>
+          {candidate?.matched_title && (
+            <button
+              disabled={!reviewReady}
+              type="button"
+              onClick={() => onReviewDecision(track, "different_version")}
+            >
+              This candidate is a different version
+            </button>
+          )}
+          {track.reviewDecision && (
+            <button
+              disabled={!reviewReady}
+              type="button"
+              onClick={() => onReviewDecision(track, null)}
+            >
+              Forget my confirmation
+            </button>
+          )}
+        </div>
+      )}
       {candidate?.matched_title && (
         <p className="mt-1 break-words">
           XML candidate: {candidate.matched_title} —{" "}

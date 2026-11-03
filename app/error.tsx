@@ -50,7 +50,8 @@ export default function GlobalError({
           Reset display settings (keep saved data)
         </button>
         <button disabled={busy} onClick={() => void clear("all")}>
-          Delete all saved data (history, XML, Buy Later and settings)
+          Delete all saved data (history, XML, Buy Later, confirmations and
+          settings)
         </button>
       </div>
       {busy && <p role="status">Removing selected data…</p>}

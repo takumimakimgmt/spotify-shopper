@@ -16,6 +16,11 @@ export async function resetLocalData(scope: ResetScope): Promise<void> {
       ? HISTORY_KEYS
       : scope === "settings"
         ? SETTINGS_KEYS
-        : [...HISTORY_KEYS, ...SETTINGS_KEYS, STORAGE_KEYS.buyQueue];
+        : [
+            ...HISTORY_KEYS,
+            ...SETTINGS_KEYS,
+            STORAGE_KEYS.buyQueue,
+            STORAGE_KEYS.reviewDecisions,
+          ];
   for (const key of keys) window.localStorage.removeItem(key);
 }

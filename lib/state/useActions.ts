@@ -99,6 +99,8 @@ export function useActions(
         "ISRC",
         "XML match",
         "Match reason",
+        "Your confirmation",
+        "Change since last analysis",
         "XML filename",
         "XML fingerprint",
         "Checked at",
@@ -116,6 +118,8 @@ export function useActions(
           sanitizeForCsvCell(t.isrc || ""),
           sanitizeForCsvCell(libraryMatchLabel(t)),
           sanitizeForCsvCell(t.ownedReason || ""),
+          sanitizeForCsvCell(t.reviewDecision?.action || ""),
+          sanitizeForCsvCell(t.changeStatus || ""),
           sanitizeForCsvCell(currentResult.rekordboxMeta?.filename || ""),
           sanitizeForCsvCell(
             currentResult.meta?.rekordbox?.library_sha256 || "",

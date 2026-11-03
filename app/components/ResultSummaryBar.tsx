@@ -30,9 +30,30 @@ export default function ResultSummaryBar({
   return (
     <div className="space-y-1 text-sm text-slate-300">
       <div>
-        {total} tracks · {toBuyCount} not in XML · {ownedCount} matching XML ·{" "}
-        {unknownCount} not confirmed
+        {total} tracks · {toBuyCount} not in XML · {ownedCount} matched or
+        confirmed · {unknownCount} not confirmed
       </div>
+      {result.tracks?.some((t) => t.reviewDecision) && (
+        <p>
+          Counts include your saved confirmations. Automatic XML evidence
+          remains available in matching details.
+        </p>
+      )}
+      {result.meta?.match_engine === "browser-v1" && (
+        <p>
+          Library matching completed on this device. XML and library metadata
+          were not uploaded.
+        </p>
+      )}
+      {result.changeSummary?.hasPrevious && (
+        <p>
+          Since last analysis: {result.changeSummary.added} added ·{" "}
+          {result.changeSummary.changed} changed ·{" "}
+          {result.changeSummary.rechecked} rechecked ·{" "}
+          {result.changeSummary.removed} removed ·{" "}
+          {result.changeSummary.unchanged} unchanged
+        </p>
+      )}
       {result.hasRekordboxData && (
         <div className="space-y-1">
           <p>

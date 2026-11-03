@@ -1,0 +1,7802 @@
+{
+  "source": "Python matcher rules v3; synthetic and committed golden fixture only",
+  "cases": [
+    {
+      "entries": [
+        {
+          "title": "Bright Lights",
+          "artist": "Artist B",
+          "album": "Album B",
+          "isrc": null
+        },
+        {
+          "title": "Goodums_-_Sammy_Virji_Remix",
+          "artist": "Sammy Virji",
+          "album": "Goodums",
+          "isrc": null
+        },
+        {
+          "title": "WHO 160-145",
+          "artist": "Port London",
+          "album": "WHO",
+          "isrc": null
+        },
+        {
+          "title": "Takumi Maki Civic Master",
+          "artist": "",
+          "album": "",
+          "isrc": null
+        },
+        {
+          "title": "CORRUPT us - Posij & ZEP Remix 169.98",
+          "artist": "ZEP, Posij",
+          "album": "CORRUPT us (Posij & ZEP Remix)",
+          "isrc": null
+        },
+        {
+          "title": "Outer Space (JAMPAGNE Remix)",
+          "artist": "Habstrakt, Roderick Porter, JAMPAGNE",
+          "album": "Heritage - Remixes",
+          "isrc": null
+        },
+        {
+          "title": "Before Love (Extended)",
+          "artist": "The Good Son",
+          "album": "Before Love",
+          "isrc": null
+        },
+        {
+          "title": "Thierry Henry (Modeā Extended Remix)",
+          "artist": "Ev, Modeā",
+          "album": "Thierry Henry (Modeā Extended Remix)",
+          "isrc": null
+        },
+        {
+          "title": "Somewhere Near Marseilles (Sci-Fi Edit)",
+          "artist": "Hikaru Utada",
+          "album": "SCIENCE FICTION",
+          "isrc": null
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Bright Lights",
+          "artist": "Artist B",
+          "album": "Album B",
+          "isrc": null
+        },
+        {
+          "title": "Goodums - Sammy Virji Remix",
+          "artist": "Sammy Virji",
+          "album": "Goodums",
+          "isrc": null
+        },
+        {
+          "title": "WHO",
+          "artist": "Port London",
+          "album": "WHO",
+          "isrc": null
+        },
+        {
+          "title": "Civic",
+          "artist": "Takumi Maki",
+          "album": "Civic",
+          "isrc": null
+        },
+        {
+          "title": "CORRUPT us - Posij & ZEP Remix",
+          "artist": "ZEP, Posij",
+          "album": "CORRUPT us (Posij & ZEP Remix)",
+          "isrc": null
+        },
+        {
+          "title": "Outer Space - JAMPAGNE Remix",
+          "artist": "Habstrakt, Roderick Porter, JAMPAGNE",
+          "album": "Heritage (Remixes)",
+          "isrc": null
+        },
+        {
+          "title": "Before Love - Extended",
+          "artist": "The Good Son",
+          "album": "Before Love",
+          "isrc": null
+        },
+        {
+          "title": "Thierry Henry - Modeā Remix",
+          "artist": "EV, Modeā",
+          "album": "Sunrise Behind The Tower Blocks",
+          "isrc": null
+        },
+        {
+          "title": "Somewhere Near Marseilles — マルセイユ辺りー",
+          "artist": "Hikaru Utada",
+          "album": "BADモード",
+          "isrc": null
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Bright Lights",
+            "matched_artist": "Artist B"
+          }
+        },
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Goodums_-_Sammy_Virji_Remix",
+            "matched_artist": "Sammy Virji"
+          }
+        },
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "WHO 160-145",
+            "matched_artist": "Port London"
+          }
+        },
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Takumi Maki Civic Master",
+            "matched_artist": ""
+          }
+        },
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "CORRUPT us - Posij & ZEP Remix 169.98",
+            "matched_artist": "ZEP, Posij"
+          }
+        },
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Outer Space (JAMPAGNE Remix)",
+            "matched_artist": "Habstrakt, Roderick Porter, JAMPAGNE"
+          }
+        },
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Before Love (Extended)",
+            "matched_artist": "The Good Son"
+          }
+        },
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Thierry Henry (Modeā Extended Remix)",
+            "matched_artist": "Ev, Modeā"
+          }
+        },
+        {
+          "owned": false,
+          "owned_reason": null,
+          "library_match": {
+            "status": "not_found",
+            "reason": "no_match",
+            "matched_title": null,
+            "matched_artist": null
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "title_annotation_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "title_annotation_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Original Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Alice Remix",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Alice Remix",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Bob Remix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Bob Remix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song - Extended",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song - Extended",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Extended Mix)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Extended Mix)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Intro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Intro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Outro)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Outro)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter A)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter A)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Chapter B)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Chapter B)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Live)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Live)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Clean Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Clean Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Explicit Version)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Explicit Version)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part I)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "version_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "version_mismatch",
+            "matched_title": "Song (Part I)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song (Part II)",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Part II)",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "A & B",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "A ft B",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song",
+            "matched_artist": "A & B"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "B & A",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Earth, Wind & Fire",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "B & A"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "A & C",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "STRASSE",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "A & C"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "A, B",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "A ft B",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song",
+            "matched_artist": "A, B"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "A feat. B",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "A feat. B",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song",
+            "matched_artist": "A feat. B"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "A ft B",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "A, B",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song",
+            "matched_artist": "A ft B"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "A featuring B",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "İstanbul",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "A featuring B"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Earth, Wind & Fire",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "İstanbul",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Earth, Wind & Fire"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Artist",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Ｂ & Ａ",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Artist"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "İstanbul",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "album",
+          "library_match": {
+            "status": "review",
+            "reason": "album",
+            "matched_title": "Song",
+            "matched_artist": ""
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Ｂ & Ａ",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "STRASSE",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Ｂ & Ａ"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Straße",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "A featuring B",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Straße"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "STRASSE",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "B & A",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "STRASSE"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "İstanbul",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "A, B",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "İstanbul"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "Björk",
+          "album": "Album"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "Straße",
+          "album": "Album"
+        }
+      ],
+      "expected": [
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song",
+            "matched_artist": "Björk"
+          }
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "title": "Song",
+          "artist": "A",
+          "album": "A",
+          "isrc": "AAA"
+        },
+        {
+          "title": "Song (Original Mix)",
+          "artist": "A & B",
+          "album": "A"
+        }
+      ],
+      "tracks": [
+        {
+          "title": "Song",
+          "artist": "A & B",
+          "album": "A"
+        },
+        {
+          "title": "Other",
+          "artist": "Else",
+          "isrc": "AAA"
+        },
+        {
+          "title": "Song",
+          "artist": "A",
+          "isrc": "BBB"
+        }
+      ],
+      "expected": [
+        {
+          "owned": true,
+          "owned_reason": "exact",
+          "library_match": {
+            "status": "matched",
+            "reason": "exact",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "A & B"
+          }
+        },
+        {
+          "owned": true,
+          "owned_reason": "isrc",
+          "library_match": {
+            "status": "matched",
+            "reason": "isrc",
+            "matched_title": "Song",
+            "matched_artist": "A"
+          }
+        },
+        {
+          "owned": null,
+          "owned_reason": "artist_mismatch",
+          "library_match": {
+            "status": "review",
+            "reason": "artist_mismatch",
+            "matched_title": "Song (Original Mix)",
+            "matched_artist": "A & B"
+          }
+        }
+      ]
+    }
+  ],
+  "normalizers": [
+    {
+      "value": "Song",
+      "artist": "song",
+      "title": "song",
+      "album": "song",
+      "identity": ["song"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Song (Original Mix)",
+      "artist": "song (original mix)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (original mix)"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Song - Alice Remix",
+      "artist": "song - alice remix",
+      "title": "song",
+      "album": "song - alice remix",
+      "identity": ["song - alice remix"],
+      "version": ["alice remix"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Bob Remix)",
+      "artist": "song (bob remix)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (bob remix)"],
+      "version": ["bob remix"],
+      "annotation": []
+    },
+    {
+      "value": "Song - Extended",
+      "artist": "song - extended",
+      "title": "song",
+      "album": "song - extended",
+      "identity": ["song - extended"],
+      "version": ["extended"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Extended Mix)",
+      "artist": "song (extended mix)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (extended mix)"],
+      "version": ["extended"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Intro)",
+      "artist": "song (intro)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (intro)"],
+      "version": ["intro"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Outro)",
+      "artist": "song (outro)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (outro)"],
+      "version": ["outro"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Chapter A)",
+      "artist": "song (chapter a)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (chapter a)"],
+      "version": [],
+      "annotation": ["chapter a"]
+    },
+    {
+      "value": "Song (Chapter B)",
+      "artist": "song (chapter b)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (chapter b)"],
+      "version": [],
+      "annotation": ["chapter b"]
+    },
+    {
+      "value": "Song (Live)",
+      "artist": "song (live)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (live)"],
+      "version": ["live"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Clean Version)",
+      "artist": "song (clean version)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (clean version)"],
+      "version": ["clean version"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Explicit Version)",
+      "artist": "song (explicit version)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (explicit version)"],
+      "version": ["explicit version"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Part I)",
+      "artist": "song (part i)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (part i)"],
+      "version": ["part i"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Part II)",
+      "artist": "song (part ii)",
+      "title": "song",
+      "album": "song",
+      "identity": ["song (part ii)"],
+      "version": ["part ii"],
+      "annotation": []
+    },
+    {
+      "value": "A & B",
+      "artist": "a",
+      "title": "a & b",
+      "album": "a & b",
+      "identity": ["a", "b"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "B & A",
+      "artist": "b",
+      "title": "b & a",
+      "album": "b & a",
+      "identity": ["a", "b"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "A & C",
+      "artist": "a",
+      "title": "a & c",
+      "album": "a & c",
+      "identity": ["a", "c"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "A, B",
+      "artist": "a",
+      "title": "a, b",
+      "album": "a, b",
+      "identity": ["a", "b"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "A feat. B",
+      "artist": "a",
+      "title": "a",
+      "album": "a feat. b",
+      "identity": ["a", "b"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "A ft B",
+      "artist": "a ft b",
+      "title": "a ft b",
+      "album": "a ft b",
+      "identity": ["a", "b"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "A featuring B",
+      "artist": "a",
+      "title": "a",
+      "album": "a featuring b",
+      "identity": ["a", "b"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Earth, Wind & Fire",
+      "artist": "earth",
+      "title": "earth, wind & fire",
+      "album": "earth, wind & fire",
+      "identity": ["earth", "fire", "wind"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Artist",
+      "artist": "artist",
+      "title": "artist",
+      "album": "artist",
+      "identity": ["artist"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "",
+      "artist": "",
+      "title": "",
+      "album": "",
+      "identity": [],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Ｂ & Ａ",
+      "artist": "ｂ",
+      "title": "ｂ & ａ",
+      "album": "ｂ & ａ",
+      "identity": ["a", "b"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Straße",
+      "artist": "straße",
+      "title": "straße",
+      "album": "straße",
+      "identity": ["strasse"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "STRASSE",
+      "artist": "strasse",
+      "title": "strasse",
+      "album": "strasse",
+      "identity": ["strasse"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "İstanbul",
+      "artist": "i̇stanbul",
+      "title": "i̇stanbul",
+      "album": "i̇stanbul",
+      "identity": ["i̇stanbul"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Björk",
+      "artist": "björk",
+      "title": "björk",
+      "album": "björk",
+      "identity": ["björk"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Artist - Song [LABEL]",
+      "artist": "artist - song [label]",
+      "title": "artist - song",
+      "album": "artist - song",
+      "identity": ["artist - song [label]"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Civic 169.98",
+      "artist": "civic 169.98",
+      "title": "civic",
+      "album": "civic 169.98",
+      "identity": ["civic 169.98"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Song_Master",
+      "artist": "song_master",
+      "title": "song",
+      "album": "song_master",
+      "identity": ["song master"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Song ft. Singer",
+      "artist": "song",
+      "title": "song",
+      "album": "song ft. singer",
+      "identity": ["singer", "song"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Song - Modeā Remix",
+      "artist": "song - modeā remix",
+      "title": "song",
+      "album": "song - modeā remix",
+      "identity": ["song - modeā remix"],
+      "version": ["modeā remix"],
+      "annotation": []
+    },
+    {
+      "value": "Song - Modeā Editā",
+      "artist": "song - modeā editā",
+      "title": "song - modeā editā",
+      "album": "song - modeā editā",
+      "identity": ["song - modeā editā"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "記憶 (夜)",
+      "artist": "記憶 (夜)",
+      "title": "記憶",
+      "album": "記憶",
+      "identity": ["記憶 (夜)"],
+      "version": [],
+      "annotation": ["夜"]
+    },
+    {
+      "value": "Song|Album",
+      "artist": "song／album",
+      "title": "song／album",
+      "album": "song／album",
+      "identity": ["song|album"],
+      "version": [],
+      "annotation": []
+    },
+    {
+      "value": "Song - Original Mix Master",
+      "artist": "song - original mix master",
+      "title": "song",
+      "album": "song - original mix master",
+      "identity": ["song - original mix master"],
+      "version": ["master"],
+      "annotation": []
+    },
+    {
+      "value": "A - B - C Remix",
+      "artist": "a - b - c remix",
+      "title": "a",
+      "album": "a - b - c remix",
+      "identity": ["a - b - c remix"],
+      "version": ["c remix"],
+      "annotation": []
+    },
+    {
+      "value": "Song_(Alice_Remix)",
+      "artist": "song_(alice_remix)",
+      "title": "song",
+      "album": "song_",
+      "identity": ["song (alice remix)"],
+      "version": ["alice remix"],
+      "annotation": []
+    },
+    {
+      "value": "Song (Alice & Bob Remix)",
+      "artist": "song (alice",
+      "title": "song",
+      "album": "song",
+      "identity": ["bob remix)", "song (alice"],
+      "version": ["alice bob remix"],
+      "annotation": []
+    }
+  ],
+  "similarity": [
+    {
+      "left": "Tide",
+      "right": "Diet",
+      "ratio": 0.5
+    },
+    {
+      "left": "Diet",
+      "right": "Tide",
+      "ratio": 0.5
+    },
+    {
+      "left": "",
+      "right": "",
+      "ratio": 1.0
+    },
+    {
+      "left": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "right": "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "ratio": 0.0
+    },
+    {
+      "left": "😀東京abc",
+      "right": "東京😀abc",
+      "ratio": 0.8333333333333334
+    },
+    {
+      "left": "da b東ec 東 eedd京東e京ce 東eb東b東  a京ec東da d東b京cb京dcbcaecca京東 京cba東dbbadcbe東ac c東dcaeaa dc東bbeebddaedde東 東 東京東b ddb 東aeabbbadcb東eedd京ee京dccbe cbceebbaec  acab baa東d京aaeaabbe eccde東dbdccddbdc東abda c京db京 c京a京東ba d京a京京 ",
+      "right": "da b東ec 東 eedd京東e京ce 東eb東b東  a京ec東da d東b京cb京dcbcaecca京東 京cba東dbbadcbe東ac c東dcaeaa dc東bbeebddaedde東 東 東京東bddb 東aeabbbadcb東eedd京ee京dccbe cbceebbaec  acab baa東d京aaeaabbe eccde東dbdccddbdc東abda c京db京 c京a京東ba d京a京京 ",
+      "ratio": 0.5011933174224343
+    },
+    {
+      "left": "東e baaabada京東b cb京abbc京bea東b bbc京dd c東ad京京acc東b aebac東ddebeb 京eccacdbe東ec京  eadb c db東ce京ebba東caceedb東bd東e  bb東京dcdd 京c ceb東dacbcd cce東 東dca東京京b東ed deca京東東eea 東ae東 京東東aadbcabedadaceaea東d京 東edcdcba東京京京c東c  京京ad ",
+      "right": "東e baaabada京東b cb京abbc京bea東b bbc京dd c東ad京京acc東b aebac東ddebeb 京eccacdbe東ec京  eadb c db東ce京ebba東caceedb東bd東東京  bb東京dcdd 京c ceb東dacbcd cce東 東dca東京京b東ed deca京東東eea 東ae東 京東東aadbcabedadaceaea東d京 東edcdcba東京京京c東c  京京ad ",
+      "ratio": 0.498812351543943
+    },
+    {
+      "left": "dd京d東 京東ec東東dde東東東京d京東dc c京ea e京 京京c京beedae東e東dd bd京京acbed京deb京東c東aad東京東ca京cdb東edc東c東京ad京 京東東cbebeda 東da東東dd dbaed東ddc a京京 bcc東京京東 da京e東京bb 東 ec東b bcdee東bebc京bbebaddd京acdb bb東東e  adecbd東beda京東e京ed京aeecd東ca東京deb",
+      "right": "dd京d東 京東ec東東dde東東東京d京東dc c京ea e京 京京c京beedae東e東dd bd京京acbed京deb京東c東aad東京東ca京cdb東edc東c東京ad京 京東東cbebeda 東da東dd dbaed東ddc a京京 bcc東京京東 da京e東京bb 東 ec東b bcdee東bebc京bbebaddd京acdb bb東東e  adecbd東beda京東e京ed京aeecd東ca東京deb",
+      "ratio": 0.5011933174224343
+    },
+    {
+      "left": "a cea",
+      "right": "a xea",
+      "ratio": 0.8
+    },
+    {
+      "left": "aedecb東cad東京bbd京東ceab東d e",
+      "right": "aedecb東cad東京bd京東ceab東d e",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "eadae",
+      "right": "ea東京ae",
+      "ratio": 0.7272727272727273
+    },
+    {
+      "left": " bc 京東ccabdedd京 京cccc京cdb",
+      "right": " bc 京東ccabdexd京 京cccc京cdb",
+      "ratio": 0.96
+    },
+    {
+      "left": "d c京 bd東be京cae京 bd京 ec 東edd京京a東cadccdceccb京京京db cde東d京aea東e東 東baceba  京e 東b be京a  cc東c東東e東ccadedc c b b東京c 京 eaccebad京cb京東ca京東eac京cebe京a京b 京 daecbcaa東 cced 東京bda a京d京 京京aed東京京dd ccdcb東東edeb東d 東ed東dc a京東adcea東d ",
+      "right": "d c京 bd東be京cae京 bd京 ec 東edd京京a東cadccdceccb京京京db cde東d京aea東e東 東baceba  京e 東b be京a  cc東c東東e東ccadedc c b b東京 京 eaccebad京cb京東ca京東eac京cebe京a京b 京 daecbcaa東 cced 東京bda a京d京 京京aed東京京dd ccdcb東東edeb東d 東ed東dc a京東adcea東d ",
+      "ratio": 0.5011933174224343
+    },
+    {
+      "left": "d東eeed 京b da京cd ded 京東京東b",
+      "right": "d東eeed 京b dacd ded 京東京東b",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "東cddc",
+      "right": "東cxdc",
+      "ratio": 0.8
+    },
+    {
+      "left": "acea京c京東東京eab東ddeed 東b e京",
+      "right": "acea京c京東東京ea東京東ddeed 東b e京",
+      "ratio": 0.9411764705882353
+    },
+    {
+      "left": "東d東京a",
+      "right": "東d東京京a",
+      "ratio": 0.9090909090909091
+    },
+    {
+      "left": "ee京b京  東deb be京 東ad東b東京dbddcdee京cdd京c東 京 京 ec東b京d東 adcaaeebbc京京東eecd ad京京e東東 ea d京ce京京 ba京京c京bb baedbbec c 東東ac 東edeadd ddba東京東東東cc京bd 京東東京c東a京ba京ebc 東京da京京becbd京bcbbcb 京adebb 東da 京caeb京京c 京b東d東京a d京 edda東京bbcd",
+      "right": "ee京b京  東deb be京 東ad東b東京dbddcdee京cdd京c東 京 京 ec東b京d東 adcaaeebbc京京東eecd ad京京e東東 ea d京ce京京 ba京京c京bb baedbbec x 東東ac 東edeadd ddba東京東東東cc京bd 京東東京c東a京ba京ebc 東京da京京becbd京bcbbcb 京adebb 東da 京caeb京京c 京b東d東京a d京 edda東京bbcd",
+      "ratio": 0.5
+    },
+    {
+      "left": "京b 東京  eb東a東b 京ec c東ddd東 bcb 東bdacaaddb京東b 東beee東a 京東京東b東ed a acacbbc東  京aaca東e東東東e京東東e京bbd東cdbaa東da c e東東be dbc東京京東 de bb東be 京 京京d京京ab東aeaabe京e edcd c東東 abd京aecd東dd ceb京c東a京dbd東c東dd bbcdce東a東京 d cbad京 eca 京eec",
+      "right": "京b 東京  eb東a東b 京ec c東ddd東 bcb 東bdacaaddb京東b 東beee東a 京東京東b東ed a acacbbc東  京aaca東e東東東e京東東e京bbd東cdbaa東da c e東xbe dbc東京京東 de bb東be 京 京京d京京ab東aeaabe京e edcd c東東 abd京aecd東dd ceb京c東a京dbd東c東dd bbcdce東a東京 d cbad京 eca 京eec",
+      "ratio": 0.5
+    },
+    {
+      "left": "c京bdd",
+      "right": "c京東京dd",
+      "ratio": 0.7272727272727273
+    },
+    {
+      "left": "b 東cecaaedd d東東京東c東東e bbb",
+      "right": "b 東cecaaedd 東京東東京東c東東e bbb",
+      "ratio": 0.9411764705882353
+    },
+    {
+      "left": "東東eb東",
+      "right": "東東b東",
+      "ratio": 0.8888888888888888
+    },
+    {
+      "left": "bb京b東京e京京  b京cd京e東東dbcc東京dc東da bace eeb東d ba cd東京e京b東d d東c  東eddbbdaedac東ca東bc東debeebbbc ce東京cc京d京e京bb dc京cc 京東京東bc京ebc 東ed京東d東京 a東東be京be b東bb京京c b東 ecbb東 東bb京a a東e  東cdc東京edacbdc東b東ce東abd京cc東d ad京dddae 京dedcbb",
+      "right": "bb京b東京e京京  b京cd京e東東dbcc東京dc東da bace eeb東d ba cd東京e京b東d d東c  東eddbbdaedac東ca東bc東debeebbbc ce東京cc京d京e京bb dc東京cc 京東京東bc京ebc 東ed京東d東京 a東東be京be b東bb京京c b東 ecbb東 東bb京a a東e  東cdc東京edacbdc東b東ce東abd京cc東d ad京dddae 京dedcbb",
+      "ratio": 0.498812351543943
+    },
+    {
+      "left": " 京edb ecddac ca京京b dc aa京",
+      "right": " 京edb ecddacca京京b dc aa京",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "dcdec",
+      "right": "dcxec",
+      "ratio": 0.8
+    },
+    {
+      "left": "e 東ce",
+      "right": "e xce",
+      "ratio": 0.8
+    },
+    {
+      "left": "c ce東",
+      "right": "c xe東",
+      "ratio": 0.8
+    },
+    {
+      "left": " cdecb東e東b a dab   c東cde京",
+      "right": " cdecb東e東b adab   c東cde京",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "beadccadbeceb東京bebac 東d東cc京b東東eb  京d 東京東aab db京 dae東aaec cc 京東a c東e京aad東 c京cb東caecdbb東cabd 東 bb東e京dbbd京cce dcd京東b京東cba京bedd東d 京東cdad bcd a京e東京 be京daddcdeba東京京aade b京acbda東e京aa東beecdcb東京 c東d京c ba acaac京京c東 c 京cc",
+      "right": "beadccadbeceb東京bebac 東d東cc京b東東eb  京d 東京東aab db京 dae東aaec cc 京東a c東e京aad東 c京cb東caecdbb東cabd 東 bb東e京dbbd京ccx dcd京東b京東cba京bedd東d 京東cdad bcd a京e東京 be京daddcdeba東京京aade b京acbda東e京aa東beecdcb東京 c東d京c ba acaac京京c東 c 京cc",
+      "ratio": 0.5
+    },
+    {
+      "left": "東東京東a京bde東daeceacd京db東bd addddc京東dae東京bbad daab東東bc 東c aaccd東d東 aadeaaedd東c京ddbd京 ad   e c京a東eeea京addccdbe 京c東東 d東a bcc dd東a東京ecc京c dadae  東京東ccbdd京b東 de aa京ddd dd東  aac 東dbed京京 dec bedd東bc  b京a東b東bbbbbdbd京eabb",
+      "right": "東東京東a京bde東daeceacd京db東bd addddc京東dae東京bbad daab東東bc 東c aaccd東d東 aadeaaedd東c京ddbd京 ad   e c京a東eeea京addccdbx 京c東東 d東a bcc dd東a東京ecc京c dadae  東京東ccbdd京b東 de aa京ddd dd東  aac 東dbed京京 dec bedd東bc  b京a東b東bbbbbdbd京eabb",
+      "ratio": 0.5
+    },
+    {
+      "left": "   d ",
+      "right": "  xd ",
+      "ratio": 0.8
+    },
+    {
+      "left": "東da東a東c京東京d京ed京bdc京 b京京cc",
+      "right": "東da東a東c京東京d京xd京bdc京 b京京cc",
+      "ratio": 0.96
+    },
+    {
+      "left": "c bec京京 d c東東cdc京ac京ed 京b京edcec京cebc東東京eadcda京ba京c b京acd京東a京 c aabec京aeb京b京京a東 京ebdc e aea東京 a京cd 東a東dc東bcddca eeb b京b東 b daac東 b  eeaacb dceaab deded東cb京東京aa cab京c eacea東c 京 東 東 ca東京c ccddbacdc 東東東東cecc東b東 dba",
+      "right": "c bec京京 d c東東cdc京ac京ed 京b京edcec京cebc東東京eadcda京ba京c b京acd京東a京 c aabec京aeb京b京京a東 京ebdc e aea東京 a京cd 東a東dc東bxddca eeb b京b東 b daac東 b  eeaacb dceaab deded東cb京東京aa cab京c eacea東c 京 東 東 ca東京c ccddbacdc 東東東東cecc東b東 dba",
+      "ratio": 0.5
+    },
+    {
+      "left": "京京東京d東 ddaceb東dac  ababb ",
+      "right": "京京東京d東 ddace東京東dac  ababb ",
+      "ratio": 0.9411764705882353
+    },
+    {
+      "left": "ccbccdd京 d eab京京京adebeabc京 e東ebc 東東d京c 京eb京c京 東abae e 東ea 東d東aaabeeaedbcedeb dea東d東cbbec東c東bdcbccc京adced東bca東eba京eac京c東a京京e京aa京deb  東 edecbaab a東dc  dc東 ea d京d京京c   cbcb東京ca東東cc東e京d ba b京  ad東ce b  ea東京ddbe 京b京",
+      "right": "ccbccdd京 d eab京京京adebeabc京 e東ebc 東東d京c 京eb京c京 東abae e 東ea 東d東aaabeeaedbcedeb dea東d東cbbec東c東bdcbccc京adced東ca東eba京eac京c東a京京e京aa京deb  東 edecbaab a東dc  dc東 ea d京d京京c   cbcb東京ca東東cc東e京d ba b京  ad東ce b  ea東京ddbe 京b京",
+      "ratio": 0.5011933174224343
+    },
+    {
+      "left": "東d東bebd abec京京adbcaeb京b東京",
+      "right": "東d東bebd abecx京adbcaeb京b東京",
+      "ratio": 0.96
+    },
+    {
+      "left": "eb東dcab京ce c東b京c dbb東cebb",
+      "right": "eb東dcab京ce cb京c dbb東cebb",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "京京 東東",
+      "right": "京京東東",
+      "ratio": 0.8888888888888888
+    },
+    {
+      "left": "cee cdbb 京京eaacc東京京東edbbee eed京京a eed東ab東e e京c cacb東a東cbddadabadcd京京c東e ee dea c ecd東c東a京ba東b東京東d 東京 東b d東ecc 東cb京東 dd bccda京京e京東京 cb京ea d aebb   ab東e  d京京  ccaeb東d東東東ababdeeabbbdc京京dcc京 d東b c 京eee東d 京da ba東ebc",
+      "right": "cee cdbb 京京eaacc東京京東edbbee eed京京a eed東ab東e e京c cacb東a東cbddadabadcd京京c東e ee dea c ecd東c東a京ba東b東京東d 東京 東b decc 東cb京東 dd bccda京京e京東京 cb京ea d aebb   ab東e  d京京  ccaeb東d東東東ababdeeabbbdc京京dcc京 d東b c 京eee東d 京da ba東ebc",
+      "ratio": 0.5011933174224343
+    },
+    {
+      "left": "c京b東 東 京c東 b東bcdb東de 東東東a bdeecdbae京b東 c京  京bada京dec東aa 東eb c京a京ad 東東京東 東e京e東a東c adbd ad京eeaeaea京eb東b東ae京東東decb京e  ced東ca 東abe 東 京   東東c東ccce 東  ddbe 東d東c東c京東東adea東c 京d東b京e da 東 東京東東eab東a京bc京aeab京東東d東東d東c京東a東ab",
+      "right": "c京b東 東 京c東 b東bcdb東de 東東東a bdeecdbae京b東 c京  京bada京dec東aa 東eb c京a京ad 東東京東 東e京e東a東c adbd ad京eeaeaea京eb東b東ae京x東decb京e  ced東ca 東abe 東 京   東東c東ccce 東  ddbe 東d東c東c京東東adea東c 京d東b京e da 東 東京東東eab東a京bc京aeab京東東d東東d東c京東a東ab",
+      "ratio": 0.5
+    },
+    {
+      "left": "ecd e",
+      "right": "ec東京 e",
+      "ratio": 0.7272727272727273
+    },
+    {
+      "left": "ca aada東c京 acbcddcedda京bc",
+      "right": "ca aada東c京 a東京bcddcedda京bc",
+      "ratio": 0.9411764705882353
+    },
+    {
+      "left": "e東京 cc 東dc a京d  京a京e東a東ee京d 東b東東cdeaeebb cb京da京cd東 京東eecdddd東  d京bacdbeed東bac東dcac bc東京ca京  東東a ac京bd 東東e京bdc東cadd a東ea東ecbd東 b京c 京bb東eecbaedadba bd東京eb東bdac de東eadc 東bcaa ebaeac  東京e東東京 d京京dc東c東d eedbc e東京東ad ",
+      "right": "e東京 cc 東dc a京d  京a京e東a東ee京d 東b東東cdeaeebb cb京da京cd東 京東eecdddd東  d京bacdbeed東bac東dcac bc東京ca京  東東a ac京bd 東東ebdc東cadd a東ea東ecbd東 b京c 京bb東eecbaedadba bd東京eb東bdac de東eadc 東bcaa ebaeac  東京e東東京 d京京dc東c東d eedbc e東京東ad ",
+      "ratio": 0.5011933174224343
+    },
+    {
+      "left": "bae京ee東京京bbacda京ceca京 京 京aaca京  東dbe  cbccaea京ddbbbcbb d京a  c 東東東ac ecd daecde 京京 東京京a  東eec 京 d東京cdbebb京e東京adae ebcc東ecae東京東京京a東c京eaec 京d bd 東eb東a b京eda東東東 d東aec東 a東東a東ceeeea京c京京 d ec東d 京bdb b京京東ae東a 京ea e ab東",
+      "right": "bae京ee東京京bbacda京ceca京 京 京aaca京  東dbe  cbccaea京ddbbbcbb d京a  c 東東東ac ecd daecde 京京 東京京a  東eec 京 d東京cdbebb京x東京adae ebcc東ecae東京東京京a東c京eaec 京d bd 東eb東a b京eda東東東 d東aec東 a東東a東ceeeea京c京京 d ec東d 京bdb b京京東ae東a 京ea e ab東",
+      "ratio": 0.5
+    },
+    {
+      "left": "c京京ba",
+      "right": "c京xba",
+      "ratio": 0.8
+    },
+    {
+      "left": "deecb",
+      "right": "dexcb",
+      "ratio": 0.8
+    },
+    {
+      "left": "b c a京b京東京d東東東b東 dd京cabbd",
+      "right": "b c a京b京東京d東東b東 dd京cabbd",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "京 aac",
+      "right": "京 xac",
+      "ratio": 0.8
+    },
+    {
+      "left": "bca京c",
+      "right": "bcx京c",
+      "ratio": 0.8
+    },
+    {
+      "left": "a  京e東b b京ea東b 京京eec cbb京",
+      "right": "a  京e東b b京eaxb 京京eec cbb京",
+      "ratio": 0.96
+    },
+    {
+      "left": "ddcd京aad d東京 deae京 ecdeba",
+      "right": "ddcd京aad d東京deae京 ecdeba",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "cecccecabd東deaabe 東東d  bd",
+      "right": "cecccecabd東daabe 東東d  bd",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "acdebaa 東ded abaaa京cbbace",
+      "right": "acdebaa 東dedabaaa京cbbace",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "b e京b東ab京acebdb 東d京caeee東",
+      "right": "b e京b東ab京acexdb 東d京caeee東",
+      "ratio": 0.96
+    },
+    {
+      "left": "bb京b京東b   d c京 adc京京京bbbcd京adbe東 e東京東京cdb東deb京京 cc京dc ecb東京京 daacc東 bc京edce a東b  dc b ecd京ddbc 東b東東京 cddeee京deed東bdceb京edeb 東beae京cc京e 京東d東aa 京cbece 東京東da d京京cee aeaee東dc東d京東b東ddebae京京ed ae  c ed京bbdeadaba京eb京c",
+      "right": "bb京b京東b   d c京 adc京京京bbbcd京adbe東 e東京東京cdb東deb京京 cc京dc ecb東京京 daacc東 bc京edce a東b  dc b ecd京ddbc 東b東東京 cddee京deed東bdceb京edeb 東beae京cc京e 京東d東aa 京cbece 東京東da d京京cee aeaee東dc東d京東b東ddebae京京ed ae  c ed京bbdeadaba京eb京c",
+      "ratio": 0.5059665871121718
+    },
+    {
+      "left": "dd東a東",
+      "right": "dd東京a東",
+      "ratio": 0.9090909090909091
+    },
+    {
+      "left": "a d東東c東b東東 京dda東b東cce be京d東aa東京d東ac京aa dbce ad京cddceb 京eb京 adebbccdddddcadeb 東beabc京dab 京b京京aceeb東d 東babbdbbbb京d東ddd京cd東東aadab a東bbbb京b東京 bee京e京cb京a ddea  cb caadabb  c京eda東 ebad京東e 東 cec東aa東京東cb京eac東a京deaa京b京東",
+      "right": "a d東東c東b東東 京dda東b東cce be京d東aa東京d東ac京aa dbce ad京cddceb 京eb京 adebbccdddddcadeb 東beabc京dab 京b京京aceeb東d 東babbbbbb京d東ddd京cd東東aadab a東bbbb京b東京 bee京e京cb京a ddea  cb caadabb  c京eda東 ebad京東e 東 cec東aa東京東cb京eac東a京deaa京b京東",
+      "ratio": 0.5011933174224343
+    },
+    {
+      "left": " dbdd東bcdd東 ee d東adb東dee京",
+      "right": " dbdd東bcdd東 e d東adb東dee京",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "東東bacbd京c  eaa東c京cdabcb京c",
+      "right": "東東bacbd京c  e東京a東c京cdabcb京c",
+      "ratio": 0.9411764705882353
+    },
+    {
+      "left": "d京b東aba京京ddaa東 東京c  dee 東",
+      "right": "d京b東aba京京ddax東 東京c  dee 東",
+      "ratio": 0.96
+    },
+    {
+      "left": "  dcb京ebba京cbcdcaa京bce 東京dcad京京ac京 東 東cbcacb東 a東d acc京 京c eacabca東b京c京ecceabcd東ae caae baed東東 東cca東b東 acba dedb京d東東a京ecaecc京東a東a京東 bdbd  ee bd   京   aea東東ddea東ecace 東東c京cacbc  ceb   b東a京e cadcee d京aa京d ee京ada 京",
+      "right": "  dcb京ebba京cbcdcaa京bce 東京dcad京京ac京 東 東cbcacb東 a東d acc京 京c eacabca東b京c京ecceabcd東ae caae baed東東 東cca東b東 acb dedb京d東東a京ecaecc京東a東a京東 bdbd  ee bd   京   aea東東ddea東ecace 東東c京cacbc  ceb   b東a京e cadcee d京aa京d ee京ada 京",
+      "ratio": 0.5011933174224343
+    },
+    {
+      "left": "cde東e東ec京dedba東a 京  d京ac e e cbbb  a 京ee adcac京ccec京dbeb京e京beea b京b京da東 b東京e京ad daa京d ed東e京e東京京ac東edea東a  b東cc cabcba 京dbad東d京c b京bdaabdbc 京ace c東 b東 東京d京東caabebddc 京be東 e 京 eb東東 aaec京東e京京bb東 ea ad京eb京eedcb東edc",
+      "right": "cde東e東ec京dedba東a 京  d京ac e e cbbb  a 京ee adcac京ccec京dbeb京e京beea b京b京da東 b東京e京ad daa京d ed東e京e東京京ac東edea東a xb東cc cabcba 京dbad東d京c b京bdaabdbc 京ace c東 b東 東京d京東caabebddc 京be東 e 京 eb東東 aaec京東e京京bb東 ea ad京eb京eedcb東edc",
+      "ratio": 0.5
+    },
+    {
+      "left": "c aabb beb e京dbde  東 bd京d d東aadc 東d 東東東c東ec東cdaceceaddd e東東d京a京ceac京a b東ed 東edae dcd東e京 京ae京 京b東bcae東東東de京b db京 京c 東e aceece東京京 ee 東e東京cabbcebd京ecdbac東ec東京aeaaecdcaa   e東ddd 東d京京京a   d e東京accc京b東東b京 東ecdacb c京京",
+      "right": "c aabb beb e京dbde  東 bd京d d東aadc 東d 東東東c東ec東cdaceceaddd e東東d京a京ceac京a b東ed 東edae dcd東e京 京ae京 京b東bcae東東東deb db京 京c 東e aceece東京京 ee 東e東京cabbcebd京ecdbac東ec東京aeaaecdcaa   e東ddd 東d京京京a   d e東京accc京b東東b京 東ecdacb c京京",
+      "ratio": 0.5011933174224343
+    },
+    {
+      "left": "acb dbdacdda cedc東ccaeae ",
+      "right": "acb dbdacddacedc東ccaeae ",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "京b京京京東c東東 京京京dcc京京c京a京ed東a ccbdd東be 京東京 京 aabedaa東 京京 bdaacaebada東 bdecc東d東dbdeab東京ededbb 東cc東d京東c京be ec beb acaba東a 京京京 東d dd 京baea東 京adedb東 ebeadee東ad東b京edaba e京dcbdb東ecce京aeeea京e cd東e cecb東東 bd京a東京cbd cc c京b",
+      "right": "京b京京京東c東東 京京京dcc京京c京a京ed東a ccbdd東be 京東京 京 aabedaa東 京京 bdaacaebada東 bdecc東d東dbdeab東京ededbb 東cc東d京東c京be ec xeb acaba東a 京京京 東d dd 京baea東 京adedb東 ebeadee東ad東b京edaba e京dcbdb東ecce京aeeea京e cd東e cecb東東 bd京a東京cbd cc c京b",
+      "ratio": 0.5
+    },
+    {
+      "left": " d京bc東a aead京東京東be東ab東bd京addee東 cb東京be  c東東b東c 京京dbcddcbadced  ae京 東東b  東ebc cab京東ce dcbadaa東bbdd京東ead東a東a 東 東東東dc東 eed 東acca abcaea 東b東b d東ddedb 東decc 東ad 東aee東c京 cec b  東 d東cddbde京bcc東aae eb京c東acec東b東d京d東e京ad",
+      "right": " d京bc東a aead京東京東be東ab東bd京addee東 cb東京be  c東東b東c 京京dbcddcbadced  ae京 東東b  東ebc cab京東ce dcbadaa東bbdd京東ead東a東x 東 東東東dc東 eed 東acca abcaea 東b東b d東ddedb 東decc 東ad 東aee東c京 cec b  東 d東cddbde京bcc東aae eb京c東acec東b東d京d東e京ad",
+      "ratio": 0.5
+    },
+    {
+      "left": "cc京cc東ceadeeedbcbd e東京aab dcceeaebaea京京acdbb京d京a京a 京dcea ccde京京a bd   eed京東db東d 京b de東京a東d e東e京abbb e 東eebebebeb ee東東京a東dcaae東db京bcb東 e京京c京京ca京deb ecaeb東aabaeaaebe 京d  京cdeece京京ade京d東b京東京bbae東 db東eacd 東dbcabda東",
+      "right": "cc京cc東ceadeeedbcbd e東京aab dcceeaebaea京京acdbb京d京a京a 京dcea ccde京京a bd   eed京東db東d 京b de東京a東d e東e京abbb e 東ee東京ebebeb ee東東京a東dcaae東db京bcb東 e京京c京京ca京deb ecaeb東aabaeaaebe 京d  京cdeece京京ade京d東b京東京bbae東 db東eacd 東dbcabda東",
+      "ratio": 0.498812351543943
+    },
+    {
+      "left": "d京ecacadbad  ac京東 aecadec",
+      "right": "d京ecacadbad ac京東 aecadec",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "東adb京京東 京dea東dacebb 東ca東 ",
+      "right": "東adb京京東 京dea東京dacebb 東ca東 ",
+      "ratio": 0.9803921568627451
+    },
+    {
+      "left": "京東cd a東ec京a東c京aa東d京eb dcc",
+      "right": "京東cd a東ec京a東京aa東d京eb dcc",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "ae c a京東e東 ead 京京daa東 京da 東京bd ad東a東京b東東 d cbdb東 東東abea 京ebbd東bb aad  abc 東ebda c eedd e東c京ceedbcccddad東aa東東ba dade京e 京 cbdbae 東bcc eaee東e東 京 b東ce東db  ed  d東bcdcbdbb東a東eae東db eac京d東bcabede京東 d東 ab東ebb 東c京cbeb d",
+      "right": "ae c a京東e東 ead 京京daa東 京da 東京bd ad東a東京b東東 d cbdb東 東東abea 京ebbd東bb aad  abc 東ebda c eedd e東c京ceedbcccddad東ax東東ba dade京e 京 cbdbae 東bcc eaee東e東 京 b東ce東db  ed  d東bcdcbdbb東a東eae東db eac京d東bcabede京東 d東 ab東ebb 東c京cbeb d",
+      "ratio": 0.5
+    },
+    {
+      "left": "a eaebadc東da京bce東eabcedc東京東 e京東c東ea京deaa b edc eddee 京ce京dbcaedabcdc東 bac京京bc京京caeeeaadee京dacce東京京e東ddac bc東ed京d東東a a ad京bd 東a adccc京cb東ed東京c bccdec東bacd d京 b caedca京cc 東東eabcbcee東ad bbed東ad b京e a東dd baebaaa東 c",
+      "right": "a eaebadc東da京bce東eabcedc東京東 e京東c東ea京deaa b edc eddee 京ce京dbcaedabcdc東 bac京京bc京京caeeeaadee京dacce東京京e東ddac 東京c東ed京d東東a a ad京bd 東a adccc京cb東ed東京c bccdec東bacd d京 b caedca京cc 東東eabcbcee東ad bbed東ad b京e a東dd baebaaa東 c",
+      "ratio": 0.498812351543943
+    },
+    {
+      "left": "b京a京 ",
+      "right": "b京京 ",
+      "ratio": 0.8888888888888888
+    },
+    {
+      "left": "東東eb京eeeed b東a 東dd b東aa  東 aaa京京東ae 京 東ec ba c東 ebd京京cbe京e京cce東ddc bd cd東京bcdb c東cc ba東dbccdcadb bbcc京adcda東c 東 abeaae京eeacc東eed東dec京abd ded京 東ee京bcedecab京d 京東東dc東c caeb 京 aa東cadede京 b京東c京bada東cdb京東a a京京ce京東ac東",
+      "right": "東東eb京eeeed b東a 東dd b東aa  東 aaa京京東ae 京 東ec ba c東 ebd京京cbe京e京cce東ddc bd cd東京bcdb c東cc ba東dbccdcadb bbcc京adc東京a東c 東 abeaae京eeacc東eed東dec京abd ded京 東ee京bcedecab京d 京東東dc東c caeb 京 aa東cadede京 b京東c京bada東cdb京東a a京京ce京東ac東",
+      "ratio": 0.498812351543943
+    },
+    {
+      "left": "  d東京ddceee 京 cc東cd京ecb 東de東 babdae京dc cdad ed東a d  京a京東 dbddeecbecddccba京a東accd 東eed bcde東京bcddaa 東be京東東東東cda京東京 c京京cd京ac京 東bdcbec acebc abc京a東eeddb東eebe  ea東京京caa東c東cec a京ac京d京b京東京d d東cbbdd b東ba東ddd cb ade  京",
+      "right": "  d東京ddceee 京 cc東cd京ecb 東de東 babdae京dc cdad ed東a d  京a京東 dbddeecbecddccba京a東accd 東eed bcde東京bcddaa 東be京東東東cda京東京 c京京cd京ac京 東bdcbec acebc abc京a東eeddb東eebe  ea東京京caa東c東cec a京ac京d京b京東京d d東cbbdd b東ba東ddd cb ade  京",
+      "ratio": 0.5059665871121718
+    },
+    {
+      "left": "京 ceb京 c a京東baa東cacedcda東cce京 e京 d bd京bd京be東adbad東ac京京e東db東dae  京b京京eee d東bc東京bec 東ceda京b東 bba     e東ee aa dcde aaa東d京bde 京東 d cbca 東東becedb東a東cec京a東e京ea東ac東edcd京ebd da 京a京c東京dcc東東e東京 c東a東d  東d京 e a東ba e京b京bbee",
+      "right": "京 ceb京 c a京東baa東cacedcda東cce京 e京 d bd京bd京be東adbad東ac京京e東db東dae  京b京京eee d東bc東京bec 東ceda京b東 bba     e東ee ax dcde aaa東d京bde 京東 d cbca 東東becedb東a東cec京a東e京ea東ac東edcd京ebd da 京a京c東京dcc東東e東京 c東a東d  東d京 e a東ba e京b京bbee",
+      "ratio": 0.5
+    },
+    {
+      "left": "c東cec",
+      "right": "c東ec",
+      "ratio": 0.8888888888888888
+    },
+    {
+      "left": "cbce東",
+      "right": "cbxe東",
+      "ratio": 0.8
+    },
+    {
+      "left": "eeb東e",
+      "right": "eex東e",
+      "ratio": 0.8
+    },
+    {
+      "left": "東 ea京bbaa京ae 京東dccab東bac東a東ed東aba東 a c bcbe京d京e東ba東e aba東e東cb東 京  ee東d京京京c東b東東bcad東bdeab京ce京 b京a京東cee東ddebda京c東d b東bb京京a東adecd d京 ac京東a京c aace京e edcaa東東c 京b京cdcbe  京ec京ccc東東東 京e 京dbcd東d京京e東京aee  東b京ead京d東東e京acb",
+      "right": "東 ea京bbaa京ae 京東dccab東bac東a東ed東aba東 a c bcbe京d京e東ba東e aba東e東cb東 京  ee東d京京京c東b東東bcad東bdeab京ce京 b京a京東cee東ddexda京c東d b東bb京京a東adecd d京 ac京東a京c aace京e edcaa東東c 京b京cdcbe  京ec京ccc東東東 京e 京dbcd東d京京e東京aee  東b京ead京d東東e京acb",
+      "ratio": 0.5
+    },
+    {
+      "left": "ca 東e  dd京京bd cad京a b東京東c",
+      "right": "ca 東e  dd京京b cad京a b東京東c",
+      "ratio": 0.9795918367346939
+    },
+    {
+      "left": "cbaca 京ad 京acadce東adceedd",
+      "right": "cbaca 京ad 京a東京adce東adceedd",
+      "ratio": 0.9411764705882353
+    },
+    {
+      "left": "東eedd",
+      "right": "東e東京dd",
+      "ratio": 0.7272727272727273
+    },
+    {
+      "left": "dc  b東edbbdd cc京東東caea京eb",
+      "right": "dc  b東edbbdd東京cc京東東caea京eb",
+      "ratio": 0.9411764705882353
+    },
+    {
+      "left": "京a bb",
+      "right": "京abb",
+      "ratio": 0.8888888888888888
+    }
+  ]
+}

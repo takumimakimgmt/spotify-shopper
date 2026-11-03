@@ -1,9 +1,10 @@
 import type { PlaylistRow, TrackCategory } from "../types";
-import { categorizeTrack } from "../domain/libraryMatch";
+import { categorizeTrack, effectiveOwned } from "../domain/libraryMatch";
 import { buildSearchHaystack } from "@/lib/utils/normalize";
 import { normalizeTitle, normalizeArtist } from "../utils/normalize";
 
 export interface FilterOptions {
+  changesOnly?: boolean;
   categoryFilter: "all" | "toBuy" | "owned" | "unknown";
   searchQuery: string;
   sortKey: "none" | "artist" | "album" | "title";
@@ -18,7 +19,9 @@ export function selectDisplayedTracks(
   options: FilterOptions,
 ): PlaylistRow[] {
   const safeTracks = Array.isArray(tracks) ? tracks : [];
-  let filtered = safeTracks;
+  let filtered = options.changesOnly
+    ? safeTracks.filter((t) => t.changeStatus !== "unchanged")
+    : safeTracks;
   // Filter by search (normalized, haystack)
   if (options.searchQuery.trim()) {
     const q = buildSearchHaystack([options.searchQuery]);
@@ -65,9 +68,9 @@ export function selectTrackCounts(tracks: PlaylistRow[]): {
 } {
   const safeTracks = Array.isArray(tracks) ? tracks : [];
   return {
-    ownedCount: safeTracks.filter((t) => t.owned === true).length,
-    toBuyCount: safeTracks.filter((t) => t.owned === false).length,
-    unknownCount: safeTracks.filter((t) => t.owned == null).length,
+    ownedCount: safeTracks.filter((t) => effectiveOwned(t) === true).length,
+    toBuyCount: safeTracks.filter((t) => effectiveOwned(t) === false).length,
+    unknownCount: safeTracks.filter((t) => effectiveOwned(t) == null).length,
   };
 }
 
@@ -77,6 +80,6 @@ export function selectTrackCounts(tracks: PlaylistRow[]): {
 export const categoryLabels: Record<"all" | TrackCategory, string> = {
   all: "All",
   checkout: "Not in XML",
-  owned: "Matches XML",
+  owned: "Matched / confirmed",
   unknown: "Not confirmed",
 };

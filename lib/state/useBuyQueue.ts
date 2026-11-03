@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { recordingKey } from "../domain/recordingIdentity";
 import type { PlaylistRow } from "../types";
 
 import { STORAGE_KEYS } from "../storage/keys";
@@ -19,14 +20,7 @@ export type BuyQueueItem = {
 };
 
 function itemId(track: PlaylistRow) {
-  const isrc = track.isrc?.trim();
-  if (isrc) return `isrc:${isrc.toLowerCase()}`;
-  return [
-    "track",
-    track.artist?.trim().toLowerCase() ?? "",
-    track.title?.trim().toLowerCase() ?? "",
-    track.album?.trim().toLowerCase() ?? "",
-  ].join(":");
+  return recordingKey(track);
 }
 
 function parseQueue(raw: string | null): BuyQueueItem[] {
@@ -46,7 +40,7 @@ function parseQueue(raw: string | null): BuyQueueItem[] {
       Number.isFinite(item.addedAt),
   );
   if (!valid) throw new Error("Saved purchase queue contains invalid items.");
-  return parsed;
+  return parsed.map((item) => ({ ...item, id: recordingKey(item) }));
 }
 
 function saveQueue(items: BuyQueueItem[]): boolean {
