@@ -1,11 +1,11 @@
-# Local XML preparation and transfer limits
+# Local XML limits
 
-The browser accepts an original XML up to **50 MiB**. It parses the full COLLECTION locally and copies every direct TRACK entry, retaining only Name, Artist, Album and ISRC. Local paths, cue points, track IDs and playlists are not sent. The original file remains in this browser's IndexedDB until Remove or a full reset.
+Original XML files up to **50 MiB**, with at most **100,000 collection entries**, are parsed locally. All entries are retained. The browser matcher runs in a dedicated Web Worker and accepts up to **10,000 playlist tracks** per operation, with a 20-second computation budget and a 30-second worker lifetime cap. Cancellation terminates the worker.
 
-The prepared metadata XML must fit **3 MiB**. The browser rejects an oversized prepared file rather than truncating the library. The proxy and backend keep their 3 MiB XML / 4,400,000-byte total body hard ceilings, leaving room for snapshot data and multipart overhead. This does not make every 50 MiB library transferable: metadata-heavy libraries can still exceed the transfer ceiling.
+The normal browser workflow uploads **no XML and no library metadata**. Only Spotify playlist URLs are sent to the API. XML rematching performs no API request. The server's legacy XML endpoints retain their 3 MiB transfer limit for compatibility, but that limit does not apply to local matching. There is no automatic server fallback.
 
-Malformed XML, DTD/entity declarations, multiple/missing collections, overlong metadata, excessive nesting and over 100,000 collection entries are rejected. Parsing currently runs in the browser's main thread; large files can briefly pause the interface. A worker-based streaming parser is a later performance improvement.
+Malformed XML, DTD/entity declarations, multiple/missing collections, excessive structure and overlong metadata are rejected. Original XML remains in local IndexedDB until Remove or full reset. Parsing currently uses the main thread before matching moves to the worker, so large XML can briefly pause the interface.
 
-Matching results describe **only the selected export**. Not in XML is not a claim that the user does not own the recording. Results and CSV carry match reasons and the exact compared metadata fingerprint when available. Original filenames remain local display metadata, and the server receives a generic filename. The fingerprint identifies the received metadata XML, not the original file containing local paths and cues.
+Results apply to the selected export only. Not in XML does not establish global non-ownership. Human confirmations are separate and reversible. Local fingerprints identify retained recording metadata, not raw paths/cues.
 
-Source for hosted transfer constraints: https://vercel.com/docs/functions/limitations
+See LOCAL_REVIEW_WORKFLOW.md for matching compatibility, review memory and test coverage.

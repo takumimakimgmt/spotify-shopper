@@ -2,12 +2,19 @@ import type { PlaylistRow, TrackCategory } from "../types";
 
 /** An automatic match is scoped to the selected XML, never global ownership. */
 export function libraryMatchLabel(track: PlaylistRow): string {
+  if (track.reviewDecision?.action === "owned") return "Confirmed by you";
+  if (track.reviewDecision?.action === "different_version")
+    return "Different version (you)";
   if (track.owned === true) return "Matches XML";
   if (track.owned === false) return "Not in XML";
   return track.ownedReason ? "Needs review" : "Not checked";
 }
 
 export function libraryMatchExplanation(track: PlaylistRow): string {
+  if (track.reviewDecision?.action === "owned")
+    return "You confirmed ownership of this recording. Automatic XML evidence remains unchanged below.";
+  if (track.reviewDecision?.action === "different_version")
+    return "You marked this XML candidate as a different recording. Recheck before buying; this does not establish absence from your whole library.";
   switch (track.libraryMatch?.reason ?? track.ownedReason) {
     case "isrc":
       return "Recording identifier matches a track in this XML.";
@@ -34,10 +41,12 @@ export function libraryMatchExplanation(track: PlaylistRow): string {
   }
 }
 
+export function effectiveOwned(track: PlaylistRow): boolean | null {
+  if (track.reviewDecision?.action === "owned") return true;
+  if (track.reviewDecision?.action === "different_version") return null;
+  return track.owned ?? null;
+}
 export function categorizeTrack(track: PlaylistRow): TrackCategory {
-  return track.owned === true
-    ? "owned"
-    : track.owned === false
-      ? "checkout"
-      : "unknown";
+  const owned = effectiveOwned(track);
+  return owned === true ? "owned" : owned === false ? "checkout" : "unknown";
 }

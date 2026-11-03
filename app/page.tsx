@@ -36,6 +36,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePlaylistAnalyzer } from "../lib/state/usePlaylistAnalyzer";
 import { useFiltersState } from "../lib/state/useFiltersState";
 import { useSelectionState } from "../lib/state/useSelectionState";
+import { useReviewDecisions } from "../lib/state/useReviewDecisions";
 import { useViewModel } from "../lib/state/useViewModel";
 import { useActions } from "../lib/state/useActions";
 import { useBuyQueue } from "../lib/state/useBuyQueue";
@@ -57,6 +58,7 @@ const SidePanels = dynamic(
 );
 import ErrorAlert from "./components/ErrorAlert";
 import { z } from "zod";
+import PurchasePlan from "./components/PurchasePlan";
 import BuyLaterPanel from "./components/BuyLaterPanel";
 // --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
 const TabQuerySchema = z.string().trim().min(1).max(64);
@@ -119,7 +121,8 @@ function PageInner() {
     }
   }, [analyzer.multiResults, activeTab, setActiveTab]);
 
-  const vm = useViewModel(analyzer, filters, activeTab);
+  const reviews = useReviewDecisions();
+  const vm = useViewModel(analyzer, filters, activeTab, reviews.decisions);
   const TAB_QS_KEY = "t";
   // URL(ASCII)を短く安全にクエリ化（base64url）
   const encodeTab = (url: string) =>
@@ -236,6 +239,14 @@ function PageInner() {
       />
       <div className="mx-auto max-w-[1024px] px-4 py-12 sm:px-6 lg:py-14">
         <div className="space-y-10">
+          {reviews.warning && (
+            <div role="alert" className="space-y-2 text-sm text-amber-200">
+              <p>{reviews.warning}</p>
+              <button type="button" onClick={reviews.clearAll}>
+                Clear saved confirmations (keep XML and results)
+              </button>
+            </div>
+          )}
           {vm.storageWarning && (
             <div className="space-y-3">
               <ErrorAlert
@@ -370,6 +381,11 @@ function PageInner() {
             tabIndex={-1}
             aria-label="Analysis results"
           >
+            <PurchasePlan
+              results={vm.multiResults}
+              queuedIds={buyQueue.queuedIds}
+              onSave={buyQueue.addTrack}
+            />
             {/* Tabs */}
             <ResultsTabs
               multiResults={vm.multiResults}
@@ -406,7 +422,13 @@ function PageInner() {
                   rekordboxFile={analyzer.rekordboxFile}
                   rekordboxDate={analyzer.rekordboxDate}
                   applySnapshotWithXml={async (file, result, tracks) => {
-                    await actions.applySnapshotWithXml(file, result, tracks);
+                    await actions.applySnapshotWithXml(
+                      file,
+                      analyzer.multiResults.find(
+                        ([key]) => key === activeTab,
+                      )?.[1] ?? result,
+                      tracks,
+                    );
                   }}
                   handleExportCSV={() =>
                     actions.downloadCsv(vm.displayedTracks, vm.currentResult)
@@ -453,7 +475,7 @@ function PageInner() {
                             : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
                         }`}
                       >
-                        Matches XML
+                        Matched / confirmed
                       </button>
                       <button
                         type="button"
@@ -500,29 +522,58 @@ function PageInner() {
                     {analyzer.savedRekordboxXmlError}
                   </p>
                 )}
+                {vm.currentResult.changeSummary?.hasPrevious && (
+                  <label className="flex items-center gap-2 text-sm text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={filters.changesOnly}
+                      onChange={(event) =>
+                        filters.setChangesOnly(event.target.checked)
+                      }
+                    />
+                    Show added, changed or rechecked tracks only
+                  </label>
+                )}
                 <ResultsTable
                   emptyMessage={
-                    filters.searchQuery.trim()
-                      ? "No tracks match your search."
-                      : filters.categoryFilter === "toBuy" &&
-                          vm.unknownCount > 0
-                        ? "No tracks are confirmed absent from this XML. Review the not-confirmed tracks before buying."
+                    filters.changesOnly &&
+                    vm.currentResult.changeSummary?.hasPrevious &&
+                    vm.currentResult.tracks.every(
+                      (t) => t.changeStatus === "unchanged",
+                    )
+                      ? "Nothing changed since the last analysis. Show all tracks to review the full playlist."
+                      : filters.searchQuery.trim()
+                        ? "No tracks match your search."
                         : filters.categoryFilter === "toBuy" &&
-                            vm.ownedCount > 0
-                          ? "All checked tracks have a match in this XML."
-                          : vm.currentResult.tracks.length === 0
-                            ? "No analyzable tracks were returned. Check skipped entries or retry loading the playlist."
-                            : "No tracks in this filter."
+                            vm.unknownCount > 0
+                          ? "No tracks are confirmed absent from this XML. Review the not-confirmed tracks before buying."
+                          : filters.categoryFilter === "toBuy" &&
+                              vm.ownedCount > 0
+                            ? "All checked tracks have a match in this XML."
+                            : vm.currentResult.tracks.length === 0
+                              ? "No analyzable tracks were returned. Check skipped entries or retry loading the playlist."
+                              : "No tracks in this filter."
                   }
                   onResetFilters={
+                    filters.changesOnly ||
                     filters.searchQuery.trim() ||
                     filters.categoryFilter !== "all"
                       ? () => {
+                          filters.setChangesOnly(false);
                           filters.setSearchQuery("");
                           filters.setCategoryFilter("all");
                         }
                       : undefined
                   }
+                  onReviewDecision={(track, action) =>
+                    reviews.decide(
+                      track,
+                      action,
+                      vm.currentResult?.meta?.rekordbox?.library_sha256,
+                      vm.currentResult?.meta?.ownership_rules_version,
+                    )
+                  }
+                  reviewReady={reviews.ready}
                   currentResult={vm.currentResult}
                   displayedTracks={vm.displayedTracks}
                   queuedTrackIds={buyQueue.queuedIds}
@@ -541,7 +592,8 @@ function PageInner() {
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p>
                       Analysis snapshots are saved on this device. Clearing
-                      history keeps your saved XML and Buy Later list.
+                      history keeps your saved XML, Buy Later list and
+                      confirmations.
                     </p>
                     <button
                       type="button"

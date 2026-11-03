@@ -70,3 +70,7 @@ yarn-error.log*
 
 # Project-specific noise
 _context/
+
+# Local browser validation artifacts
+.playwright-cli/
+output/playwright/

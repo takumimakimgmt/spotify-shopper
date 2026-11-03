@@ -40,7 +40,7 @@ Playlist Shopper is a focused DJ purchase-decision workflow. Upload a Rekordbox 
 ## Known Limitations
 
 - Matching depends on playlist metadata and the exported Rekordbox XML.
-- Original XML files up to 50 MiB are processed in the browser. Only recording metadata is sent, with a 3 MiB transfer limit; no library entries are silently omitted.
+- Original XML files up to 50 MiB are matched locally using a Web Worker. XML and library metadata are not uploaded; the hosted transfer ceiling does not apply to local matching.
 - Saved results use browser local storage and may be cleared by the browser.
 - Purchase links are best-effort search or store links when available.
 - Only Spotify playlist URLs are supported in the current sharing flow.

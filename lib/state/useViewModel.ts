@@ -11,11 +11,17 @@
  */
 "use client";
 
+import {
+  applyReviewDecisions,
+  type ReviewDecisions,
+} from "./useReviewDecisions";
 import { useMemo } from "react";
 import type { PlaylistRow, ResultState } from "../types";
 import type { FiltersState } from "./useFiltersState";
 import { usePlaylistAnalyzer } from "./usePlaylistAnalyzer";
 import { selectDisplayedTracks, selectTrackCounts } from "../ui/selectors";
+
+const EMPTY_DECISIONS: ReviewDecisions = {};
 
 export interface ViewModel {
   // Derived data ONLY (memoized via selectors)
@@ -42,10 +48,25 @@ export function useViewModel(
   analyzer: ReturnType<typeof usePlaylistAnalyzer>,
   filters: FiltersState,
   selectedKey: string | null,
+  decisions: ReviewDecisions = EMPTY_DECISIONS,
 ): ViewModel {
   const multiResults = useMemo(
-    () => analyzer.multiResults || [],
-    [analyzer.multiResults],
+    () =>
+      (analyzer.multiResults || []).map(
+        ([url, result]): [string, ResultState] => [
+          url,
+          {
+            ...result,
+            tracks: applyReviewDecisions(
+              result.tracks,
+              decisions,
+              result.meta?.rekordbox?.library_sha256,
+              result.meta?.ownership_rules_version,
+            ),
+          },
+        ],
+      ),
+    [analyzer.multiResults, decisions],
   );
 
   const storageWarning = useMemo(
@@ -63,12 +84,15 @@ export function useViewModel(
   const displayedTracks = useMemo(() => {
     if (!currentResult) return [];
     return selectDisplayedTracks(currentResult.tracks, {
+      changesOnly:
+        !!currentResult.changeSummary?.hasPrevious && filters.changesOnly,
       categoryFilter: filters.categoryFilter,
       searchQuery: filters.searchQuery,
       sortKey: filters.sortKey,
     });
   }, [
     currentResult,
+    filters.changesOnly,
     filters.categoryFilter,
     filters.searchQuery,
     filters.sortKey,

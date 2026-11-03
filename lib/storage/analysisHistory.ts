@@ -34,7 +34,9 @@ export function normalizeStoredResults(
         r.tracks.every(isPlaylistRow);
       if (parsed.version === 3 && !validSnapshot) return null;
       const trustedOwnership =
-        validSnapshot && s.meta?.ownership_rules_version === 3;
+        validSnapshot &&
+        (s.meta?.ownership_rules_version === 3 ||
+          s.meta?.ownership_rules_version === 4);
       out.push([
         url,
         {
@@ -54,6 +56,7 @@ export function normalizeStoredResults(
           rekordboxMeta: trustedOwnership ? (s.rekordboxMeta ?? null) : null,
           meta: s.meta,
           errorText: s.errorText ?? null,
+          changeSummary: s.changeSummary,
           tracks: validSnapshot
             ? (r.tracks as PlaylistRow[]).map((t: PlaylistRow) => ({
                 ...t,

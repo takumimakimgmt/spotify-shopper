@@ -217,8 +217,8 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             Choose a Rekordbox XML export, up to 50 MB. Without XML, you can
             browse tracks and store links, but recordings stay unchecked.
             Matching only covers tracks included in your selected XML export.
-            The original file stays in this browser; only title, artist, album
-            and recording ID metadata is sent for matching.
+            Matching runs on this device. Your XML and library metadata are not
+            sent to the server.
           </p>
           <details className="text-sm text-slate-300">
             <summary className="cursor-pointer rounded-sm py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
@@ -325,9 +325,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               : "No XML selected. Tracks will be marked Not checked until you check them with XML."}
           </p>
           <p className="text-xs leading-5 text-slate-400">
-            The original XML is saved in this browser for reuse. Only recording
-            metadata is sent for matching; file paths and cue points stay here.
-            Use Remove to delete the browser’s saved XML.
+            The original XML is saved in this browser for reuse. Library
+            matching runs locally; XML, file paths and recording metadata stay
+            on this device. Use Remove to delete the browser’s saved XML.
           </p>
         </div>
 

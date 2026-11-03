@@ -1,4 +1,5 @@
 "use client";
+import { withPlaylistChanges } from "../domain/playlistChanges";
 import { normalizeMeta, normalizeTracks } from "../api/normalize";
 import { normalizeApiError, type NormalizedApiError } from "../api/errors";
 
@@ -64,10 +65,7 @@ const makeRekordboxMeta = (file: File | null): RekordboxMeta | null =>
 import { useEffect, useRef, useState, ChangeEvent, FormEvent } from "react";
 import { PlaylistRow, ResultState, PlaylistSnapshotV1 } from "../types";
 import { MAX_XML_BYTES } from "../constants";
-import {
-  applySnapshotOwnership,
-  splitSnapshot,
-} from "@/lib/playlist/snapshotOwnership";
+import { applySnapshotOwnership } from "@/lib/playlist/snapshotOwnership";
 import {
   getPlaylist,
   postPlaylistWithRekordboxUpload,
@@ -835,6 +833,10 @@ export function usePlaylistAnalyzer() {
         ]);
         const finished = newResults[newResults.length - 1];
         finished[1].rekordboxMeta = makeRekordboxMeta(activeRekordboxFile);
+        finished[1] = withPlaylistChanges(
+          finished[1],
+          checkpointResults.find(([key]) => key === url)?.[1],
+        );
         checkpointResults = [
           finished,
           ...checkpointResults.filter(([key]) => key !== url),
@@ -984,44 +986,14 @@ export function usePlaylistAnalyzer() {
       }),
     };
 
-    const matchedTracks: unknown[] = [];
-    let matchMeta: Record<string, unknown> = {};
-    let comparedFingerprint: unknown;
-    let comparedRules: unknown;
-    let matchMilliseconds = 0;
-    let fuzzyCount = 0;
-    for (const batch of splitSnapshot(snapshot)) {
-      const json = await matchSnapshotWithXml(JSON.stringify(batch), file);
-      const rows = getProp(json, "tracks");
-      if (!Array.isArray(rows) || rows.length !== batch.tracks.length)
-        throw new Error("Incomplete XML matching response. Please retry.");
-      matchedTracks.push(...rows);
-      matchMeta = normalizeMeta(getProp(json, "meta")) ?? {};
-      const xmlMeta = getProp(matchMeta, "rekordbox");
-      const fingerprint = getProp(xmlMeta, "library_sha256");
-      const rules = getProp(matchMeta, "ownership_rules_version");
-      if (
-        (comparedFingerprint !== undefined &&
-          fingerprint !== comparedFingerprint) ||
-        (comparedRules !== undefined && rules !== comparedRules)
-      ) {
-        throw new Error(
-          "Matching data changed during the batch. Recheck all tracks.",
-        );
-      }
-      comparedFingerprint = fingerprint;
-      comparedRules = rules;
-      matchMilliseconds += Number(getProp(xmlMeta, "match_ms")) || 0;
-      fuzzyCount += Number(getProp(xmlMeta, "fuzzy_count")) || 0;
-    }
-    if (isRecord(matchMeta.rekordbox)) {
-      matchMeta.rekordbox = {
-        ...matchMeta.rekordbox,
-        track_total: baseTracks.length,
-        match_ms: matchMilliseconds,
-        fuzzy_count: fuzzyCount,
-      };
-    }
+    const matched = await matchSnapshotWithXml(JSON.stringify(snapshot), file);
+    const matchedTracks = getProp(matched, "tracks");
+    if (
+      !Array.isArray(matchedTracks) ||
+      matchedTracks.length !== baseTracks.length
+    )
+      throw new Error("Incomplete local XML matching response. Please retry.");
+    const matchMeta = normalizeMeta(getProp(matched, "meta")) ?? {};
     // Validate before scheduling a state update so failures reach the XML UI.
     applySnapshotOwnership(baseTracks, baseTracks, matchedTracks);
     setMultiResults((prev) =>
@@ -1029,18 +1001,21 @@ export function usePlaylistAnalyzer() {
         if (result !== currentResult) return [url, result];
         return [
           url,
-          {
-            ...result,
-            tracks: applySnapshotOwnership(
-              result.tracks,
-              baseTracks,
-              matchedTracks,
-            ),
-            hasRekordboxData: true,
-            rekordboxMeta: makeRekordboxMeta(file),
-            analyzedAt: Date.now(),
-            meta: { ...result.meta, ...matchMeta },
-          },
+          withPlaylistChanges(
+            {
+              ...result,
+              tracks: applySnapshotOwnership(
+                result.tracks,
+                baseTracks,
+                matchedTracks,
+              ),
+              hasRekordboxData: true,
+              rekordboxMeta: makeRekordboxMeta(file),
+              analyzedAt: Date.now(),
+              meta: { ...result.meta, ...matchMeta },
+            },
+            result,
+          ),
         ];
       }),
     );
