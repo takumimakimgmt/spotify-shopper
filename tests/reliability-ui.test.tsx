@@ -84,6 +84,41 @@ describe("persistent purchase queue and XML actions", () => {
     expect(queue.storageWarning).toContain("could not be read");
     expect(write).not.toHaveBeenCalled();
   });
+  it.each(["{broken", "{}", '[{"id":"partial"}]', ""])(
+    "preserves corrupt queue data without silently overwriting it: %s",
+    async (raw) => {
+      vi.useFakeTimers();
+      localStorage.setItem("playlist-shopper-buy-queue", raw);
+      const write = vi.spyOn(Storage.prototype, "setItem");
+      await act(async () => {
+        root.render(<QueueHarness />);
+      });
+      await act(async () => {
+        await vi.runOnlyPendingTimersAsync();
+      });
+      expect(queue.storageWarning).toContain(
+        "Existing saved data has been kept",
+      );
+      act(() =>
+        queue.addTrack(track, {
+          name: "Beatport",
+          url: "https://beatport.com",
+        }),
+      );
+      await act(async () => {
+        await vi.runOnlyPendingTimersAsync();
+      });
+      expect(queue.items).toHaveLength(0);
+      expect(write).not.toHaveBeenCalled();
+      expect(localStorage.getItem("playlist-shopper-buy-queue")).toBe(raw);
+      localStorage.setItem("playlist-shopper-buy-queue", "[]");
+      act(() => queue.retrySave());
+      await act(async () => {
+        await vi.runOnlyPendingTimersAsync();
+      });
+      expect(queue.storageWarning).toBeNull();
+    },
+  );
   it("uses a keyboard-focusable action and rechecks all tracks despite filters", async () => {
     const tracks = [track, { ...track, index: 2, title: "Other" }];
     const result = {
