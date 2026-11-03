@@ -81,7 +81,7 @@ function normalizeTrack(t: TrackLike, index: number): PlaylistRow {
     spotifyUrl: asString(t.spotify_url) ?? "",
     appleUrl: asString(t.apple_url),
     stores: links,
-    owned: asBool(t.owned) ?? false,
+    owned: asBool(t.owned) ?? null,
     ownedReason: asString(t.owned_reason),
     trackKeyPrimary: asString(t.track_key_primary),
     trackKeyFallback: asString(t.track_key_fallback),

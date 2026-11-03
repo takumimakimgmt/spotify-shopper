@@ -101,6 +101,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
 
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    window.localStorage.clear();
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -606,6 +607,59 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
         message: "Something went wrong. Please try again.",
       }),
     ]);
+
+    getPlaylistMock.mockResolvedValueOnce({
+      playlist_id: "failure123",
+      playlist_name: "Recovered Playlist",
+      playlist_url: failureUrl,
+      tracks: [
+        {
+          title: "Recovered Track",
+          artist: "Artist R",
+          album: "Album R",
+          isrc: "JP0000000003",
+          spotify_url: "https://open.spotify.com/track/recovered-track",
+          apple_url: null,
+          links: {
+            beatport: "",
+            bandcamp: "",
+            itunes: "",
+          },
+          owned: false,
+          owned_reason: null,
+          track_key_primary: "isrc:JP0000000003",
+          track_key_fallback: "norm:recovered track|artist r|album r",
+          track_key_primary_type: "isrc",
+          track_key_version: "v1",
+        },
+      ],
+      meta: {
+        cache_hit: false,
+        refresh: false,
+      },
+    });
+
+    await act(async () => {
+      currentApi!.retryFailed();
+    });
+
+    await flush();
+
+    expect(getPlaylistMock).toHaveBeenCalledTimes(3);
+    expect(getPlaylistMock.mock.calls[2]?.[0]).toEqual(
+      expect.objectContaining({
+        url: failureUrl,
+        source: "spotify",
+        refresh: false,
+      }),
+    );
+    expect(currentApi!.multiResults[0]?.[0]).toBe(failureUrl);
+    expect(currentApi!.multiResults[0]?.[1]).toEqual(
+      expect.objectContaining({
+        title: "Recovered Playlist",
+        playlist_id: "failure123",
+      }),
+    );
   });
 
   test("replaces only matching URLs and preserves unrelated existing multiResults", async () => {
@@ -719,5 +773,73 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
         message: "1 tracks",
       }),
     ]);
+  });
+
+  test("attempts automatic hydration only once after a failure", async () => {
+    getPlaylistMock.mockRejectedValue(new Error("backend unavailable"));
+
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+
+    act(() => {
+      currentApi!.setMultiResults([
+        [
+          spotifyPlaylistUrl,
+          {
+            title: "Stored Playlist",
+            total: 1,
+            playlistUrl: spotifyPlaylistUrl,
+            playlist_id: "abc123",
+            playlist_name: "Stored Playlist",
+            tracks: [],
+            analyzedAt: 1,
+            hasRekordboxData: false,
+          },
+        ],
+      ]);
+    });
+    await flush();
+
+    await act(async () => {
+      await currentApi!.ensureHydrated(spotifyPlaylistUrl);
+      await currentApi!.ensureHydrated(spotifyPlaylistUrl);
+    });
+
+    expect(getPlaylistMock).toHaveBeenCalledTimes(1);
+    expect(currentApi!.multiResults[0]?.[1].errorText).toBeTruthy();
+  });
+
+  test("removes persisted results when the final result is deleted", async () => {
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+
+    act(() => {
+      currentApi!.setMultiResults([
+        [
+          spotifyPlaylistUrl,
+          {
+            title: "Stored Playlist",
+            total: 1,
+            playlistUrl: spotifyPlaylistUrl,
+            playlist_id: "abc123",
+            playlist_name: "Stored Playlist",
+            tracks: [],
+            analyzedAt: 1,
+            hasRekordboxData: false,
+          },
+        ],
+      ]);
+    });
+    await flush();
+    window.localStorage.setItem("spotify-shopper-results", "stale");
+
+    act(() => {
+      currentApi!.setMultiResults([]);
+    });
+    await flush();
+
+    expect(window.localStorage.getItem("spotify-shopper-results")).toBeNull();
   });
 });

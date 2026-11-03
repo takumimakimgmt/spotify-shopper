@@ -9,6 +9,7 @@ type ErrorShape = {
   upstreamStatus?: number;
   upstreamHost?: string;
   durationMs?: number;
+  diagnostics?: Record<string, unknown>;
 };
 
 const OPEN_SPOTIFY_HOST = ["open", "spotify", "com"].join(".");
@@ -16,6 +17,15 @@ const SPOTIFY_PLAYLIST_ID_RE = /^[A-Za-z0-9]{22}$/;
 const SPOTIFY_PLAYLIST_URI_RE = /^spotify:playlist:[A-Za-z0-9]{22}$/;
 const INVALID_SPOTIFY_PLAYLIST_MESSAGE =
   "Enter a Spotify playlist URL, URI, or ID.";
+const DEFAULT_MAX_PROXY_BODY_BYTES = 55 * 1024 * 1024;
+const DEFAULT_MAX_PROXY_RESPONSE_BYTES = 25 * 1024 * 1024;
+const MAX_RATE_LIMIT_BUCKETS = 10_000;
+const RATE_LIMIT_PRUNE_INTERVAL = 256;
+const PLAYLIST_URL_ENDPOINTS = new Set([
+  "playlist",
+  "playlist-with-rekordbox",
+  "playlist-with-rekordbox-upload",
+]);
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -170,24 +180,183 @@ function isJsonLike(contentType: string | null): boolean {
   return ct.includes("application/json") || ct.includes("+json");
 }
 
+function byteLimitFromEnv(name: string, fallback: number): number {
+  const n = Number(process.env[name]);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+function boundedIntegerFromEnv(
+  name: string,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  const n = Number(process.env[name]);
+  return Number.isInteger(n) && n >= min && n <= max ? n : fallback;
+}
+
+function parseContentLength(headers: Headers): number | null {
+  const raw = headers.get("content-length");
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+async function readStreamWithLimit(
+  stream: ReadableStream<Uint8Array> | null,
+  maxBytes: number,
+): Promise<{ ok: true; bytes: Uint8Array<ArrayBuffer> } | { ok: false }> {
+  if (!stream) {
+    return { ok: true, bytes: new Uint8Array(new ArrayBuffer(0)) };
+  }
+
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel("payload_too_large").catch(() => {});
+        return { ok: false };
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(new ArrayBuffer(total));
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { ok: true, bytes };
+}
+
+function proxyJsonError(
+  status: number,
+  body: ErrorShape,
+  extraHeaders?: Record<string, string>,
+) {
+  return NextResponse.json(body, {
+    status,
+    headers: { "x-request-id": body.requestId, ...extraHeaders },
+  });
+}
+
+async function extractPlaylistUrlFromBody(
+  req: NextRequest,
+  bodyBytes: Uint8Array | undefined,
+): Promise<{ ok: true; url: string | null } | { ok: false; message: string }> {
+  if (!bodyBytes || bodyBytes.byteLength === 0) {
+    return { ok: true, url: null };
+  }
+
+  const contentType = req.headers.get("content-type")?.toLowerCase() ?? "";
+
+  try {
+    if (contentType.includes("application/json")) {
+      const data = JSON.parse(new TextDecoder().decode(bodyBytes)) as unknown;
+      return {
+        ok: true,
+        url:
+          typeof data === "object" &&
+          data !== null &&
+          typeof (data as Record<string, unknown>).url === "string"
+            ? ((data as Record<string, unknown>).url as string)
+            : null,
+      };
+    }
+
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      return {
+        ok: true,
+        url: new URLSearchParams(new TextDecoder().decode(bodyBytes)).get(
+          "url",
+        ),
+      };
+    }
+
+    if (contentType.includes("multipart/form-data")) {
+      const formBody = new ArrayBuffer(bodyBytes.byteLength);
+      new Uint8Array(formBody).set(bodyBytes);
+      const formReq = new Request(req.url, {
+        method: req.method,
+        headers: req.headers,
+        body: formBody,
+      });
+      const form = await formReq.formData();
+      const value = form.get("url");
+      return { ok: true, url: typeof value === "string" ? value : null };
+    }
+  } catch {
+    return { ok: false, message: "Invalid request body" };
+  }
+
+  return { ok: true, url: null };
+}
+
+function requiresPlaylistUrl(endpoint: string): boolean {
+  return PLAYLIST_URL_ENDPOINTS.has(endpoint.replaceAll("_", "-"));
+}
+
 function getClientIp(req: NextRequest): string {
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]?.trim() || "unknown";
-  return req.headers.get("x-real-ip") || "unknown";
+  const realIp = req.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
+  const platformForwarded = req.headers.get("x-vercel-forwarded-for");
+  if (platformForwarded) {
+    return platformForwarded.split(",").at(-1)?.trim() || "unknown";
+  }
+
+  const forwarded = req.headers.get("x-forwarded-for");
+  return forwarded?.split(",").at(-1)?.trim() || "unknown";
 }
 
 type Bucket = { resetAt: number; count: number };
 const buckets = new Map<string, Bucket>();
+let rateLimitChecks = 0;
+
+function pruneRateLimitBuckets(now: number) {
+  rateLimitChecks += 1;
+  if (
+    rateLimitChecks % RATE_LIMIT_PRUNE_INTERVAL !== 0 &&
+    buckets.size < MAX_RATE_LIMIT_BUCKETS
+  ) {
+    return;
+  }
+
+  for (const [key, bucket] of buckets) {
+    if (now >= bucket.resetAt) buckets.delete(key);
+  }
+
+  while (buckets.size >= MAX_RATE_LIMIT_BUCKETS) {
+    const oldestKey = buckets.keys().next().value as string | undefined;
+    if (!oldestKey) break;
+    buckets.delete(oldestKey);
+  }
+}
 
 function rateLimitKey(req: NextRequest, endpoint: string): string {
   return `${endpoint}:${getClientIp(req)}`;
 }
 
 function getRateLimitPerMinute(endpoint: string): number {
-  const base = Number(process.env.RATE_LIMIT_PER_MINUTE ?? "120");
-  const playlist = Number(process.env.PLAYLIST_RATE_LIMIT_PER_MINUTE ?? "30");
-  if (endpoint === "playlist") return playlist;
-  return Number.isFinite(base) && base > 0 ? base : 120;
+  const base = boundedIntegerFromEnv("RATE_LIMIT_PER_MINUTE", 120, 1, 10_000);
+  const playlist = boundedIntegerFromEnv(
+    "PLAYLIST_RATE_LIMIT_PER_MINUTE",
+    30,
+    1,
+    10_000,
+  );
+  return requiresPlaylistUrl(endpoint) ? playlist : base;
 }
 
 function checkRateLimit(
@@ -199,6 +368,7 @@ function checkRateLimit(
 
   const key = rateLimitKey(req, endpoint);
   const t = nowMs();
+  pruneRateLimitBuckets(t);
   const b = buckets.get(key);
 
   if (!b || t >= b.resetAt) {
@@ -271,75 +441,140 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
       endpoint,
       durationMs: nowMs() - startedAt,
     };
-    return NextResponse.json(body, {
-      status: 429,
-      headers: {
-        "x-request-id": requestId,
-        "retry-after": String(rl.retryAfterSec),
-      },
+    return proxyJsonError(429, body, {
+      "retry-after": String(rl.retryAfterSec),
     });
   }
 
   const backend = getBackendBaseUrl();
   if (!backend) {
-    return NextResponse.json(
-      {
-        error: "backend_url_missing",
-        message:
-          "Set BACKEND_URL (recommended) or NEXT_PUBLIC_BACKEND_URL / NEXT_PUBLIC_API_BASE_URL / API_BASE_URL.",
-        requestId,
-        endpoint,
-        durationMs: nowMs() - startedAt,
-      } satisfies ErrorShape,
-      { status: 500, headers: { "x-request-id": requestId } },
-    );
+    return proxyJsonError(500, {
+      error: "backend_url_missing",
+      message:
+        "Set BACKEND_URL (recommended) or NEXT_PUBLIC_BACKEND_URL / NEXT_PUBLIC_API_BASE_URL / API_BASE_URL.",
+      requestId,
+      endpoint,
+      durationMs: nowMs() - startedAt,
+    } satisfies ErrorShape);
   }
 
   if (!backendHostAllowed(backend)) {
-    return NextResponse.json(
-      {
-        error: "backend_url_disallowed",
-        message:
-          "BACKEND_URL hostname is disallowed (private IP literal or invalid).",
-        requestId,
-        endpoint,
-        upstreamHost: backend.hostname,
-        durationMs: nowMs() - startedAt,
-      } satisfies ErrorShape,
-      { status: 500, headers: { "x-request-id": requestId } },
-    );
+    return proxyJsonError(500, {
+      error: "backend_url_disallowed",
+      message:
+        "BACKEND_URL hostname is disallowed (private IP literal or invalid).",
+      requestId,
+      endpoint,
+      upstreamHost: backend.hostname,
+      durationMs: nowMs() - startedAt,
+    } satisfies ErrorShape);
   }
 
   const allowedHosts = getAllowedBackendHosts(backend);
   if (!allowedHosts.has(backend.hostname.toLowerCase())) {
-    return NextResponse.json(
-      {
-        error: "backend_url_disallowed",
-        message: "BACKEND_URL hostname is not in BACKEND_HOST_ALLOWLIST.",
-        requestId,
-        endpoint,
-        upstreamHost: backend.hostname,
-        durationMs: nowMs() - startedAt,
-      } satisfies ErrorShape,
-      { status: 500, headers: { "x-request-id": requestId } },
-    );
+    return proxyJsonError(500, {
+      error: "backend_url_disallowed",
+      message: "BACKEND_URL hostname is not in BACKEND_HOST_ALLOWLIST.",
+      requestId,
+      endpoint,
+      upstreamHost: backend.hostname,
+      durationMs: nowMs() - startedAt,
+    } satisfies ErrorShape);
   }
 
   const incomingUrl = new URL(req.url);
-  if (incomingUrl.searchParams.has("url")) {
-    const v = validateSpotifyPlaylistInput(incomingUrl.searchParams.get("url"));
+  const method = req.method.toUpperCase();
+
+  const queryPlaylistUrl = incomingUrl.searchParams.get("url");
+  if (queryPlaylistUrl !== null) {
+    const v = validateSpotifyPlaylistInput(queryPlaylistUrl);
     if (!v.ok) {
-      return NextResponse.json(
-        {
-          error: "invalid_input",
-          message: v.message,
-          requestId,
-          endpoint,
-          durationMs: nowMs() - startedAt,
-        } satisfies ErrorShape,
-        { status: 400, headers: { "x-request-id": requestId } },
-      );
+      return proxyJsonError(400, {
+        error: "invalid_input",
+        message: v.message,
+        requestId,
+        endpoint,
+        durationMs: nowMs() - startedAt,
+      } satisfies ErrorShape);
     }
+  }
+
+  const maxBodyBytes = byteLimitFromEnv(
+    "PROXY_MAX_BODY_BYTES",
+    DEFAULT_MAX_PROXY_BODY_BYTES,
+  );
+  const requestContentLength = parseContentLength(req.headers);
+  if (requestContentLength !== null && requestContentLength > maxBodyBytes) {
+    return proxyJsonError(413, {
+      error: "payload_too_large",
+      message: "Request body is too large",
+      requestId,
+      endpoint,
+      durationMs: nowMs() - startedAt,
+    });
+  }
+
+  let bodyBytes: Uint8Array<ArrayBuffer> | undefined;
+  if (method !== "GET" && method !== "HEAD") {
+    const requestBody = await readStreamWithLimit(req.body, maxBodyBytes);
+    if (!requestBody.ok) {
+      return proxyJsonError(413, {
+        error: "payload_too_large",
+        message: "Request body is too large",
+        requestId,
+        endpoint,
+        durationMs: nowMs() - startedAt,
+      });
+    }
+    bodyBytes = requestBody.bytes;
+  }
+
+  if (bodyBytes && bodyBytes.byteLength > maxBodyBytes) {
+    return proxyJsonError(413, {
+      error: "payload_too_large",
+      message: "Request body is too large",
+      requestId,
+      endpoint,
+      durationMs: nowMs() - startedAt,
+    });
+  }
+
+  const bodyPlaylistUrl = await extractPlaylistUrlFromBody(req, bodyBytes);
+  if (!bodyPlaylistUrl.ok) {
+    return proxyJsonError(400, {
+      error: "invalid_input",
+      message: bodyPlaylistUrl.message,
+      requestId,
+      endpoint,
+      durationMs: nowMs() - startedAt,
+    });
+  }
+
+  if (bodyPlaylistUrl.url !== null) {
+    const v = validateSpotifyPlaylistInput(bodyPlaylistUrl.url);
+    if (!v.ok) {
+      return proxyJsonError(400, {
+        error: "invalid_input",
+        message: v.message,
+        requestId,
+        endpoint,
+        durationMs: nowMs() - startedAt,
+      });
+    }
+  }
+
+  if (
+    requiresPlaylistUrl(endpoint) &&
+    queryPlaylistUrl === null &&
+    bodyPlaylistUrl.url === null
+  ) {
+    return proxyJsonError(400, {
+      error: "invalid_input",
+      message: INVALID_SPOTIFY_PLAYLIST_MESSAGE,
+      requestId,
+      endpoint,
+      durationMs: nowMs() - startedAt,
+    });
   }
 
   const target = new URL(`/api/${endpoint}`, backend);
@@ -353,16 +588,24 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
   }
   upstreamHeaders.set("x-request-id", requestId);
   upstreamHeaders.delete("expect");
+  upstreamHeaders.delete("x-backend-token");
   upstreamHeaders.set("accept-encoding", "identity");
+  const backendProxyToken = process.env.BACKEND_PROXY_TOKEN?.trim();
+  if (backendProxyToken) {
+    upstreamHeaders.set("x-backend-token", backendProxyToken);
+  }
 
-  const method = req.method.toUpperCase();
-  const bodyBytes =
-    method === "GET" || method === "HEAD"
-      ? undefined
-      : new Uint8Array(await req.arrayBuffer());
-
-  const maxAttempts = Number(process.env.PROXY_MAX_ATTEMPTS ?? "2");
-  const timeoutMs = Number(process.env.PROXY_TIMEOUT_MS ?? "25000");
+  const maxAttempts = boundedIntegerFromEnv("PROXY_MAX_ATTEMPTS", 2, 1, 3);
+  const timeoutMs = boundedIntegerFromEnv(
+    "PROXY_TIMEOUT_MS",
+    25_000,
+    1_000,
+    120_000,
+  );
+  const maxResponseBytes = byteLimitFromEnv(
+    "PROXY_MAX_RESPONSE_BYTES",
+    DEFAULT_MAX_PROXY_RESPONSE_BYTES,
+  );
   const backoffMs = [0, 400, 900];
 
   for (let attempt = 1; attempt <= Math.max(1, maxAttempts); attempt++) {
@@ -379,7 +622,7 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
       const res = await fetch(target.toString(), {
         method,
         headers: upstreamHeaders,
-        body: bodyBytes,
+        body: bodyBytes?.buffer,
         signal: ac.signal,
         redirect: "follow",
         cache: "no-store",
@@ -387,9 +630,38 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
 
       const upstreamMs = nowMs() - t0;
       const status = res.status;
+      const upstreamContentLength = parseContentLength(res.headers);
+      if (
+        upstreamContentLength !== null &&
+        upstreamContentLength > maxResponseBytes
+      ) {
+        return proxyJsonError(502, {
+          error: "upstream_response_too_large",
+          message: "Upstream response is too large",
+          requestId,
+          endpoint,
+          upstreamStatus: status,
+          upstreamHost: backend.hostname,
+          durationMs: nowMs() - startedAt,
+        });
+      }
 
-      const buf = await res.arrayBuffer();
-      const bytes = new Uint8Array(buf);
+      const upstreamBody = await readStreamWithLimit(
+        res.body,
+        maxResponseBytes,
+      );
+      if (!upstreamBody.ok) {
+        return proxyJsonError(502, {
+          error: "upstream_response_too_large",
+          message: "Upstream response is too large",
+          requestId,
+          endpoint,
+          upstreamStatus: status,
+          upstreamHost: backend.hostname,
+          durationMs: nowMs() - startedAt,
+        });
+      }
+      const bytes = upstreamBody.bytes;
 
       if (status >= 500 && attempt < maxAttempts) continue;
 
@@ -410,39 +682,33 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
       outHeaders.set("x-upstream-status", String(status));
       outHeaders.set("x-upstream-ms", String(upstreamMs));
 
-      return new Response(bytes, { status, headers: outHeaders });
+      return new Response(bytes.buffer, { status, headers: outHeaders });
     } catch (err) {
       if (attempt < maxAttempts) continue;
 
-      return NextResponse.json(
-        {
-          error: "proxy_failed",
-          message: "fetch failed",
-          requestId,
-          endpoint,
-          upstreamHost: backend.hostname,
-          durationMs: nowMs() - startedAt,
-          diagnostics:
-            process.env.PROXY_INCLUDE_DIAGNOSTICS === "true"
-              ? diag(err)
-              : undefined,
-        } as Record<string, unknown>,
-        { status: 502, headers: { "x-request-id": requestId } },
-      );
+      return proxyJsonError(502, {
+        error: "proxy_failed",
+        message: "fetch failed",
+        requestId,
+        endpoint,
+        upstreamHost: backend.hostname,
+        durationMs: nowMs() - startedAt,
+        diagnostics:
+          process.env.PROXY_INCLUDE_DIAGNOSTICS === "true"
+            ? diag(err)
+            : undefined,
+      } satisfies ErrorShape);
     } finally {
       clearTimeout(timer);
     }
   }
 
-  return NextResponse.json(
-    {
-      error: "proxy_failed",
-      message: "exhausted attempts",
-      requestId,
-      endpoint,
-      upstreamHost: backend.hostname,
-      durationMs: nowMs() - startedAt,
-    } satisfies ErrorShape,
-    { status: 502, headers: { "x-request-id": requestId } },
-  );
+  return proxyJsonError(502, {
+    error: "proxy_failed",
+    message: "exhausted attempts",
+    requestId,
+    endpoint,
+    upstreamHost: backend.hostname,
+    durationMs: nowMs() - startedAt,
+  } satisfies ErrorShape);
 }

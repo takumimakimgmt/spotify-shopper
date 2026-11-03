@@ -4,7 +4,7 @@ import { buildSearchHaystack } from "@/lib/utils/normalize";
 import { normalizeTitle, normalizeArtist } from "../utils/normalize";
 
 export interface FilterOptions {
-  categoryFilter: "all" | "toBuy" | "owned";
+  categoryFilter: "all" | "toBuy" | "owned" | "unknown";
   searchQuery: string;
   sortKey: "none" | "artist" | "album" | "title";
 }
@@ -48,6 +48,8 @@ export function selectDisplayedTracks(
     filtered = filtered.filter((t) => categorizeTrack(t) === "owned");
   } else if (options.categoryFilter === "toBuy") {
     filtered = filtered.filter((t) => categorizeTrack(t) === "checkout");
+  } else if (options.categoryFilter === "unknown") {
+    filtered = filtered.filter((t) => categorizeTrack(t) === "unknown");
   }
 
   return filtered;
@@ -59,11 +61,13 @@ export function selectDisplayedTracks(
 export function selectTrackCounts(tracks: PlaylistRow[]): {
   ownedCount: number;
   toBuyCount: number;
+  unknownCount: number;
 } {
   const safeTracks = Array.isArray(tracks) ? tracks : [];
   return {
     ownedCount: safeTracks.filter((t) => t.owned === true).length,
-    toBuyCount: safeTracks.filter((t) => t.owned !== true).length,
+    toBuyCount: safeTracks.filter((t) => t.owned === false).length,
+    unknownCount: safeTracks.filter((t) => t.owned == null).length,
   };
 }
 
@@ -74,4 +78,5 @@ export const categoryLabels: Record<"all" | TrackCategory, string> = {
   all: "All",
   checkout: "To buy",
   owned: "Owned",
+  unknown: "Unverified",
 };

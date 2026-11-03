@@ -35,8 +35,9 @@ export function ResultsTabs({
               }`}
             >
               <button
+                type="button"
                 onClick={() => onSelectTab(url)}
-                className="flex min-w-0 items-center gap-2 px-2.5 py-1.5 text-left"
+                className="flex min-h-10 min-w-0 items-center gap-2 px-3 py-2 text-left"
                 title={result.title}
               >
                 <span className="min-w-0 truncate">{result.title}</span>
@@ -59,11 +60,12 @@ export function ResultsTabs({
                 )}
               </button>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onRemoveTab(url);
                 }}
-                className="self-stretch border-l border-white/10 px-2 text-lg leading-none text-slate-500 transition hover:bg-rose-950/30 hover:text-rose-300"
+                className="min-w-10 self-stretch border-l border-white/10 px-3 text-lg leading-none text-slate-400 transition hover:bg-rose-950/30 hover:text-rose-200"
                 title="Remove this playlist"
                 aria-label={`Remove ${result.title}`}
               >

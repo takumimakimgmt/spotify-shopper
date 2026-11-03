@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/prebuild.mjs && next build",
+    "build": "node scripts/prebuild.mjs && node scripts/build-next.mjs",
     "start": "next start",
     "lint": "eslint",
     "api:update-openapi": "node scripts/update-openapi.mjs",

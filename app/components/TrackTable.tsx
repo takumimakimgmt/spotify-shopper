@@ -46,6 +46,7 @@ function MatchTypeBadge({ ownedReason }: { ownedReason: string }) {
 
 import React from "react";
 import type { PlaylistRow, TrackCategory, ResultState } from "../../lib/types";
+import { sanitizeForCsvCell } from "@/lib/utils/csvSanitize";
 
 export type TrackTableProps = {
   _currentResult: ResultState;
@@ -123,7 +124,7 @@ export function TrackTable({
     const header = "Title,Artist,Album,ISRC,Spotify URL\n";
     const rows = toBuyTracks.map((t) =>
       [t.title, t.artist, t.album, t.isrc, t.spotifyUrl]
-        .map((f) => `"${(f ?? "").replace(/"/g, '""')}"`)
+        .map((f) => `"${sanitizeForCsvCell(f ?? "").replace(/"/g, '""')}"`)
         .join(","),
     );
     const csv = header + rows.join("\n");

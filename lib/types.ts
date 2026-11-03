@@ -100,7 +100,7 @@ export type ResultState = {
 };
 
 export type SortKey = "none" | "artist" | "album" | "title";
-export type TrackCategory = "checkout" | "owned";
+export type TrackCategory = "checkout" | "owned" | "unknown";
 
 export type PlaylistSnapshotV1 = {
   schema: "playlist_snapshot";

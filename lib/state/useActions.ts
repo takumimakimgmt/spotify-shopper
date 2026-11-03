@@ -109,7 +109,9 @@ export function useActions(
           sanitizeForCsvCell(t.artist),
           sanitizeForCsvCell(t.album),
           sanitizeForCsvCell(t.isrc || ""),
-          sanitizeForCsvCell(t.owned === true ? "Yes" : "No"),
+          sanitizeForCsvCell(
+            t.owned === true ? "Yes" : t.owned === false ? "No" : "Unverified",
+          ),
           sanitizeForCsvCell(stores.beatport),
           sanitizeForCsvCell(stores.bandcamp),
           ...(ENABLE_APPLE_MUSIC ? [sanitizeForCsvCell(stores.itunes)] : []),

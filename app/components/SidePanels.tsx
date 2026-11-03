@@ -9,6 +9,7 @@ interface SidePanelsProps {
   currentResult: ResultState;
   ownedCount: number;
   toBuyCount: number;
+  unknownCount: number;
   displayedTracks: PlaylistRow[];
   rekordboxFile: File | null;
   rekordboxDate?: string | null;
@@ -24,6 +25,7 @@ export function SidePanels({
   currentResult,
   ownedCount,
   toBuyCount,
+  unknownCount,
   displayedTracks,
   // rekordboxFile,
   // rekordboxDate,
@@ -58,7 +60,7 @@ export function SidePanels({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <div className="flex flex-col gap-2 text-xs text-slate-500 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 text-sm text-slate-400 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             {currentResult.rekordboxMeta && (
               <div className="truncate">
@@ -81,12 +83,12 @@ export function SidePanels({
                 href={currentResult.playlistUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded border border-slate-800 px-2 py-1 text-slate-300 hover:border-slate-700 hover:text-slate-100"
+                className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white"
               >
                 Open playlist
               </a>
             )}
-            <label className="cursor-pointer rounded border border-slate-800 px-2 py-1 text-slate-300 hover:border-slate-700 hover:text-slate-100">
+            <label className="min-h-9 cursor-pointer rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white">
               Re-analyze with XML
               <input
                 type="file"
@@ -98,7 +100,7 @@ export function SidePanels({
             <button
               type="button"
               onClick={handleExportCSV}
-              className="rounded border border-slate-800 px-2 py-1 text-slate-300 hover:border-slate-700 hover:text-slate-100"
+              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white"
             >
               Export CSV
             </button>
@@ -115,6 +117,7 @@ export function SidePanels({
         result={currentResult}
         ownedCount={ownedCount}
         toBuyCount={toBuyCount}
+        unknownCount={unknownCount}
       />
     </div>
   );
