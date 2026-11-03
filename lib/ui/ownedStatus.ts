@@ -8,14 +8,14 @@ export function getOwnedStatusStyle(
   if (owned === true) {
     const tooltip =
       ownedReason === "isrc"
-        ? "✅ Owned: Matched by ISRC"
+        ? "✅ Matches XML: Matched by ISRC"
         : ownedReason === "exact"
-          ? "✅ Owned: Matched by Title + Artist"
+          ? "✅ Matches XML: Matched by Title + Artist"
           : ownedReason === "album"
-            ? "✅ Owned: Matched by Title + Album"
+            ? "✅ Matches XML: Matched by Title + Album"
             : ownedReason === "fuzzy"
               ? "🟠 Maybe: Fuzzy match (low confidence)"
-              : "✅ Owned";
+              : "✅ Matches XML";
     return {
       borderClass: "border-l-4 border-emerald-500",
       tooltip,
@@ -24,11 +24,11 @@ export function getOwnedStatusStyle(
   if (owned == null) {
     return {
       borderClass: "border-l-4 border-amber-500",
-      tooltip: "Unverified: Check ownership with XML",
+      tooltip: "Not confirmed: Check the recording with XML",
     };
   }
   return {
     borderClass: "border-l-4 border-slate-600",
-    tooltip: "⬛ To Buy: Not found in library",
+    tooltip: "Not found in this XML; ownership outside this export is unknown",
   };
 }

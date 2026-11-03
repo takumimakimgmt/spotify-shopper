@@ -1,4 +1,5 @@
-import type { PlaylistRow, PlaylistSnapshotV1 } from "../types";
+import { parseLibraryMatch } from "../api/normalize";
+import type { PlaylistRow, PlaylistSnapshotV1, LibraryMatch } from "../types";
 
 /** Match responses to submitted rows, never to lossy normalized music keys. */
 export function applySnapshotOwnership(
@@ -11,7 +12,12 @@ export function applySnapshotOwnership(
   }
   const updates = new Map<
     number,
-    { original: PlaylistRow; owned: boolean | null; reason: string | null }
+    {
+      original: PlaylistRow;
+      owned: boolean | null;
+      reason: string | null;
+      libraryMatch: LibraryMatch | null;
+    }
   >();
   submitted.forEach((original, index) => {
     const matched = response[index];
@@ -30,6 +36,7 @@ export function applySnapshotOwnership(
     }
     updates.set(original.index, {
       original,
+      libraryMatch: parseLibraryMatch(matched.library_match),
       owned: matched.owned ?? null,
       reason:
         typeof matched.owned_reason === "string" ? matched.owned_reason : null,
@@ -45,7 +52,12 @@ export function applySnapshotOwnership(
       track.isrc !== update.original.isrc
     )
       return track;
-    return { ...track, owned: update.owned, ownedReason: update.reason };
+    return {
+      ...track,
+      owned: update.owned,
+      ownedReason: update.reason,
+      libraryMatch: update.libraryMatch,
+    };
   });
 }
 

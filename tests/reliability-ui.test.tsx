@@ -119,6 +119,29 @@ describe("persistent purchase queue and XML actions", () => {
       expect(queue.storageWarning).toBeNull();
     },
   );
+  it("pauses queue edits when another tab changes saved items", async () => {
+    vi.useFakeTimers();
+    await act(async () => {
+      root.render(<QueueHarness />);
+    });
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    act(() =>
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "playlist-shopper-buy-queue" }),
+      ),
+    );
+    act(() =>
+      queue.addTrack(track, { name: "Beatport", url: "https://beatport.com" }),
+    );
+    expect(queue.items).toHaveLength(0);
+    act(() => queue.retrySave());
+    act(() =>
+      queue.addTrack(track, { name: "Beatport", url: "https://beatport.com" }),
+    );
+    expect(queue.items).toHaveLength(1);
+  });
   it("uses a keyboard-focusable action and rechecks all tracks despite filters", async () => {
     const tracks = [track, { ...track, index: 2, title: "Other" }];
     const result = {

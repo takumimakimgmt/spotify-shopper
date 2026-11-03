@@ -57,7 +57,7 @@ describe("three-state ownership results", () => {
         (b) => b.textContent === "Buy Later",
       );
       expect(saves).toHaveLength(owned === false ? 2 : 0);
-      if (owned == null) expect(container.textContent).toContain("Unverified");
+      if (owned == null) expect(container.textContent).toContain("Not checked");
     }
   });
   it("explains why unverified tracks are excluded from To buy", () => {
@@ -69,7 +69,55 @@ describe("three-state ownership results", () => {
         unknownCount={2}
       />,
     );
-    expect(html).toContain("2 unverified");
-    expect(html).toContain("excluded from To buy");
+    expect(html).toContain("2 not confirmed");
+    expect(html).toContain("excluded from Not in XML");
   });
+});
+
+it("shows export scope and candidate evidence without claiming global ownership", () => {
+  const result = {
+    total: 1,
+    hasRekordboxData: true,
+    rekordboxMeta: { filename: "partial.xml" },
+    meta: {
+      rekordbox: {
+        scope: "selected_xml",
+        library_track_count: 123,
+        library_sha256: "fingerprint",
+        matched_at: "2026-11-03T00:00:00Z",
+      },
+    },
+  } as ResultState;
+  const summary = renderToStaticMarkup(
+    <ResultSummaryBar
+      result={result}
+      ownedCount={0}
+      toBuyCount={1}
+      unknownCount={0}
+    />,
+  );
+  expect(summary).toContain("does not mean you do not own");
+  expect(summary).toContain("123 library entries");
+  expect(summary).toContain("partial.xml");
+  const html = renderToStaticMarkup(
+    <ResultsTable
+      currentResult={result}
+      displayedTracks={[
+        {
+          ...tracks[0],
+          owned: null,
+          ownedReason: "version_mismatch",
+          libraryMatch: {
+            status: "review",
+            reason: "version_mismatch",
+            matched_title: "Song (Other Remix)",
+            matched_artist: "Artist",
+          },
+        },
+      ]}
+    />,
+  );
+  expect(html).toContain("Song (Other Remix)");
+  expect(html).toContain("Needs review");
+  expect(html).toContain("Matching details");
 });

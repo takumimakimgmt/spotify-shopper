@@ -25,7 +25,7 @@ HOTFIX SPEC (Playlist Shopper)
   - xmlError is shown ONLY under XML input
   - playlistUrlError is shown ONLY under playlist input
 - XML size:
-  - MAX_XML_BYTES = 3 * 1024 * 1024
+  - MAX_XML_BYTES = 50 * 1024 * 1024
   - If exceeded, set xmlError and DO NOT set playlistUrlError
 TODO:
 - Implement guard + fallback for activeTab
@@ -57,148 +57,13 @@ const SidePanels = dynamic(
 );
 import ErrorAlert from "./components/ErrorAlert";
 import { z } from "zod";
-import { withBeatportAid } from "../lib/affiliates/beatport";
+import BuyLaterPanel from "./components/BuyLaterPanel";
 // --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
 const TabQuerySchema = z.string().trim().min(1).max(64);
 
 function parseTabQuery(raw: string | null): string | null {
   const parsed = TabQuerySchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
-}
-
-type QuietBuyLaterItem = {
-  id: string;
-  title: string;
-  artist: string;
-  album?: string;
-  spotifyUrl?: string;
-  buyUrl: string;
-  buyStore: string;
-};
-
-function queueListenUrl(item: QuietBuyLaterItem): string {
-  if (item.spotifyUrl) return item.spotifyUrl;
-
-  const q = [item.artist, item.title, "topic"].filter(Boolean).join(" ");
-  if (!q) return "";
-  const proto = ["ht", "tps", ":", "//"].join("");
-  const host = ["music", "youtube", "com"].join(".");
-  return `${proto}${host}/search?q=${encodeURIComponent(q)}`;
-}
-
-function isQueuePurchaseStore(store: string): boolean {
-  return store === "Beatport" || store === "Bandcamp";
-}
-
-function QueueTitle({ item }: { item: QuietBuyLaterItem }) {
-  const href = queueListenUrl(item);
-
-  if (!href) {
-    return (
-      <div className="truncate text-sm font-medium text-slate-300">
-        {item.title}
-      </div>
-    );
-  }
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={`Listen to ${item.title}`}
-      className="inline-block max-w-full truncate border-b border-white/25 pb-0.5 text-sm font-medium text-slate-200 hover:border-white/60 hover:text-white focus-visible:rounded-sm focus-visible:border-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
-    >
-      {item.title}
-    </a>
-  );
-}
-
-function QuietBuyLater({
-  items,
-  onRemove,
-  storageWarning,
-  onRetrySave,
-}: {
-  items: QuietBuyLaterItem[];
-  onRemove: (id: string) => void;
-  storageWarning?: string | null;
-  onRetrySave?: () => void;
-}) {
-  if (items.length === 0 && !storageWarning) return null;
-
-  return (
-    <section className="border-t border-white/15 pt-6 text-sm text-slate-400">
-      <div className="flex items-baseline justify-between gap-3">
-        <div>
-          <div className="font-semibold text-slate-200">Buy Later</div>
-          <div className="mt-2">Saved purchase candidates.</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => items.forEach((item) => onRemove(item.id))}
-          className="text-slate-400 hover:text-slate-100"
-        >
-          Clear
-        </button>
-      </div>
-
-      {storageWarning && (
-        <div role="alert" className="mt-3 text-amber-200">
-          <p>{storageWarning}</p>
-          <button
-            type="button"
-            onClick={onRetrySave}
-            className="mt-2 rounded border border-white/20 px-3 py-2"
-          >
-            Retry storage
-          </button>
-        </div>
-      )}
-      <div className="mt-6 border-b border-white/10">
-        <div className="divide-y divide-white/10">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="grid grid-cols-1 items-center rounded-lg border border-white/10 p-2 md:grid-cols-[minmax(0,34%)_minmax(0,25%)_9%_minmax(0,20%)_12%] md:rounded-none md:border-0 md:p-0"
-            >
-              <div className="min-w-0 px-3 py-4">
-                <QueueTitle item={item} />
-              </div>
-              <div className="min-w-0 px-3 py-4">
-                <div className="truncate text-slate-400">{item.artist}</div>
-                {item.album ? (
-                  <div className="truncate text-slate-500">{item.album}</div>
-                ) : null}
-              </div>
-              <div className="hidden px-3 py-4 md:block" />
-              <div className="flex flex-wrap gap-2 px-3 py-4">
-                {isQueuePurchaseStore(item.buyStore) ? (
-                  <a
-                    href={withBeatportAid(item.buyUrl)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="whitespace-nowrap rounded border border-slate-800 px-2 py-1 text-slate-400 hover:border-slate-700 hover:text-slate-100"
-                  >
-                    {item.buyStore}
-                  </a>
-                ) : null}
-              </div>
-              <div className="px-3 py-4">
-                <button
-                  type="button"
-                  onClick={() => onRemove(item.id)}
-                  className="whitespace-nowrap text-slate-400 hover:text-slate-300"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
 }
 
 function PageInner() {
@@ -371,6 +236,49 @@ function PageInner() {
       />
       <div className="mx-auto max-w-[1024px] px-4 py-12 sm:px-6 lg:py-14">
         <div className="space-y-10">
+          {vm.storageWarning && (
+            <div className="space-y-3">
+              <ErrorAlert
+                title="Local data warning"
+                message={vm.storageWarning}
+                hint="Keep this page open until saved data is safe. Clear analysis history removes saved results and progress only."
+              />
+              <button
+                type="button"
+                className="rounded border border-white/20 px-3 py-2 text-sm"
+                onClick={actions.clearLocalData}
+              >
+                Clear analysis history and progress (keep XML and Buy Later)
+              </button>
+            </div>
+          )}
+          {analyzer.resumableDraft && !analyzer.isProcessing && (
+            <div
+              role="status"
+              className="rounded-lg border border-amber-400/30 p-4 text-sm"
+            >
+              <p>
+                {analyzer.resumableDraft.pendingUrls.length} playlists remain in
+                the saved batch.
+              </p>
+              <p className="mt-1 text-slate-300">
+                Completed results are kept. Processing pauses when this page
+                closes. Resume checks remaining playlists using{" "}
+                {analyzer.resumableDraft.useXml
+                  ? `the currently selected XML (previous file: ${analyzer.resumableDraft.xmlFilename || "unknown"})`
+                  : "no XML"}
+                .
+              </p>
+              <div className="mt-3 flex gap-4">
+                <button onClick={analyzer.resumeAnalysis}>
+                  Resume remaining playlists
+                </button>
+                <button onClick={analyzer.discardAnalysisDraft}>
+                  Discard saved progress (keep results)
+                </button>
+              </div>
+            </div>
+          )}
           <section>
             {selection.formCollapsed && vm.multiResults.length > 0 ? (
               <div className="flex items-center justify-between gap-4 border-b border-white/15 pb-5">
@@ -445,7 +353,7 @@ function PageInner() {
             )}
           </section>
           {vm.multiResults.length === 0 && (
-            <QuietBuyLater
+            <BuyLaterPanel
               items={buyQueue.items}
               onRemove={buyQueue.removeItem}
               storageWarning={buyQueue.storageWarning}
@@ -462,13 +370,6 @@ function PageInner() {
             tabIndex={-1}
             aria-label="Analysis results"
           >
-            {vm.storageWarning && (
-              <ErrorAlert
-                title="Local data warning"
-                message={vm.storageWarning}
-                hint="Free browser storage and retry analysis. Clear analysis history removes saved results only."
-              />
-            )}
             {/* Tabs */}
             <ResultsTabs
               multiResults={vm.multiResults}
@@ -541,7 +442,7 @@ function PageInner() {
                             : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
                         }`}
                       >
-                        To buy
+                        Not in XML
                       </button>
                       <button
                         type="button"
@@ -552,7 +453,7 @@ function PageInner() {
                             : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
                         }`}
                       >
-                        Owned
+                        Matches XML
                       </button>
                       <button
                         type="button"
@@ -560,7 +461,7 @@ function PageInner() {
                         onClick={() => filters.setCategoryFilter("unknown")}
                         className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${filters.categoryFilter === "unknown" ? "bg-amber-400/10 text-amber-100" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"}`}
                       >
-                        Unverified
+                        Not confirmed
                       </button>
                     </div>
                   </div>
@@ -605,10 +506,10 @@ function PageInner() {
                       ? "No tracks match your search."
                       : filters.categoryFilter === "toBuy" &&
                           vm.unknownCount > 0
-                        ? "No confirmed missing tracks. Check Unverified tracks before buying."
+                        ? "No tracks are confirmed absent from this XML. Review the not-confirmed tracks before buying."
                         : filters.categoryFilter === "toBuy" &&
                             vm.ownedCount > 0
-                          ? "All checked tracks are owned."
+                          ? "All checked tracks have a match in this XML."
                           : vm.currentResult.tracks.length === 0
                             ? "No analyzable tracks were returned. Check skipped entries or retry loading the playlist."
                             : "No tracks in this filter."
@@ -627,7 +528,7 @@ function PageInner() {
                   queuedTrackIds={buyQueue.queuedIds}
                   onAddToBuyQueue={buyQueue.addTrack}
                 />
-                <QuietBuyLater
+                <BuyLaterPanel
                   items={buyQueue.items}
                   onRemove={buyQueue.removeItem}
                   storageWarning={buyQueue.storageWarning}

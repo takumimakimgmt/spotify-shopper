@@ -88,8 +88,8 @@ describe("AnalyzeForm", () => {
       textButton(container, "Upload").compareDocumentPosition(submit) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    expect(container.textContent).toContain("up to 3 MB");
-    expect(container.textContent).toContain("ownership stays unverified");
+    expect(container.textContent).toContain("up to 50 MB");
+    expect(container.textContent).toContain("recordings stay unchecked");
     expect(
       Array.from(container.querySelectorAll("button")).some(
         (button) => button.textContent === "Remove",
@@ -114,11 +114,11 @@ describe("AnalyzeForm", () => {
     expect(container.textContent).toContain("Rekordbox library");
     expect(container.textContent).toContain("collection.xml");
     expect(container.textContent).toContain("2 KB");
-    expect(textButton(container, "Check ownership").type).toBe("submit");
+    expect(textButton(container, "Match against XML").type).toBe("submit");
 
     const uploadButton = textButton(container, "Upload");
     const removeButton = textButton(container, "Remove");
-    expect(textButton(container, "Check ownership").type).toBe("submit");
+    expect(textButton(container, "Match against XML").type).toBe("submit");
 
     await act(async () => {
       removeButton.click();
@@ -141,7 +141,7 @@ describe("AnalyzeForm", () => {
     await renderForm(props);
 
     const removeButton = textButton(container, "Remove");
-    expect(textButton(container, "Check ownership").type).toBe("submit");
+    expect(textButton(container, "Match against XML").type).toBe("submit");
 
     await act(async () => {
       removeButton.click();
@@ -264,7 +264,7 @@ describe("AnalyzeForm", () => {
   });
   test("blocks a selected file over the hosted XML limit before submission", async () => {
     const file = new File(["xml"], "large.xml", { type: "text/xml" });
-    Object.defineProperty(file, "size", { value: 3 * 1024 * 1024 + 1 });
+    Object.defineProperty(file, "size", { value: 50 * 1024 * 1024 + 1 });
     await renderForm(
       makeProps({
         playlistUrlInput:
@@ -273,7 +273,7 @@ describe("AnalyzeForm", () => {
         rekordboxFilename: file.name,
       }),
     );
-    expect(textButton(container, "Check ownership").disabled).toBe(true);
-    expect(container.textContent).toContain("max 3MB");
+    expect(textButton(container, "Match against XML").disabled).toBe(true);
+    expect(container.textContent).toContain("max 50MB");
   });
 });

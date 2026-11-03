@@ -16,6 +16,7 @@ import { useCallback } from "react";
 import type { PlaylistRow, ResultState } from "../types";
 import { usePlaylistAnalyzer } from "./usePlaylistAnalyzer";
 import { normalizeStores } from "../playlist/stores";
+import { libraryMatchLabel } from "../domain/libraryMatch";
 import { sanitizeForCsvCell } from "../utils/csvSanitize";
 
 export interface ActionsAPI {
@@ -96,7 +97,11 @@ export function useActions(
         "Artist",
         "Album",
         "ISRC",
-        "Owned",
+        "XML match",
+        "Match reason",
+        "XML filename",
+        "XML fingerprint",
+        "Checked at",
         "Beatport",
         "Bandcamp",
         ...(ENABLE_APPLE_MUSIC ? ["iTunes"] : []),
@@ -109,9 +114,13 @@ export function useActions(
           sanitizeForCsvCell(t.artist),
           sanitizeForCsvCell(t.album),
           sanitizeForCsvCell(t.isrc || ""),
+          sanitizeForCsvCell(libraryMatchLabel(t)),
+          sanitizeForCsvCell(t.ownedReason || ""),
+          sanitizeForCsvCell(currentResult.rekordboxMeta?.filename || ""),
           sanitizeForCsvCell(
-            t.owned === true ? "Yes" : t.owned === false ? "No" : "Unverified",
+            currentResult.meta?.rekordbox?.library_sha256 || "",
           ),
+          sanitizeForCsvCell(currentResult.meta?.rekordbox?.matched_at || ""),
           sanitizeForCsvCell(stores.beatport),
           sanitizeForCsvCell(stores.bandcamp),
           ...(ENABLE_APPLE_MUSIC ? [sanitizeForCsvCell(stores.itunes)] : []),

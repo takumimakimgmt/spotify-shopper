@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PlaylistRow } from "../types";
 
-const STORAGE_KEY = "playlist-shopper-buy-queue";
+import { STORAGE_KEYS } from "../storage/keys";
+const STORAGE_KEY = STORAGE_KEYS.buyQueue;
 
 export type BuyQueueItem = {
   id: string;
@@ -109,6 +110,18 @@ export function useBuyQueue() {
     );
   }, [items, restored, restore]);
 
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY && event.key !== null) return;
+      setRestored(false);
+      setStorageWarning(
+        "Buy Later changed in another tab. Retry storage to load the latest saved tracks before making changes.",
+      );
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const queuedIds = useMemo(
     () => new Set(items.map((item) => item.id)),
     [items],
@@ -142,9 +155,18 @@ export function useBuyQueue() {
     [restored],
   );
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-  }, []);
+  const removeItem = useCallback(
+    (id: string) => {
+      if (!restored) {
+        setStorageWarning(
+          "Buy Later is not ready. Retry loading saved tracks first.",
+        );
+        return;
+      }
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    },
+    [restored],
+  );
 
   return {
     items,

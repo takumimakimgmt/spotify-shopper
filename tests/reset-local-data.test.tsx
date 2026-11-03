@@ -13,6 +13,7 @@ const keys = [
   "spotify-shopper-active-tab",
   "spotify-shopper-form-collapsed",
   "playlist-shopper-buy-queue",
+  "playlist-shopper-analysis-draft",
 ];
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;

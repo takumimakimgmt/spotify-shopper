@@ -30,9 +30,38 @@ export default function ResultSummaryBar({
   return (
     <div className="space-y-1 text-sm text-slate-300">
       <div>
-        {total} tracks · {toBuyCount} not owned · {ownedCount} owned ·{" "}
-        {unknownCount} unverified
+        {total} tracks · {toBuyCount} not in XML · {ownedCount} matching XML ·{" "}
+        {unknownCount} not confirmed
       </div>
+      {result.hasRekordboxData && (
+        <div className="space-y-1">
+          <p>
+            Results cover only the selected XML. Not in XML does not mean you do
+            not own the track.
+          </p>
+          <details>
+            <summary className="cursor-pointer">XML checked</summary>
+            <p className="break-words">
+              {result.rekordboxMeta?.filename || "Selected XML"}
+            </p>
+            {result.meta?.rekordbox?.library_track_count != null && (
+              <p>
+                {result.meta.rekordbox.library_track_count} library entries
+                checked
+              </p>
+            )}
+            {result.meta?.rekordbox?.matched_at && (
+              <p>Checked: {result.meta.rekordbox.matched_at}</p>
+            )}
+            {result.meta?.rekordbox?.library_sha256 && (
+              <p className="break-all">
+                Compared metadata fingerprint:{" "}
+                {result.meta.rekordbox.library_sha256}
+              </p>
+            )}
+          </details>
+        </div>
+      )}
       {(result.meta?.skipped_track_count ?? 0) > 0 && (
         <p className="text-amber-200" role="status">
           {result.meta?.source_track_count ?? total} playlist entries · {total}{" "}
@@ -42,8 +71,9 @@ export default function ResultSummaryBar({
       )}
       {unknownCount > 0 && (
         <p className="text-amber-200">
-          Unverified tracks are excluded from To buy. Check matching details, or
-          upload XML if you have not checked your library yet.
+          Tracks that need review or have not been checked are excluded from Not
+          in XML. Check matching details, or upload XML if you have not checked
+          your library yet.
         </p>
       )}
       <div className="flex flex-wrap items-center gap-2">

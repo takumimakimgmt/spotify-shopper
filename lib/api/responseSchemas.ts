@@ -8,6 +8,13 @@ const StoreLinksModelSchema = z
   })
   .passthrough();
 
+export const LibraryMatchSchema = z.object({
+  status: z.enum(["matched", "not_found", "review"]),
+  reason: z.string(),
+  matched_title: z.string().nullable().optional(),
+  matched_artist: z.string().nullable().optional(),
+});
+
 export const TrackModelSchema = z
   .object({
     title: z.string(),
@@ -19,6 +26,7 @@ export const TrackModelSchema = z
     links: StoreLinksModelSchema.nullable().optional(),
     owned: z.boolean().nullable().optional(),
     owned_reason: z.string().nullable().optional(),
+    library_match: LibraryMatchSchema.nullable().optional(),
     track_key_primary: z.string().nullable().optional(),
     track_key_fallback: z.string().nullable().optional(),
     track_key_primary_type: z.enum(["isrc", "norm"]).default("norm"),

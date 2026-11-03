@@ -35,131 +35,21 @@ function getStringProp(obj: unknown, key: string): string | undefined {
   return typeof v === "string" ? v : undefined;
 }
 
-const APPLE_TIMEOUT_MS = Number(
-  process.env.NEXT_PUBLIC_APPLE_TIMEOUT_MS ?? "120000",
-);
-
-// --- Music feature flag ---
-const _ENABLE_APPLE = process.env.NEXT_PUBLIC_ENABLE_APPLE === "1";
-
-// --- Robust localStorage restore utilities ---
-export function safeJsonParse<T>(s: string | null): T | null {
-  if (!s) return null;
-  try {
-    return JSON.parse(s) as T;
-  } catch {
-    return null;
-  }
-}
-
-export function normalizeStoredResults(
-  parsed: any,
-): Array<[string, ResultState]> | null {
-  if (!parsed) return null;
-
-  // v3 stores full rows; legacy v2 summary-only records require a fresh ownership check.
-  if (
-    (parsed.version === 2 || parsed.version === 3) &&
-    Array.isArray(parsed.results)
-  ) {
-    const out: Array<[string, ResultState]> = [];
-    for (const r of parsed.results) {
-      const url = typeof r?.url === "string" ? r.url : null;
-      if (!url) continue;
-      const s = r?.summary ?? {};
-      const validSnapshot =
-        parsed.version === 3 &&
-        Array.isArray(r.tracks) &&
-        r.tracks.every(
-          (t: any) =>
-            t &&
-            typeof t.title === "string" &&
-            typeof t.artist === "string" &&
-            typeof t.album === "string" &&
-            Number.isInteger(t.index) &&
-            t.stores &&
-            typeof t.stores === "object",
-        );
-      const trustedOwnership =
-        validSnapshot && s.meta?.ownership_rules_version === 3;
-      out.push([
-        url,
-        {
-          title: typeof s.title === "string" ? s.title : "Saved playlist",
-          total: Number.isFinite(s.total) ? s.total : 0,
-          playlistUrl: typeof s.playlistUrl === "string" ? s.playlistUrl : url,
-          playlist_id: s.playlist_id,
-          playlist_name: s.playlist_name,
-          analyzedAt: Number.isFinite(s.analyzedAt) ? s.analyzedAt : Date.now(),
-          hasRekordboxData: trustedOwnership && !!s.hasRekordboxData,
-          rekordboxMeta: trustedOwnership ? (s.rekordboxMeta ?? null) : null,
-          meta: s.meta,
-          errorText: s.errorText ?? null,
-          tracks: validSnapshot
-            ? r.tracks.map((t: PlaylistRow) => ({
-                ...t,
-                owned:
-                  trustedOwnership && typeof t.owned === "boolean"
-                    ? t.owned
-                    : null,
-                ownedReason: trustedOwnership ? t.ownedReason : null,
-              }))
-            : [],
-        },
-      ]);
-    }
-    return out;
-  }
-
-  // legacy: { results: [[url, resultState], ...] }
-  if (Array.isArray(parsed.results) && Array.isArray(parsed.results[0])) {
-    const out: Array<[string, ResultState]> = [];
-    for (const pair of parsed.results) {
-      const url = typeof pair?.[0] === "string" ? pair[0] : null;
-      const r = pair?.[1] ?? {};
-      if (!url) continue;
-      out.push([
-        url,
-        {
-          title: r.title ?? "",
-          total: Number.isFinite(r.total) ? r.total : 0,
-          playlistUrl: r.playlistUrl ?? url,
-          playlist_id: r.playlist_id,
-          playlist_name: r.playlist_name,
-          analyzedAt: Number.isFinite(r.analyzedAt) ? r.analyzedAt : Date.now(),
-          hasRekordboxData: false,
-          rekordboxMeta: null,
-          meta: r.meta,
-          errorText: r.errorText ?? null,
-          tracks: Array.isArray(r.tracks)
-            ? r.tracks.map((t: PlaylistRow) => ({
-                ...t,
-                owned: null,
-                ownedReason: null,
-              }))
-            : [],
-        },
-      ]);
-    }
-    return out;
-  }
-
-  return null;
-}
-
-export function restoreResultsFromStorage(storage: {
-  getItem(k: string): string | null;
-  removeItem(k: string): void;
-}): Array<[string, any]> | null {
-  const saved = storage.getItem(STORAGE_RESULTS);
-  if (!saved) return null;
-  const parsed = safeJsonParse<any>(saved);
-  const restored = normalizeStoredResults(parsed as any);
-  if (restored && restored.length > 0) return restored as any;
-  storage.removeItem(STORAGE_RESULTS);
-  return null;
-}
-
+import {
+  normalizeStoredResults,
+  saveAnalysisHistory,
+} from "../storage/analysisHistory";
+export {
+  safeJsonParse,
+  normalizeStoredResults,
+  restoreResultsFromStorage,
+} from "../storage/analysisHistory";
+import {
+  readAnalysisDraft,
+  saveAnalysisDraft,
+  type AnalysisDraft,
+} from "../storage/analysisDraft";
+import { STORAGE_KEYS } from "../storage/keys";
 import type { RekordboxMeta } from "../types";
 import type { ApiMeta } from "../types";
 // RekordboxMeta utility
@@ -172,12 +62,7 @@ const makeRekordboxMeta = (file: File | null): RekordboxMeta | null =>
     : null;
 
 import { useEffect, useRef, useState, ChangeEvent, FormEvent } from "react";
-import {
-  PlaylistRow,
-  ResultState,
-  TrackCategory,
-  PlaylistSnapshotV1,
-} from "../types";
+import { PlaylistRow, ResultState, PlaylistSnapshotV1 } from "../types";
 import { MAX_XML_BYTES } from "../constants";
 import {
   applySnapshotOwnership,
@@ -197,8 +82,7 @@ import {
 } from "../storage/savedRekordboxXml";
 import { detectSourceFromUrl, sanitizeUrl } from "../utils/playlistUrl";
 
-export const STORAGE_RESULTS = "spotify-shopper-results";
-const MAX_STORAGE_BYTES = 2 * 1024 * 1024; // Full local snapshots; failures are surfaced.
+export const STORAGE_RESULTS = STORAGE_KEYS.history;
 
 const ENABLE_LOCAL_PERSIST = true;
 type StorageLike = {
@@ -235,11 +119,7 @@ const safeStorage: StorageLike = {
   },
 };
 
-export function categorizeTrack(track: PlaylistRow): TrackCategory {
-  if (track.owned === true) return "owned";
-  if (track.owned === false) return "checkout";
-  return "unknown";
-}
+export { categorizeTrack } from "../domain/libraryMatch";
 
 function mapTracks(rows: PlaylistRow[]): PlaylistRow[] {
   return rows;
@@ -256,9 +136,6 @@ function errorToMeta(error: NormalizedApiError) {
   };
 }
 
-const _sleep = (ms: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
 function xmlTooLargeMessage(file: File): string {
   const mb = (file.size / (1024 * 1024)).toFixed(1);
   return `XML is too large (${mb} MB). Please export a smaller Rekordbox XML and try again.`;
@@ -269,34 +146,6 @@ function validateXmlSize(file: File | null): string | null {
   return file.size > MAX_XML_BYTES ? xmlTooLargeMessage(file) : null;
 }
 
-function classifyAppleError(
-  message: string | undefined,
-): "timeout" | "dom-change" | "region" | "bot-suspected" | "unknown" {
-  if (!message) return "unknown";
-  const lower = message.toLowerCase();
-  if (lower.includes("timeout") || lower.includes("timed out"))
-    return "timeout";
-  if (
-    lower.includes("selector") ||
-    lower.includes("element not found") ||
-    lower.includes("dom")
-  )
-    return "dom-change";
-  if (
-    lower.includes("region") ||
-    lower.includes("country") ||
-    lower.includes("market")
-  )
-    return "region";
-  if (
-    lower.includes("bot") ||
-    lower.includes("captcha") ||
-    lower.includes("suspicious")
-  )
-    return "bot-suspected";
-  return "unknown";
-}
-
 export function usePlaylistAnalyzer() {
   const hydrateInFlightRef = useRef<Set<string>>(new Set());
   const hydrateAttemptedRef = useRef<Set<string>>(new Set());
@@ -304,6 +153,23 @@ export function usePlaylistAnalyzer() {
     Array<[string, ResultState]>
   >([]);
   const [storageHydrated, setStorageHydrated] = useState(false);
+  const historyWritableRef = useRef(false);
+  const [resumableDraft, setResumableDraft] = useState<AnalysisDraft | null>(
+    null,
+  );
+  const resumeRef = useRef<AnalysisDraft | null>(null);
+  const draftWritableRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      setResumableDraft(readAnalysisDraft());
+      draftWritableRef.current = true;
+    } catch {
+      setStorageWarning(
+        "Saved progress could not be read. Existing data has been kept. Explicitly discard saved progress or clear analysis history to start again.",
+      );
+    }
+  }, []);
 
   // タブ切替時にtracks未定義ならAPIでhydrate
   const _ensureHydrated = async (url: string, retry = false) => {
@@ -355,23 +221,38 @@ export function usePlaylistAnalyzer() {
     }
   };
 
-  // Robust restore: always arrayify tracks, auto-discard broken/legacy data
+  // Never overwrite history that could not be read or validated.
   useEffect(() => {
-    if (typeof window === "undefined") return;
     try {
-      const saved = safeStorage.getItem(STORAGE_RESULTS);
-      if (!saved) return;
-      const parsed = safeJsonParse<any>(saved);
-      const restored = normalizeStoredResults(parsed);
-      if (restored && restored.length > 0) {
+      const saved = window.localStorage.getItem(STORAGE_RESULTS);
+      if (saved !== null) {
+        const restored = normalizeStoredResults(JSON.parse(saved));
+        if (!restored) throw new Error("Invalid saved history");
         setMultiResults(restored);
-      } else {
-        // Broken or unrecognized format: auto-discard
-        safeStorage.removeItem(STORAGE_RESULTS);
       }
-    } finally {
+      historyWritableRef.current = true;
       setStorageHydrated(true);
+    } catch {
+      setStorageWarning(
+        "Analysis history could not be read. Existing data has been kept. Clear analysis history explicitly to start saving again.",
+      );
     }
+    const onStorage = (event: StorageEvent) => {
+      if (
+        event.key !== STORAGE_RESULTS &&
+        event.key !== STORAGE_KEYS.analysisDraft &&
+        event.key !== null
+      )
+        return;
+      historyWritableRef.current = false;
+      setStorageHydrated(false);
+      abortRef.current?.abort();
+      setStorageWarning(
+        "Analysis history changed in another tab. Saving is paused to protect it. Reload this page to use the latest saved results.",
+      );
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const [playlistUrlInput, setPlaylistUrlInputState] = useState("");
@@ -405,36 +286,16 @@ export function usePlaylistAnalyzer() {
     }
 
     localStorageDebounceRef.current = setTimeout(() => {
-      // Persist full snapshots so reloading does not discard XML matching.
-      const results = multiResults.map(([url, r]) => ({
-        url,
-        snapshotId: r.playlist_id,
-        tracks: r.tracks,
-        summary: {
-          title: r.title,
-          total: r.total,
-          playlistUrl: r.playlistUrl,
-          playlist_id: r.playlist_id,
-          playlist_name: r.playlist_name,
-          analyzedAt: r.analyzedAt,
-          hasRekordboxData: r.hasRekordboxData,
-          rekordboxMeta: r.rekordboxMeta,
-          meta: r.meta,
-        },
-      }));
-      const payload = JSON.stringify({ version: 3, results });
-      if (new Blob([payload]).size > MAX_STORAGE_BYTES) {
+      try {
+        saveAnalysisHistory(multiResults);
+        setStorageWarning(null);
+      } catch (error) {
         setStorageWarning(
-          "Analysis history exceeds the 2 MB local snapshot limit. Clear older analyses before closing this page.",
+          error instanceof Error
+            ? error.message
+            : "Analysis history could not be saved. Keep this page open and free browser storage.",
         );
-        return;
       }
-      const saved = safeStorage.setItem(STORAGE_RESULTS, payload);
-      setStorageWarning(
-        saved
-          ? null
-          : "Analysis history could not be saved in this browser. Keep this page open and free browser storage.",
-      );
       localStorageDebounceRef.current = null;
     }, 500);
 
@@ -576,16 +437,42 @@ export function usePlaylistAnalyzer() {
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef<number>(0);
+  useEffect(
+    () => () => {
+      requestIdRef.current += 1;
+      abortRef.current?.abort();
+    },
+    [],
+  );
   const progressTimer = useRef<number | null>(null);
   const reAnalyzeInputRef = useRef<HTMLInputElement | null>(null);
   const localStorageDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const clearLocalData = () => {
+    requestIdRef.current += 1;
+    abortRef.current?.abort();
+    setLoading(false);
+    setIsReanalyzing(false);
+    setProgressItems([]);
+    setPhaseLabel(null);
     const removed = safeStorage.removeItem(STORAGE_RESULTS);
+    if (removed) {
+      historyWritableRef.current = true;
+      setStorageHydrated(true);
+    }
     setMultiResults([]);
     setPlaylistUrlInput("");
     hydrateAttemptedRef.current.clear();
-    setStorageWarning(removed ? null : "ローカルデータの削除に失敗しました");
+    try {
+      saveAnalysisDraft(null);
+      draftWritableRef.current = true;
+      setResumableDraft(null);
+      setStorageWarning(
+        removed ? null : "Analysis history could not be removed.",
+      );
+    } catch {
+      setStorageWarning("Saved progress could not be removed.");
+    }
   };
 
   // selectedKey is managed by selection, not analyzer
@@ -747,10 +634,20 @@ export function usePlaylistAnalyzer() {
       window.setTimeout(() => setForceRefreshHint(false), 2000);
     }
 
-    const urls = playlistUrlInputRef.current
-      .split("\n")
-      .map((line) => sanitizeUrl(line))
-      .filter((url) => url.length > 0);
+    const resume = resumeRef.current;
+    resumeRef.current = null;
+    const urls = [
+      ...new Set(
+        playlistUrlInputRef.current
+          .split("\n")
+          .map((line) => sanitizeUrl(line))
+          .filter((url) => url.length > 0),
+      ),
+    ];
+    if (urls.length > 50) {
+      setErrorText("Check at most 50 playlists in one batch.");
+      return;
+    }
     if (urls.length === 0) {
       setErrorText("Please enter at least one playlist URL or ID.");
       setPhaseLabel(null);
@@ -772,8 +669,17 @@ export function usePlaylistAnalyzer() {
       return;
     }
 
-    const activeRekordboxFile = await resolveActiveRekordboxFile();
-    if (savedRekordboxXmlMeta && !activeRekordboxFile) {
+    const activeRekordboxFile =
+      resume && !resume.useXml ? null : await resolveActiveRekordboxFile();
+    if (resume?.useXml && !activeRekordboxFile) {
+      setErrorText("Choose the XML for this batch before resuming.");
+      return;
+    }
+    if (
+      !(resume && !resume.useXml) &&
+      savedRekordboxXmlMeta &&
+      !activeRekordboxFile
+    ) {
       setErrorText(
         "Saved XML could not be loaded. Replace or remove it before continuing.",
       );
@@ -788,6 +694,30 @@ export function usePlaylistAnalyzer() {
       setPhaseLabel(null);
       return;
     }
+
+    if (!historyWritableRef.current || !draftWritableRef.current) {
+      setErrorText(
+        "Saved history or progress needs attention before starting. Reload to load the latest history, or explicitly clear analysis history.",
+      );
+      return;
+    }
+    let draft: AnalysisDraft = {
+      version: 1,
+      pendingUrls: urls,
+      useXml: !!activeRekordboxFile,
+      xmlFilename: activeRekordboxFile?.name,
+      refresh: resume?.refresh ?? isForceRefresh,
+      updatedAt: Date.now(),
+    };
+    try {
+      saveAnalysisDraft(draft);
+      setResumableDraft(draft);
+    } catch {
+      setStorageWarning(
+        "Progress could not be saved. Keep this page open until the batch finishes.",
+      );
+    }
+    let checkpointResults = multiResults;
 
     // Initialize progress items for each URL
     setProgressItems(
@@ -814,15 +744,9 @@ export function usePlaylistAnalyzer() {
     let hasError = false;
 
     for (const url of urls) {
-      let effectiveSource = "spotify" as const;
       try {
         const t0 = performance.now();
         const t1_start = t0;
-        effectiveSource = "spotify";
-        const isApplePlaylistUrl = /music\.apple\.com\//i.test(url);
-        if (isApplePlaylistUrl) {
-          effectiveSource = "spotify";
-        }
         setPhaseLabel("Fetching Spotify...");
         setProgressItems((prev) =>
           prev.map((p) =>
@@ -843,60 +767,21 @@ export function usePlaylistAnalyzer() {
           if (activeRekordboxFile) {
             return postPlaylistWithRekordboxUpload({
               url,
-              source: effectiveSource,
+              source: "spotify",
               file: activeRekordboxFile,
-              refresh: isForceRefresh,
+              refresh: draft.refresh,
               signal: requestController.signal,
             });
           }
           return getPlaylist({
             url,
-            source: effectiveSource,
-            refresh: isForceRefresh,
+            source: "spotify",
+            refresh: draft.refresh,
             signal: requestController.signal,
           });
         };
 
-        // Musicはautoモード1回のみ（backendでfast/legacy自動フォールバック）
-        if (false /* apple disabled */) {
-          setPhaseLabel("Fetching playlist (auto)");
-          const timeoutController = new AbortController();
-          const timeoutId = setTimeout(
-            () => timeoutController.abort(),
-            APPLE_TIMEOUT_MS,
-          );
-          try {
-            json = await fetchOnce();
-            clearTimeout(timeoutId);
-          } catch (_err: any) {
-            clearTimeout(timeoutId);
-            // UI向けエラー文言を具体化
-            const reasonTag = classifyAppleError(_err?.message);
-            let errorMsg = "";
-            switch (reasonTag) {
-              case "timeout":
-                errorMsg =
-                  "取得が時間切れでした。時間をおいて再実行してください。";
-                break;
-              case "dom-change":
-                errorMsg =
-                  "Apple側のDOM変更の可能性。時間を置く or URL形式を確認。";
-                break;
-              case "region":
-                errorMsg = "地域制限/ログイン状態の可能性。";
-                break;
-              case "bot-suspected":
-                errorMsg = "bot検知の可能性。時間を置く/回数を減らす。";
-                break;
-              default:
-                errorMsg = "取得に失敗しました。";
-            }
-            setErrorText(errorMsg);
-            throw _err;
-          }
-        } else {
-          json = await fetchOnce();
-        }
+        json = await fetchOnce();
         const t3_api_done = performance.now();
 
         if (localRequestId !== requestIdRef.current) {
@@ -948,6 +833,30 @@ export function usePlaylistAnalyzer() {
             meta: metaWithTiming,
           },
         ]);
+        const finished = newResults[newResults.length - 1];
+        finished[1].rekordboxMeta = makeRekordboxMeta(activeRekordboxFile);
+        checkpointResults = [
+          finished,
+          ...checkpointResults.filter(([key]) => key !== url),
+        ];
+        setMultiResults(checkpointResults);
+        try {
+          // Save the completed result before removing it from pending work.
+          if (!historyWritableRef.current)
+            throw new Error("Saving is paused to protect existing history.");
+          saveAnalysisHistory(checkpointResults);
+          draft = {
+            ...draft,
+            pendingUrls: draft.pendingUrls.filter((pending) => pending !== url),
+            updatedAt: Date.now(),
+          };
+          saveAnalysisDraft(draft);
+          setResumableDraft(draft.pendingUrls.length ? draft : null);
+        } catch {
+          setStorageWarning(
+            "Completed results are on this page, but progress could not be saved. Keep this page open; resuming may repeat the last playlist.",
+          );
+        }
         // Mark success
         setProgressItems((prev) =>
           prev.map((p) =>
@@ -982,16 +891,13 @@ export function usePlaylistAnalyzer() {
         hasError = true;
         const normalized = normalizeApiError(_err);
         const progressMessage = normalized.code ?? normalized.message;
-        const reasonTag = false /* apple disabled */
-          ? classifyAppleError(String(normalized.detail ?? progressMessage))
-          : null;
         setProgressItems((prev) =>
           prev.map((p) =>
             p.url === url
               ? {
                   ...p,
                   status: "error",
-                  message: reasonTag ? `${reasonTag}` : progressMessage,
+                  message: progressMessage,
                 }
               : p,
           ),
@@ -1001,7 +907,6 @@ export function usePlaylistAnalyzer() {
           url: url.substring(0, 80),
           source: detectSourceFromUrl(url) || "spotify",
           refresh: isForceRefresh ? 1 : 0,
-          reason: reasonTag || undefined,
         });
         setErrorText(normalized.message);
       }
@@ -1009,29 +914,7 @@ export function usePlaylistAnalyzer() {
 
     if (localRequestId !== requestIdRef.current) return;
 
-    if (newResults.length > 0) {
-      const rbMeta = makeRekordboxMeta(activeRekordboxFile);
-      const existingUrls = new Set(newResults.map(([url]) => url));
-      const filteredExisting = multiResults.filter(
-        ([url]) => !existingUrls.has(url),
-      );
-      // 新規resultにrekordboxMetaを焼き込む
-      const merged: Array<[string, ResultState]> = [
-        ...newResults.map(
-          ([url, result]) =>
-            [url, { ...result, rekordboxMeta: rbMeta }] as [
-              string,
-              ResultState,
-            ],
-        ),
-        ...filteredExisting,
-      ];
-      setMultiResults(merged);
-      setPlaylistUrlInput("");
-      // XMLファイル情報は消さない
-      // setRekordboxFile(null);
-      // setRekordboxDate(null);
-    }
+    if (newResults.length > 0) setPlaylistUrlInput("");
 
     if (hasError && newResults.length === 0) {
       setErrorText(
@@ -1103,6 +986,10 @@ export function usePlaylistAnalyzer() {
 
     const matchedTracks: unknown[] = [];
     let matchMeta: Record<string, unknown> = {};
+    let comparedFingerprint: unknown;
+    let comparedRules: unknown;
+    let matchMilliseconds = 0;
+    let fuzzyCount = 0;
     for (const batch of splitSnapshot(snapshot)) {
       const json = await matchSnapshotWithXml(JSON.stringify(batch), file);
       const rows = getProp(json, "tracks");
@@ -1110,6 +997,30 @@ export function usePlaylistAnalyzer() {
         throw new Error("Incomplete XML matching response. Please retry.");
       matchedTracks.push(...rows);
       matchMeta = normalizeMeta(getProp(json, "meta")) ?? {};
+      const xmlMeta = getProp(matchMeta, "rekordbox");
+      const fingerprint = getProp(xmlMeta, "library_sha256");
+      const rules = getProp(matchMeta, "ownership_rules_version");
+      if (
+        (comparedFingerprint !== undefined &&
+          fingerprint !== comparedFingerprint) ||
+        (comparedRules !== undefined && rules !== comparedRules)
+      ) {
+        throw new Error(
+          "Matching data changed during the batch. Recheck all tracks.",
+        );
+      }
+      comparedFingerprint = fingerprint;
+      comparedRules = rules;
+      matchMilliseconds += Number(getProp(xmlMeta, "match_ms")) || 0;
+      fuzzyCount += Number(getProp(xmlMeta, "fuzzy_count")) || 0;
+    }
+    if (isRecord(matchMeta.rekordbox)) {
+      matchMeta.rekordbox = {
+        ...matchMeta.rekordbox,
+        track_total: baseTracks.length,
+        match_ms: matchMilliseconds,
+        fuzzy_count: fuzzyCount,
+      };
     }
     // Validate before scheduling a state update so failures reach the XML UI.
     applySnapshotOwnership(baseTracks, baseTracks, matchedTracks);
@@ -1161,7 +1072,27 @@ export function usePlaylistAnalyzer() {
     handleAnalyze({ preventDefault: () => {} } as unknown as FormEvent);
   };
 
+  const resumeAnalysis = () => {
+    if (isProcessing || !resumableDraft) return;
+    resumeRef.current = resumableDraft;
+    setPlaylistUrlInput(resumableDraft.pendingUrls.join("\n"));
+    void handleAnalyze({ preventDefault: () => {} } as FormEvent);
+  };
+  const discardAnalysisDraft = () => {
+    if (isProcessing) return;
+    try {
+      saveAnalysisDraft(null);
+      draftWritableRef.current = true;
+      setResumableDraft(null);
+    } catch {
+      setStorageWarning("Saved progress could not be removed.");
+    }
+  };
+
   return {
+    resumableDraft,
+    resumeAnalysis,
+    discardAnalysisDraft,
     // data & state
     playlistUrlInput,
     setPlaylistUrlInput,

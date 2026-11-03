@@ -93,9 +93,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const localXmlError = useMemo(() => {
     const file = props.rekordboxFile;
     if (!file && (props.savedRekordboxXmlMeta?.size ?? 0) > MAX_XML_BYTES)
-      return "Saved XML exceeds the 3 MB upload limit. Remove it and select a smaller export.";
+      return "Saved XML exceeds the 50 MB upload limit. Remove it and select a smaller export.";
     if (!file) return null;
-    if (file.size > MAX_XML_BYTES) return "XML file too large (max 3MB)";
+    if (file.size > MAX_XML_BYTES) return "XML file too large (max 50MB)";
 
     const code = props.errorMeta?.error_code;
     if (code === "XML_TOO_LARGE" || code === "XML_PARSE_FAILED") {
@@ -210,13 +210,15 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <span className="mr-2 text-slate-400">2.</span>
             Rekordbox library{" "}
             <span className="font-normal text-slate-400">
-              (needed to check ownership)
+              (needed to match your library)
             </span>
           </div>
           <p id="xml-help" className="text-sm leading-6 text-slate-400">
-            Choose a Rekordbox XML export, up to 3 MB. Without XML, you can
-            browse tracks and store links, but ownership stays unverified.
+            Choose a Rekordbox XML export, up to 50 MB. Without XML, you can
+            browse tracks and store links, but recordings stay unchecked.
             Matching only covers tracks included in your selected XML export.
+            The original file stays in this browser; only title, artist, album
+            and recording ID metadata is sent for matching.
           </p>
           <details className="text-sm text-slate-300">
             <summary className="cursor-pointer rounded-sm py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
@@ -315,16 +317,17 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             aria-describedby="analysis-help"
             className="min-h-11 w-full rounded-lg bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:bg-white/10 disabled:text-white/30 sm:w-auto sm:min-w-44"
           >
-            {hasXml ? "Check ownership" : "Browse playlist"}
+            {hasXml ? "Match against XML" : "Browse playlist"}
           </button>
           <p id="analysis-help" className="text-sm leading-6 text-slate-400">
             {hasXml
               ? "Compare this playlist with your selected XML to find tracks missing from your library."
-              : "No XML selected. Tracks will be marked Unverified until you check them with XML."}
+              : "No XML selected. Tracks will be marked Not checked until you check them with XML."}
           </p>
           <p className="text-xs leading-5 text-slate-400">
-            Uploaded XML is saved in this browser for reuse and sent to the
-            server for matching. Use Remove to delete the browser’s saved XML.
+            The original XML is saved in this browser for reuse. Only recording
+            metadata is sent for matching; file paths and cue points stay here.
+            Use Remove to delete the browser’s saved XML.
           </p>
         </div>
 

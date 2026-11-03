@@ -149,6 +149,96 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     logSpy?.mockRestore();
   });
 
+  test("checkpoints completed playlists and resumes only the unfinished work after remount", async () => {
+    const secondUrl =
+      "https://open.spotify.com/playlist/1jKqvXbsroCPdccFmORnPz";
+    getPlaylistMock
+      .mockResolvedValueOnce(playlistResponse())
+      .mockImplementationOnce(
+        ({ signal }: { signal: AbortSignal }) =>
+          new Promise((_, reject) => {
+            signal.addEventListener(
+              "abort",
+              () => reject(new DOMException("Aborted", "AbortError")),
+              { once: true },
+            );
+          }),
+      );
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+    let pending!: Promise<void>;
+    await act(async () => {
+      currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl + "\n" + secondUrl);
+      pending = currentApi!.handleAnalyze({ preventDefault() {} } as FormEvent);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(currentApi!.multiResults).toHaveLength(1);
+    expect(currentApi!.resumableDraft?.pendingUrls).toEqual([secondUrl]);
+    expect(
+      JSON.parse(localStorage.getItem("playlist-shopper-analysis-draft")!)
+        .pendingUrls,
+    ).toEqual([secondUrl]);
+    expect(
+      JSON.parse(localStorage.getItem(STORAGE_RESULTS)!).results,
+    ).toHaveLength(1);
+    await act(async () => {
+      root.unmount();
+      await pending;
+    });
+    root = createRoot(container);
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+    expect(currentApi!.multiResults).toHaveLength(1);
+    getPlaylistMock.mockResolvedValueOnce(
+      playlistResponse({ playlist_url: secondUrl, playlist_id: "second" }),
+    );
+    await act(async () => {
+      currentApi!.resumeAnalysis();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(getPlaylistMock).toHaveBeenCalledTimes(3);
+    expect(getPlaylistMock.mock.calls[2][0].url).toBe(secondUrl);
+    expect(currentApi!.multiResults).toHaveLength(2);
+    expect(localStorage.getItem("playlist-shopper-analysis-draft")).toBeNull();
+  });
+
+  test("preserves corrupt history and blocks writes until explicitly cleared", async () => {
+    localStorage.setItem(STORAGE_RESULTS, "{corrupt");
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+    expect(currentApi!.storageWarning).toContain("Existing data has been kept");
+    expect(localStorage.getItem(STORAGE_RESULTS)).toBe("{corrupt");
+    act(() => currentApi!.clearLocalData());
+    expect(localStorage.getItem(STORAGE_RESULTS)).toBeNull();
+  });
+
+  test("protects history changed by another tab before starting more work", async () => {
+    await act(async () => {
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />);
+    });
+    act(() =>
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: STORAGE_RESULTS,
+          newValue: "other",
+        }),
+      ),
+    );
+    act(() => currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl));
+    await act(async () => {
+      await currentApi!.handleAnalyze({ preventDefault() {} } as FormEvent);
+    });
+    expect(getPlaylistMock).not.toHaveBeenCalled();
+    expect(currentApi!.storageWarning).toContain("another tab");
+  });
+
   test("rechecks the full playlist despite a filtered view and updates XML metadata", async () => {
     const response = playlistResponse();
     response.tracks.push({
