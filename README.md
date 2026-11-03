@@ -7,10 +7,10 @@ Playlist Shopper is a focused DJ purchase-decision workflow. Upload a Rekordbox 
 ## What It Does
 
 - Compares a Spotify playlist against a Rekordbox XML library export.
-- Splits results into `To buy` and `Owned`.
+- Splits results into `To buy`, `Owned`, and `Unverified`.
 - Opens available Beatport or Bandcamp links for purchase research.
 - Saves purchase candidates to `Buy Later` in the browser.
-- Keeps the workflow local-first in the frontend, with saved analysis summaries capped in local storage.
+- Keeps the workflow local-first in the frontend, with saved analysis snapshots capped in local storage.
 
 ## Who This Is For
 
@@ -40,14 +40,13 @@ Playlist Shopper is a focused DJ purchase-decision workflow. Upload a Rekordbox 
 ## Known Limitations
 
 - Matching depends on playlist metadata and the exported Rekordbox XML.
-- Large XML files are limited to 50 MB in the frontend.
+- Large XML files are limited to 3 MB in the frontend.
 - Saved results use browser local storage and may be cleared by the browser.
 - Purchase links are best-effort search or store links when available.
 - Only Spotify playlist URLs are supported in the current sharing flow.
 
 ## Not Included Yet
 
-- Beatport affiliate links.
 - Apple Music.
 - Discogs.
 - BPM/Key.
@@ -111,7 +110,7 @@ After deployment:
 ## Notes
 
 - Analyzer state stores only core domain data and progress.
-- Local storage persists slim summaries with a size cap and exposes reset through `Clear saved data`.
+- Local storage persists full analysis snapshots with a 2 MiB cap. `Clear analysis history` keeps saved XML and Buy Later; their removal controls are separate.
 - URL utilities live in `lib/utils/playlistUrl.ts`.
 - CSV injection mitigation lives in `lib/utils/csvSanitize.ts`.
 - See `docs/DISTRIBUTION.md` for packaging with `git archive`.

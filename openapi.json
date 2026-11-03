@@ -193,7 +193,7 @@
     "/api/match-snapshot-with-xml": {
       "post": {
         "summary": "Match Snapshot With Xml",
-        "description": "与えられた PlaylistSnapshotV1（JSON）に対して、Rekordbox XML を用いて owned/owned_reason を付与して返す。\nURL の再入力は不要。\n\n制限：\n- snapshot: 最大 1MB\n- XML: MAX_UPLOAD_SIZE（環境変数、デフォルト 50MB）",
+        "description": "与えられた PlaylistSnapshotV1（JSON）に対して、Rekordbox XML を用いて owned/owned_reason を付与して返す。\nURL の再入力は不要。\n\n制限：\n- snapshot: 最大 1MB\n- XML: MAX_UPLOAD_SIZE（環境変数、デフォルト 3MB）",
         "operationId": "match_snapshot_with_xml_api_match_snapshot_with_xml_post",
         "requestBody": {
           "content": {

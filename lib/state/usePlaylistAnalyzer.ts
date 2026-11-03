@@ -57,27 +57,54 @@ export function normalizeStoredResults(
 ): Array<[string, ResultState]> | null {
   if (!parsed) return null;
 
-  // v2: { version: 2, results: [{ url, summary: {...} }] }
-  if (parsed.version === 2 && Array.isArray(parsed.results)) {
+  // v3 stores full rows; legacy v2 summary-only records require a fresh ownership check.
+  if (
+    (parsed.version === 2 || parsed.version === 3) &&
+    Array.isArray(parsed.results)
+  ) {
     const out: Array<[string, ResultState]> = [];
     for (const r of parsed.results) {
       const url = typeof r?.url === "string" ? r.url : null;
       if (!url) continue;
       const s = r?.summary ?? {};
+      const validSnapshot =
+        parsed.version === 3 &&
+        Array.isArray(r.tracks) &&
+        r.tracks.every(
+          (t: any) =>
+            t &&
+            typeof t.title === "string" &&
+            typeof t.artist === "string" &&
+            typeof t.album === "string" &&
+            Number.isInteger(t.index) &&
+            t.stores &&
+            typeof t.stores === "object",
+        );
+      const trustedOwnership =
+        validSnapshot && s.meta?.ownership_rules_version === 3;
       out.push([
         url,
         {
-          title: s.title ?? "",
+          title: typeof s.title === "string" ? s.title : "Saved playlist",
           total: Number.isFinite(s.total) ? s.total : 0,
-          playlistUrl: s.playlistUrl ?? url,
+          playlistUrl: typeof s.playlistUrl === "string" ? s.playlistUrl : url,
           playlist_id: s.playlist_id,
           playlist_name: s.playlist_name,
           analyzedAt: Number.isFinite(s.analyzedAt) ? s.analyzedAt : Date.now(),
-          hasRekordboxData: !!s.hasRekordboxData,
-          rekordboxMeta: s.rekordboxMeta ?? null,
+          hasRekordboxData: trustedOwnership && !!s.hasRekordboxData,
+          rekordboxMeta: trustedOwnership ? (s.rekordboxMeta ?? null) : null,
           meta: s.meta,
           errorText: s.errorText ?? null,
-          tracks: [], // Always array
+          tracks: validSnapshot
+            ? r.tracks.map((t: PlaylistRow) => ({
+                ...t,
+                owned:
+                  trustedOwnership && typeof t.owned === "boolean"
+                    ? t.owned
+                    : null,
+                ownedReason: trustedOwnership ? t.ownedReason : null,
+              }))
+            : [],
         },
       ]);
     }
@@ -100,11 +127,17 @@ export function normalizeStoredResults(
           playlist_id: r.playlist_id,
           playlist_name: r.playlist_name,
           analyzedAt: Number.isFinite(r.analyzedAt) ? r.analyzedAt : Date.now(),
-          hasRekordboxData: !!r.hasRekordboxData,
-          rekordboxMeta: r.rekordboxMeta ?? null,
+          hasRekordboxData: false,
+          rekordboxMeta: null,
           meta: r.meta,
           errorText: r.errorText ?? null,
-          tracks: Array.isArray(r.tracks) ? r.tracks : [], // Always array
+          tracks: Array.isArray(r.tracks)
+            ? r.tracks.map((t: PlaylistRow) => ({
+                ...t,
+                owned: null,
+                ownedReason: null,
+              }))
+            : [],
         },
       ]);
     }
@@ -146,7 +179,10 @@ import {
   PlaylistSnapshotV1,
 } from "../types";
 import { MAX_XML_BYTES } from "../constants";
-import { applySnapshotOwnership } from "@/lib/playlist/snapshotOwnership";
+import {
+  applySnapshotOwnership,
+  splitSnapshot,
+} from "@/lib/playlist/snapshotOwnership";
 import {
   getPlaylist,
   postPlaylistWithRekordboxUpload,
@@ -162,7 +198,7 @@ import {
 import { detectSourceFromUrl, sanitizeUrl } from "../utils/playlistUrl";
 
 export const STORAGE_RESULTS = "spotify-shopper-results";
-const MAX_STORAGE_BYTES = 300 * 1024; // ~300KB guard
+const MAX_STORAGE_BYTES = 2 * 1024 * 1024; // Full local snapshots; failures are surfaced.
 
 const ENABLE_LOCAL_PERSIST = true;
 type StorageLike = {
@@ -270,10 +306,10 @@ export function usePlaylistAnalyzer() {
   const [storageHydrated, setStorageHydrated] = useState(false);
 
   // タブ切替時にtracks未定義ならAPIでhydrate
-  const _ensureHydrated = async (url: string) => {
+  const _ensureHydrated = async (url: string, retry = false) => {
     if (
       hydrateInFlightRef.current.has(url) ||
-      hydrateAttemptedRef.current.has(url)
+      (!retry && hydrateAttemptedRef.current.has(url))
     )
       return;
     const idx = multiResults.findIndex(([u]) => u === url);
@@ -283,15 +319,12 @@ export function usePlaylistAnalyzer() {
     hydrateAttemptedRef.current.add(url);
     hydrateInFlightRef.current.add(url);
     try {
-      setMultiResults((prev) =>
-        prev.map(([u, r]) => (u === url ? [u, { ...r, tracks: [] }] : [u, r])),
-      );
       const detectedSource = detectSourceFromUrl(url);
       const json = await getPlaylist({ url, source: detectedSource });
       const rows = mapTracks(normalizeTracks(json));
       setMultiResults((prev) =>
         prev.map(([u, r]) =>
-          u === url
+          u === url && r === result
             ? [
                 u,
                 {
@@ -300,6 +333,9 @@ export function usePlaylistAnalyzer() {
                   total: rows.length,
                   errorText: null,
                   analyzedAt: Date.now(),
+                  hasRekordboxData: false,
+                  rekordboxMeta: null,
+                  meta: normalizeMeta(getProp(json, "meta")) as ApiMeta,
                 },
               ]
             : [u, r],
@@ -309,7 +345,7 @@ export function usePlaylistAnalyzer() {
       const normalized = normalizeApiError(_err);
       setMultiResults((prev) =>
         prev.map(([u, r]) =>
-          u === url
+          u === url && r === result
             ? [u, { ...r, errorText: normalized.message, tracks: [] }]
             : [u, r],
         ),
@@ -369,10 +405,11 @@ export function usePlaylistAnalyzer() {
     }
 
     localStorageDebounceRef.current = setTimeout(() => {
-      // summary-only: url, snapshotId, summaryのみ
+      // Persist full snapshots so reloading does not discard XML matching.
       const results = multiResults.map(([url, r]) => ({
         url,
         snapshotId: r.playlist_id,
+        tracks: r.tracks,
         summary: {
           title: r.title,
           total: r.total,
@@ -385,13 +422,19 @@ export function usePlaylistAnalyzer() {
           meta: r.meta,
         },
       }));
-      const payload = JSON.stringify({ version: 2, results });
-      if (payload.length > MAX_STORAGE_BYTES) {
-        setStorageWarning("保存容量上限を超えました");
+      const payload = JSON.stringify({ version: 3, results });
+      if (new Blob([payload]).size > MAX_STORAGE_BYTES) {
+        setStorageWarning(
+          "Analysis history exceeds the 2 MB local snapshot limit. Clear older analyses before closing this page.",
+        );
         return;
       }
       const saved = safeStorage.setItem(STORAGE_RESULTS, payload);
-      setStorageWarning(saved ? null : "ローカル保存に失敗しました");
+      setStorageWarning(
+        saved
+          ? null
+          : "Analysis history could not be saved in this browser. Keep this page open and free browser storage.",
+      );
       localStorageDebounceRef.current = null;
     }, 500);
 
@@ -541,7 +584,7 @@ export function usePlaylistAnalyzer() {
     const removed = safeStorage.removeItem(STORAGE_RESULTS);
     setMultiResults([]);
     setPlaylistUrlInput("");
-    applyRekordboxFile(null);
+    hydrateAttemptedRef.current.clear();
     setStorageWarning(removed ? null : "ローカルデータの削除に失敗しました");
   };
 
@@ -730,6 +773,12 @@ export function usePlaylistAnalyzer() {
     }
 
     const activeRekordboxFile = await resolveActiveRekordboxFile();
+    if (savedRekordboxXmlMeta && !activeRekordboxFile) {
+      setErrorText(
+        "Saved XML could not be loaded. Replace or remove it before continuing.",
+      );
+      return;
+    }
     const xmlSizeError = validateXmlSize(activeRekordboxFile);
     if (xmlSizeError) {
       setErrorText(xmlSizeError);
@@ -1003,10 +1052,16 @@ export function usePlaylistAnalyzer() {
   const applySnapshotWithXml = async (
     file: File,
     currentResult: ResultState,
-    displayedTracks: PlaylistRow[],
+    _displayedTracks: PlaylistRow[],
   ) => {
-    // Always arrayify tracks for safety
-    const baseTracks = Array.isArray(displayedTracks) ? displayedTracks : [];
+    const sizeError = validateXmlSize(file);
+    if (sizeError) throw new Error(sizeError);
+    // This action always rechecks the full playlist, regardless of visible filters.
+    const baseTracks = Array.isArray(currentResult.tracks)
+      ? currentResult.tracks
+      : [];
+    if (baseTracks.length === 0)
+      throw new Error("Load the playlist tracks before checking XML.");
     const snapshot: PlaylistSnapshotV1 = {
       schema: "playlist_snapshot",
       version: 1,
@@ -1046,8 +1101,16 @@ export function usePlaylistAnalyzer() {
       }),
     };
 
-    const json = await matchSnapshotWithXml(JSON.stringify(snapshot), file);
-    const matchedTracks = getProp(json, "tracks");
+    const matchedTracks: unknown[] = [];
+    let matchMeta: Record<string, unknown> = {};
+    for (const batch of splitSnapshot(snapshot)) {
+      const json = await matchSnapshotWithXml(JSON.stringify(batch), file);
+      const rows = getProp(json, "tracks");
+      if (!Array.isArray(rows) || rows.length !== batch.tracks.length)
+        throw new Error("Incomplete XML matching response. Please retry.");
+      matchedTracks.push(...rows);
+      matchMeta = normalizeMeta(getProp(json, "meta")) ?? {};
+    }
     // Validate before scheduling a state update so failures reach the XML UI.
     applySnapshotOwnership(baseTracks, baseTracks, matchedTracks);
     setMultiResults((prev) =>
@@ -1063,10 +1126,15 @@ export function usePlaylistAnalyzer() {
               matchedTracks,
             ),
             hasRekordboxData: true,
+            rekordboxMeta: makeRekordboxMeta(file),
+            analyzedAt: Date.now(),
+            meta: { ...result.meta, ...matchMeta },
           },
         ];
       }),
     );
+    applyRekordboxFile(file);
+    await persistRekordboxFile(file);
   };
 
   const cancelAnalyze = () => {

@@ -25,7 +25,7 @@ HOTFIX SPEC (Playlist Shopper)
   - xmlError is shown ONLY under XML input
   - playlistUrlError is shown ONLY under playlist input
 - XML size:
-  - MAX_XML_BYTES = 50 * 1024 * 1024
+  - MAX_XML_BYTES = 3 * 1024 * 1024
   - If exceeded, set xmlError and DO NOT set playlistUrlError
 TODO:
 - Implement guard + fallback for activeTab
@@ -117,11 +117,15 @@ function QueueTitle({ item }: { item: QuietBuyLaterItem }) {
 function QuietBuyLater({
   items,
   onRemove,
+  storageWarning,
+  onRetrySave,
 }: {
   items: QuietBuyLaterItem[];
   onRemove: (id: string) => void;
+  storageWarning?: string | null;
+  onRetrySave?: () => void;
 }) {
-  if (items.length === 0) return null;
+  if (items.length === 0 && !storageWarning) return null;
 
   return (
     <section className="border-t border-white/15 pt-6 text-sm text-slate-400">
@@ -139,23 +143,35 @@ function QuietBuyLater({
         </button>
       </div>
 
+      {storageWarning && (
+        <div role="alert" className="mt-3 text-amber-200">
+          <p>{storageWarning}</p>
+          <button
+            type="button"
+            onClick={onRetrySave}
+            className="mt-2 rounded border border-white/20 px-3 py-2"
+          >
+            Retry storage
+          </button>
+        </div>
+      )}
       <div className="mt-6 border-b border-white/10">
         <div className="divide-y divide-white/10">
           {items.map((item) => (
             <div
               key={item.id}
-              className="grid grid-cols-[minmax(0,34%)_minmax(0,25%)_9%_minmax(0,20%)_12%] items-center"
+              className="grid grid-cols-1 items-center rounded-lg border border-white/10 p-2 md:grid-cols-[minmax(0,34%)_minmax(0,25%)_9%_minmax(0,20%)_12%] md:rounded-none md:border-0 md:p-0"
             >
               <div className="min-w-0 px-3 py-4">
                 <QueueTitle item={item} />
               </div>
               <div className="min-w-0 px-3 py-4">
-                <div className="truncate text-slate-600">{item.artist}</div>
+                <div className="truncate text-slate-400">{item.artist}</div>
                 {item.album ? (
-                  <div className="truncate text-slate-700">{item.album}</div>
+                  <div className="truncate text-slate-500">{item.album}</div>
                 ) : null}
               </div>
-              <div className="px-3 py-4" />
+              <div className="hidden px-3 py-4 md:block" />
               <div className="flex flex-wrap gap-2 px-3 py-4">
                 {isQueuePurchaseStore(item.buyStore) ? (
                   <a
@@ -172,7 +188,7 @@ function QuietBuyLater({
                 <button
                   type="button"
                   onClick={() => onRemove(item.id)}
-                  className="whitespace-nowrap text-slate-600 hover:text-slate-300"
+                  className="whitespace-nowrap text-slate-400 hover:text-slate-300"
                 >
                   Remove
                 </button>
@@ -210,6 +226,7 @@ function PageInner() {
   const handleAnalyzeWithAppleBlock = (e: React.FormEvent) => {
     const url = analyzer.playlistUrlInput.trim();
     if (/music\.apple\.com/i.test(url)) {
+      e.preventDefault();
       setBanner({
         kind: "error",
         text: "This URL is not supported yet. Use a Spotify playlist URL.",
@@ -431,6 +448,8 @@ function PageInner() {
             <QuietBuyLater
               items={buyQueue.items}
               onRemove={buyQueue.removeItem}
+              storageWarning={buyQueue.storageWarning}
+              onRetrySave={buyQueue.retrySave}
             />
           )}
         </div>
@@ -447,7 +466,7 @@ function PageInner() {
               <ErrorAlert
                 title="Local data warning"
                 message={vm.storageWarning}
-                hint="Use Clear saved data to reset local storage, then re-run analysis."
+                hint="Free browser storage and retry analysis. Clear analysis history removes saved results only."
               />
             )}
             {/* Tabs */}
@@ -459,6 +478,24 @@ function PageInner() {
             />
             {vm.currentResult && (
               <div className="space-y-3">
+                {vm.currentResult.errorText && (
+                  <div
+                    role="alert"
+                    className="rounded border border-rose-400/30 p-3 text-sm text-rose-200"
+                  >
+                    <p>{vm.currentResult.errorText}</p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        selection.activeTab &&
+                        void analyzer.ensureHydrated(selection.activeTab, true)
+                      }
+                      className="mt-2 rounded border border-white/20 px-3 py-2"
+                    >
+                      Retry loading playlist
+                    </button>
+                  </div>
+                )}
                 <SidePanels
                   currentResult={vm.currentResult}
                   ownedCount={vm.ownedCount}
@@ -557,7 +594,34 @@ function PageInner() {
                     </label>
                   </div>
                 </div>
+                {analyzer.savedRekordboxXmlError && (
+                  <p role="alert" className="text-sm text-amber-200">
+                    {analyzer.savedRekordboxXmlError}
+                  </p>
+                )}
                 <ResultsTable
+                  emptyMessage={
+                    filters.searchQuery.trim()
+                      ? "No tracks match your search."
+                      : filters.categoryFilter === "toBuy" &&
+                          vm.unknownCount > 0
+                        ? "No confirmed missing tracks. Check Unverified tracks before buying."
+                        : filters.categoryFilter === "toBuy" &&
+                            vm.ownedCount > 0
+                          ? "All checked tracks are owned."
+                          : vm.currentResult.tracks.length === 0
+                            ? "No analyzable tracks were returned. Check skipped entries or retry loading the playlist."
+                            : "No tracks in this filter."
+                  }
+                  onResetFilters={
+                    filters.searchQuery.trim() ||
+                    filters.categoryFilter !== "all"
+                      ? () => {
+                          filters.setSearchQuery("");
+                          filters.setCategoryFilter("all");
+                        }
+                      : undefined
+                  }
                   currentResult={vm.currentResult}
                   displayedTracks={vm.displayedTracks}
                   queuedTrackIds={buyQueue.queuedIds}
@@ -566,6 +630,8 @@ function PageInner() {
                 <QuietBuyLater
                   items={buyQueue.items}
                   onRemove={buyQueue.removeItem}
+                  storageWarning={buyQueue.storageWarning}
+                  onRetrySave={buyQueue.retrySave}
                 />
                 <details className="text-xs text-slate-500">
                   <summary className="cursor-pointer list-none font-medium text-slate-400">
@@ -573,15 +639,15 @@ function PageInner() {
                   </summary>
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p>
-                      Results are saved locally (~300KB cap). Clear to free
-                      space.
+                      Analysis snapshots are saved on this device. Clearing
+                      history keeps your saved XML and Buy Later list.
                     </p>
                     <button
                       type="button"
                       onClick={() => actions.clearLocalData()}
                       className="self-start rounded border border-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-slate-700 hover:text-slate-100"
                     >
-                      Clear saved data
+                      Clear analysis history
                     </button>
                   </div>
                 </details>

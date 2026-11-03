@@ -47,15 +47,6 @@ function parseQueue(raw: string | null): BuyQueueItem[] {
   }
 }
 
-function loadQueue(): BuyQueueItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return parseQueue(window.localStorage.getItem(STORAGE_KEY));
-  } catch {
-    return [];
-  }
-}
-
 function saveQueue(items: BuyQueueItem[]): boolean {
   if (typeof window === "undefined") return false;
   try {
@@ -69,20 +60,53 @@ function saveQueue(items: BuyQueueItem[]): boolean {
 export function useBuyQueue() {
   const [items, setItems] = useState<BuyQueueItem[]>([]);
   const [restored, setRestored] = useState(false);
-
-  useEffect(() => {
-    const restoreTimer = window.setTimeout(() => {
-      setItems(loadQueue());
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  const restore = useCallback(() => {
+    try {
+      setItems(parseQueue(window.localStorage.getItem(STORAGE_KEY)));
       setRestored(true);
-    }, 0);
-
-    return () => window.clearTimeout(restoreTimer);
+      setStorageWarning(null);
+    } catch {
+      setStorageWarning(
+        "Buy Later could not be read from this browser. Retry before saving more tracks.",
+      );
+    }
   }, []);
 
   useEffect(() => {
+    const restoreTimer = window.setTimeout(() => {
+      restore();
+    }, 0);
+
+    return () => window.clearTimeout(restoreTimer);
+  }, [restore]);
+
+  useEffect(() => {
     if (!restored) return;
-    saveQueue(items);
+    const saved = saveQueue(items);
+    const timer = window.setTimeout(
+      () =>
+        setStorageWarning(
+          saved
+            ? null
+            : "Buy Later is only kept on this page because browser storage failed. Retry saving before closing.",
+        ),
+      0,
+    );
+    return () => window.clearTimeout(timer);
   }, [items, restored]);
+
+  const retrySave = useCallback(() => {
+    if (!restored) {
+      restore();
+      return;
+    }
+    setStorageWarning(
+      saveQueue(items)
+        ? null
+        : "Buy Later could not be saved. Free browser storage and retry.",
+    );
+  }, [items, restored, restore]);
 
   const queuedIds = useMemo(
     () => new Set(items.map((item) => item.id)),
@@ -91,6 +115,12 @@ export function useBuyQueue() {
 
   const addTrack = useCallback(
     (track: PlaylistRow, buyLink: { name: string; url: string }) => {
+      if (!restored) {
+        setStorageWarning(
+          "Buy Later is not ready. Retry loading saved tracks first.",
+        );
+        return;
+      }
       const nextItem: BuyQueueItem = {
         id: itemId(track),
         title: track.title,
@@ -108,7 +138,7 @@ export function useBuyQueue() {
         return [nextItem, ...prev];
       });
     },
-    [],
+    [restored],
   );
 
   const removeItem = useCallback((id: string) => {
@@ -120,6 +150,8 @@ export function useBuyQueue() {
     queuedIds,
     addTrack,
     removeItem,
+    storageWarning,
+    retrySave,
   };
 }
 

@@ -92,15 +92,22 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
 
   const localXmlError = useMemo(() => {
     const file = props.rekordboxFile;
+    if (!file && (props.savedRekordboxXmlMeta?.size ?? 0) > MAX_XML_BYTES)
+      return "Saved XML exceeds the 3 MB upload limit. Remove it and select a smaller export.";
     if (!file) return null;
-    if (file.size > MAX_XML_BYTES) return "XML file too large (max 50MB)";
+    if (file.size > MAX_XML_BYTES) return "XML file too large (max 3MB)";
 
     const code = props.errorMeta?.error_code;
     if (code === "XML_TOO_LARGE" || code === "XML_PARSE_FAILED") {
       return messageFromMeta ?? "XML error";
     }
     return null;
-  }, [props.rekordboxFile, props.errorMeta, messageFromMeta]);
+  }, [
+    props.rekordboxFile,
+    props.savedRekordboxXmlMeta,
+    props.errorMeta,
+    messageFromMeta,
+  ]);
   const visiblePlaylistError = props.playlistUrlError || playlistUrlError;
   const visibleXmlError = localXmlError || props.savedRekordboxXmlError;
   const hasRetryableError = Boolean(
@@ -207,8 +214,9 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             </span>
           </div>
           <p id="xml-help" className="text-sm leading-6 text-slate-400">
-            Choose a Rekordbox XML export, up to 50 MB. Without XML, you can
+            Choose a Rekordbox XML export, up to 3 MB. Without XML, you can
             browse tracks and store links, but ownership stays unverified.
+            Matching only covers tracks included in your selected XML export.
           </p>
           <details className="text-sm text-slate-300">
             <summary className="cursor-pointer rounded-sm py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">

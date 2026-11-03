@@ -109,3 +109,56 @@ describe("restoreResultsFromStorage", () => {
     expect(storage.removed).toEqual([STORAGE_RESULTS]);
   });
 });
+
+describe("ownership snapshot restoration", () => {
+  const track = {
+    index: 1,
+    title: "Song",
+    artist: "Artist",
+    album: "Album",
+    stores: {},
+    owned: true,
+    ownedReason: "exact",
+  };
+  it("preserves the checked recording and XML information under current rules", () => {
+    const result = normalizeStoredResults({
+      version: 3,
+      results: [
+        {
+          url: "u",
+          tracks: [track],
+          summary: {
+            title: "P",
+            total: 1,
+            hasRekordboxData: true,
+            rekordboxMeta: { filename: "library.xml" },
+            meta: { ownership_rules_version: 3 },
+          },
+        },
+      ],
+    })!;
+    expect(result[0][1].tracks[0].owned).toBe(true);
+    expect(result[0][1].rekordboxMeta?.filename).toBe("library.xml");
+  });
+  it("does not retain ownership claims from stale matching rules", () => {
+    const result = normalizeStoredResults({
+      version: 3,
+      results: [
+        {
+          url: "u",
+          tracks: [track],
+          summary: {
+            title: "P",
+            total: 1,
+            hasRekordboxData: true,
+            rekordboxMeta: { filename: "old.xml" },
+            meta: { ownership_rules_version: 2 },
+          },
+        },
+      ],
+    })!;
+    expect(result[0][1].tracks[0].owned).toBeNull();
+    expect(result[0][1].hasRekordboxData).toBe(false);
+    expect(result[0][1].rekordboxMeta).toBeNull();
+  });
+});

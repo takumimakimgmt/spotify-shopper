@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import type { PlaylistRow, ResultState } from "../../lib/types";
 import ResultSummaryBar from "./ResultSummaryBar";
 import ErrorAlert from "./ErrorAlert";
@@ -26,33 +26,40 @@ export function SidePanels({
   ownedCount,
   toBuyCount,
   unknownCount,
-  displayedTracks,
+  displayedTracks: _displayedTracks,
   // rekordboxFile,
   // rekordboxDate,
   applySnapshotWithXml,
   handleExportCSV,
 }: SidePanelsProps) {
+  const uploadRef = useRef<HTMLInputElement>(null);
+  const [matching, setMatching] = useState(false);
+  const [matchMessage, setMatchMessage] = useState<string | null>(null);
   const [xmlError, setXmlError] = useState<string | null>(null);
   const handleXmlChange: React.ChangeEventHandler<HTMLInputElement> = async (
     ev,
   ) => {
     const file = ev.target.files?.[0];
-    if (!file) return;
+    if (!file || matching) return;
     if (file.size > MAX_XML_BYTES) {
       const mb = (file.size / (1024 * 1024)).toFixed(1);
       setXmlError(
-        `XML is too large (${mb} MB). Please export smaller, playlist-level XML from Rekordbox and try again.`,
+        `XML is too large (${mb} MB). Maximum 3 MB. Choose a smaller export and check which library tracks it covers.`,
       );
       ev.target.value = "";
       return;
     }
     try {
+      setMatching(true);
+      setMatchMessage(null);
       setXmlError(null);
-      await applySnapshotWithXml(file, currentResult, displayedTracks);
+      await applySnapshotWithXml(file, currentResult, currentResult.tracks);
+      setMatchMessage(`Checked all ${currentResult.tracks.length} tracks.`);
     } catch (e: unknown) {
       const errorMsg = e instanceof Error ? e.message : String(e);
       setXmlError(`XML apply failed: ${errorMsg}`);
     } finally {
+      setMatching(false);
       ev.target.value = "";
     }
   };
@@ -88,15 +95,24 @@ export function SidePanels({
                 Open playlist
               </a>
             )}
-            <label className="min-h-9 cursor-pointer rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white">
-              Re-analyze with XML
-              <input
-                type="file"
-                accept=".xml"
-                className="hidden"
-                onChange={handleXmlChange}
-              />
-            </label>
+            <input
+              ref={uploadRef}
+              type="file"
+              accept=".xml"
+              aria-label="Re-analyze all tracks with XML"
+              className="hidden"
+              onChange={handleXmlChange}
+            />
+            <button
+              type="button"
+              disabled={matching || currentResult.tracks.length === 0}
+              onClick={() => uploadRef.current?.click()}
+              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            >
+              {matching
+                ? "Checking all tracks…"
+                : "Re-analyze all tracks with XML"}
+            </button>
             <button
               type="button"
               onClick={handleExportCSV}
@@ -107,6 +123,11 @@ export function SidePanels({
           </div>
         </div>
 
+        {matchMessage && (
+          <p role="status" className="text-sm text-slate-300">
+            {matchMessage}
+          </p>
+        )}
         {xmlError && (
           <div>
             <ErrorAlert title="XML Error" message={xmlError} />

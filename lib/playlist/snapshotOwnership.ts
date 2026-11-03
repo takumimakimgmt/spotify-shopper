@@ -1,4 +1,4 @@
-import type { PlaylistRow } from "../types";
+import type { PlaylistRow, PlaylistSnapshotV1 } from "../types";
 
 /** Match responses to submitted rows, never to lossy normalized music keys. */
 export function applySnapshotOwnership(
@@ -47,4 +47,30 @@ export function applySnapshotOwnership(
       return track;
     return { ...track, owned: update.owned, ownedReason: update.reason };
   });
+}
+
+export function splitSnapshot(
+  snapshot: PlaylistSnapshotV1,
+): PlaylistSnapshotV1[] {
+  const batches: PlaylistSnapshotV1[] = [];
+  const overhead = new Blob([JSON.stringify({ ...snapshot, tracks: [] })]).size;
+  let tracks: PlaylistSnapshotV1["tracks"] = [];
+  let bytes = overhead;
+  for (const track of snapshot.tracks) {
+    const size = new Blob([JSON.stringify(track)]).size;
+    if (overhead + size > 900_000)
+      throw new Error("Track metadata is too large to re-analyze.");
+    if (
+      tracks.length >= 500 ||
+      bytes + size + (tracks.length ? 1 : 0) > 900_000
+    ) {
+      batches.push({ ...snapshot, tracks });
+      tracks = [];
+      bytes = overhead;
+    }
+    bytes += size + (tracks.length ? 1 : 0);
+    tracks.push(track);
+  }
+  if (tracks.length) batches.push({ ...snapshot, tracks });
+  return batches;
 }

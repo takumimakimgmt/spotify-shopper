@@ -30,6 +30,12 @@ export type StoreLinks = {
 };
 
 export type ApiMeta = {
+  ownership_rules_version?: number;
+  source_track_count?: number;
+  analyzed_track_count?: number;
+  skipped_track_count?: number;
+  skipped_local_count?: number;
+  skipped_unavailable_count?: number;
   cache_hit?: boolean;
   cache_ttl_s?: number;
   refresh?: boolean;

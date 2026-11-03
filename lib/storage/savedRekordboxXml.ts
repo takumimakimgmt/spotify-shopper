@@ -60,10 +60,16 @@ function withStore<T>(
         const store = transaction.objectStore(STORE_NAME);
         const request = run(store);
 
-        request.onsuccess = () => resolve(request.result);
+        let result: T;
+        request.onsuccess = () => {
+          result = request.result;
+        };
         request.onerror = () =>
           reject(request.error ?? new Error("Saved XML storage failed."));
-        transaction.oncomplete = () => db.close();
+        transaction.oncomplete = () => {
+          db.close();
+          resolve(result);
+        };
         transaction.onerror = () => {
           db.close();
           reject(transaction.error ?? new Error("Saved XML storage failed."));

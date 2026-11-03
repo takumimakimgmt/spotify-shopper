@@ -33,6 +33,13 @@ export default function ResultSummaryBar({
         {total} tracks · {toBuyCount} not owned · {ownedCount} owned ·{" "}
         {unknownCount} unverified
       </div>
+      {(result.meta?.skipped_track_count ?? 0) > 0 && (
+        <p className="text-amber-200" role="status">
+          {result.meta?.source_track_count ?? total} playlist entries · {total}{" "}
+          analyzed · {result.meta?.skipped_track_count} skipped (local or
+          unavailable tracks).
+        </p>
+      )}
       {unknownCount > 0 && (
         <p className="text-amber-200">
           Unverified tracks are excluded from To buy. Check matching details, or

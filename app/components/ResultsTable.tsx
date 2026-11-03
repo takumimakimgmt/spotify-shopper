@@ -9,6 +9,8 @@ const BEATPORT_A_AID = process.env.NEXT_PUBLIC_BEATPORT_A_AID;
 
 type Props = {
   currentResult: unknown | null;
+  emptyMessage?: string;
+  onResetFilters?: () => void;
   displayedTracks: PlaylistRow[];
   queuedTrackIds?: Set<string>;
   onAddToBuyQueue?: (
@@ -19,6 +21,10 @@ type Props = {
 
 function reviewHint(track: PlaylistRow): string {
   switch (track.ownedReason) {
+    case "artist_mismatch":
+      return "Artist credits differ. Confirm the recording in your library.";
+    case "title_annotation_mismatch":
+      return "Title details differ. Check the intro, outro or other recording details.";
     case "version_mismatch":
       return "A different mix or version was found. Check the recording before buying.";
     case "isrc_conflict":
@@ -155,9 +161,29 @@ export default function ResultsTable({
   displayedTracks,
   queuedTrackIds,
   onAddToBuyQueue,
+  emptyMessage,
+  onResetFilters,
 }: Props) {
   if (!currentResult) return null;
   const rows = Array.isArray(displayedTracks) ? displayedTracks : [];
+  if (rows.length === 0)
+    return (
+      <div
+        role="status"
+        className="rounded-lg border border-white/15 bg-white/5 p-5 text-sm text-slate-300"
+      >
+        <p>{emptyMessage ?? "No tracks to display."}</p>
+        {onResetFilters && (
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="mt-3 rounded border border-white/20 px-3 py-2"
+          >
+            Show all tracks
+          </button>
+        )}
+      </div>
+    );
 
   return (
     <div className="space-y-2">
