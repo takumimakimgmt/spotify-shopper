@@ -29,22 +29,23 @@ function itemId(track: PlaylistRow) {
 }
 
 function parseQueue(raw: string | null): BuyQueueItem[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item): item is BuyQueueItem =>
-        typeof item?.id === "string" &&
-        typeof item?.title === "string" &&
-        typeof item?.artist === "string" &&
-        typeof item?.buyUrl === "string" &&
-        typeof item?.buyStore === "string" &&
-        typeof item?.addedAt === "number",
-    );
-  } catch {
-    return [];
+  if (raw === null) return [];
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) {
+    throw new Error("Saved purchase queue has an invalid format.");
   }
+  const valid = parsed.every(
+    (item): item is BuyQueueItem =>
+      typeof item?.id === "string" &&
+      typeof item?.title === "string" &&
+      typeof item?.artist === "string" &&
+      typeof item?.buyUrl === "string" &&
+      typeof item?.buyStore === "string" &&
+      typeof item?.addedAt === "number" &&
+      Number.isFinite(item.addedAt),
+  );
+  if (!valid) throw new Error("Saved purchase queue contains invalid items.");
+  return parsed;
 }
 
 function saveQueue(items: BuyQueueItem[]): boolean {
@@ -68,7 +69,7 @@ export function useBuyQueue() {
       setStorageWarning(null);
     } catch {
       setStorageWarning(
-        "Buy Later could not be read from this browser. Retry before saving more tracks.",
+        "Buy Later could not be read from this browser. Existing saved data has been kept. Retry before saving more tracks.",
       );
     }
   }, []);
