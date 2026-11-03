@@ -35,8 +35,8 @@ export default function ResultSummaryBar({
       </div>
       {unknownCount > 0 && (
         <p className="text-amber-200">
-          Unverified tracks are excluded from To buy. Upload or re-analyze with
-          XML to check ownership.
+          Unverified tracks are excluded from To buy. Check matching details, or
+          upload XML if you have not checked your library yet.
         </p>
       )}
       <div className="flex flex-wrap items-center gap-2">

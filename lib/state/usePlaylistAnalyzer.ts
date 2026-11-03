@@ -146,7 +146,7 @@ import {
   PlaylistSnapshotV1,
 } from "../types";
 import { MAX_XML_BYTES } from "../constants";
-import { canonicalizeKey } from "@/lib/utils/normalize";
+import { applySnapshotOwnership } from "@/lib/playlist/snapshotOwnership";
 import {
   getPlaylist,
   postPlaylistWithRekordboxUpload,
@@ -1047,60 +1047,26 @@ export function usePlaylistAnalyzer() {
     };
 
     const json = await matchSnapshotWithXml(JSON.stringify(snapshot), file);
-    const byKey: Record<string, unknown> = {};
-    const byKeyCanonical = new Map<string, unknown>();
-    const tracksValue = getProp(json, "tracks");
-    const tracks: unknown[] = Array.isArray(tracksValue) ? tracksValue : [];
-    for (const t of tracks) {
-      const key =
-        getStringProp(t, "track_key_primary") ??
-        getStringProp(t, "track_key_fallback");
-      if (typeof key === "string" && key) byKey[key] = t;
-      const ck = canonicalizeKey(String(key ?? ""));
-      if (ck && !byKeyCanonical.has(ck)) byKeyCanonical.set(ck, t);
-    }
-    setMultiResults((prev) => {
-      const next = [...prev];
-      const idx = next.findIndex(
-        (r) => r[1].playlist_id === currentResult.playlist_id,
-      );
-      if (idx >= 0) {
-        const nt = next[idx][1];
-        // Always arrayify tracks before .map
-        const safeTracks = Array.isArray(nt.tracks) ? nt.tracks : [];
-        nt.tracks = safeTracks.map((t) => {
-          // pick: exact -> canonical, with debug info
-          const keys = [
-            t.trackKeyPrimary,
-            t.trackKeyFallback,
-            t.trackKeyGuess,
-          ].filter(Boolean) as string[];
-          let picked: { m: any; via: "exact" | "canonical" } | null = null;
-          for (const k of keys) {
-            if (byKey[k]) {
-              picked = { m: byKey[k], via: "exact" };
-              break;
-            }
-            const ck = canonicalizeKey(k);
-            if (ck && byKeyCanonical.has(ck)) {
-              picked = { m: byKeyCanonical.get(ck), via: "canonical" };
-              break;
-            }
-          }
-          const m = picked?.m ?? null;
-          return {
-            ...t,
-            owned: typeof m?.owned === "boolean" ? m.owned : null,
-            ownedSource: m?.source ?? null,
-            ownedReason:
-              (m?.reason ?? null) +
-              (picked?.via === "canonical" ? " (canonical match)" : ""),
-          };
-        });
-        next[idx][1] = { ...nt, hasRekordboxData: true };
-      }
-      return next;
-    });
+    const matchedTracks = getProp(json, "tracks");
+    // Validate before scheduling a state update so failures reach the XML UI.
+    applySnapshotOwnership(baseTracks, baseTracks, matchedTracks);
+    setMultiResults((prev) =>
+      prev.map(([url, result]) => {
+        if (result !== currentResult) return [url, result];
+        return [
+          url,
+          {
+            ...result,
+            tracks: applySnapshotOwnership(
+              result.tracks,
+              baseTracks,
+              matchedTracks,
+            ),
+            hasRekordboxData: true,
+          },
+        ];
+      }),
+    );
   };
 
   const cancelAnalyze = () => {
