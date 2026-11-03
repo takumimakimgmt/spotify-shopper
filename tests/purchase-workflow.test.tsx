@@ -2,10 +2,6 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, it, expect } from "vitest";
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
-import {
-  portableTracks,
-  purchaseDocument,
-} from "@/lib/domain/portablePurchases";
 import RecordingComparison from "@/app/components/RecordingComparison";
 import type { PlaylistRow } from "@/lib/types";
 const track: PlaylistRow = {
@@ -63,39 +59,5 @@ describe("purchase workflow", () => {
     ).toContain("Bob");
     expect(div.textContent).toContain("Artist credits · differs");
     expect(JSON.stringify(row)).toBe(before);
-  });
-  it("exports only candidate snapshots and leaves unchecked rows explicitly unchecked", () => {
-    const items = portableTracks([
-      track,
-      { ...track, owned: true },
-      { ...track, reviewDecision: { action: "owned", updatedAt: "now" } },
-      { ...track, owned: null },
-    ]);
-    expect(items).toHaveLength(2);
-    expect(items[1].status).toBe("Not checked");
-    expect(items[0]).not.toHaveProperty("libraryMatch");
-    const html = purchaseDocument(items, "2026-11-03");
-    expect(html).toContain('name="viewport"');
-    expect(html).toContain("not a fresh library check");
-    expect(html).toContain("Search Beatport");
-  });
-  it("escapes hostile metadata and never embeds executable scripts or unsafe store URLs", () => {
-    const html = purchaseDocument([
-      {
-        ...track,
-        title: "<script>alert(1)</script>",
-        artist: "<img src=x onerror=alert(1)>",
-        status: "Not checked",
-        stores: { beatport: "javascript:alert(1)" },
-      },
-    ]);
-    const document = new DOMParser().parseFromString(html, "text/html");
-    expect(document.querySelectorAll("script,img,iframe")).toHaveLength(0);
-    expect(document.querySelector("strong")?.textContent).toBe(
-      "<script>alert(1)</script>",
-    );
-    expect(
-      [...document.querySelectorAll("a")].every((a) => a.protocol === "https:"),
-    ).toBe(true);
   });
 });

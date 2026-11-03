@@ -1,7 +1,6 @@
 "use client";
 
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
-import { downloadPurchases } from "@/lib/domain/portablePurchases";
 
 type QuietBuyLaterItem = {
   id: string;
@@ -77,32 +76,6 @@ export default function BuyLaterPanel({
         </button>
       </div>
 
-      {items.length > 0 && (
-        <div className="mt-3">
-          <button
-            type="button"
-            className="min-h-11 rounded border border-white/20 px-3 py-2 text-slate-100"
-            onClick={() =>
-              downloadPurchases(
-                items.map((item) => ({
-                  ...item,
-                  status: "Saved candidate · ownership not rechecked",
-                  stores:
-                    item.buyStore === "Beatport"
-                      ? { beatport: item.buyUrl }
-                      : { bandcamp: item.buyUrl },
-                })),
-              )
-            }
-          >
-            Download saved candidates for phone
-          </button>
-          <p className="mt-2 text-xs">
-            Send the downloaded HTML file to your phone and open in a browser.
-            Includes song details and store links, without XML.
-          </p>
-        </div>
-      )}
       {storageWarning && (
         <div role="alert" className="mt-3 text-amber-200">
           <p>{storageWarning}</p>

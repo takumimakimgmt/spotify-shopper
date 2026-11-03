@@ -5,10 +5,6 @@ import type { PlaylistRow } from "../../lib/types";
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
 import RecordingComparison from "./RecordingComparison";
 import {
-  downloadPurchases,
-  portableTracks,
-} from "@/lib/domain/portablePurchases";
-import {
   effectiveOwned,
   libraryMatchLabel,
   libraryMatchExplanation,
@@ -134,21 +130,6 @@ export default function ResultsTable({
 
   return (
     <div className="space-y-2">
-      <div className="rounded border border-white/15 p-3 text-sm">
-        <button
-          type="button"
-          disabled={!portableTracks(rows).length}
-          onClick={() => downloadPurchases(portableTracks(rows))}
-          className="min-h-11 rounded border border-white/20 px-3 py-2 disabled:opacity-40"
-        >
-          Download candidates for phone
-        </button>
-        <p className="mt-2 text-xs text-slate-400">
-          Exports non-owned tracks in the current view, including unchecked
-          candidates with their status. Send the HTML file to your phone and
-          open in a browser. No XML included.
-        </p>
-      </div>
       <div className="md:hidden space-y-2">
         {rows.length === 0 ? (
           <div className="rounded-lg border border-white/15 bg-white/5 p-4 text-sm text-slate-300 text-center">
