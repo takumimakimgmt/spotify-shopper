@@ -1,5 +1,6 @@
 /** Stable keys: migrations must preserve existing data and reset only known records. */
 export const STORAGE_KEYS = {
+  language: "playlist-shopper-language",
   history: "spotify-shopper-results",
   buyQueue: "playlist-shopper-buy-queue",
   activeTab: "spotify-shopper-active-tab",

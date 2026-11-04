@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useMemo, useRef } from "react";
 import ProcessingBar from "./ProcessingBar";
 import ErrorAlert from "./ErrorAlert";
@@ -59,19 +60,21 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatDateTime(value: string | number) {
+function formatDateTime(value: string | number, language: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString();
+  return date.toLocaleString(language === "ja" ? "ja-JP" : "en-US");
 }
 
 export default function AnalyzeForm(props: AnalyzeFormProps) {
+  const { language, t: tr } = useI18n();
+
   const playlistInputRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const xmlName =
     props.rekordboxFilename ??
     props.savedRekordboxXmlMeta?.filename ??
-    "No XML selected";
+    tr("No XML selected");
   const hasXml = Boolean(
     props.rekordboxFile ||
     props.rekordboxFilename ||
@@ -137,13 +140,13 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           }`}
         >
           <div className="flex items-start gap-2">
-            <div className="flex-1">{props.banner.text}</div>
+            <div className="flex-1">{tr(props.banner.text)}</div>
             {props.onDismissBanner ? (
               <button
                 type="button"
                 onClick={props.onDismissBanner}
                 className="text-slate-300 hover:text-white"
-                aria-label="Dismiss"
+                aria-label={tr("Dismiss")}
               >
                 ✕
               </button>
@@ -157,7 +160,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           ref={fileInputRef}
           type="file"
           accept=".xml"
-          aria-label="Upload Rekordbox XML"
+          aria-label={tr("Upload Rekordbox XML")}
           aria-describedby="xml-help"
           onChange={props.handleRekordboxChange}
           className="hidden"
@@ -169,7 +172,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             className="block text-sm font-semibold text-slate-200"
           >
             <span className="mr-2 text-slate-400">1.</span>
-            Spotify playlist
+            {tr("Spotify playlist")}
           </label>
           <div className="flex flex-col items-stretch gap-3 sm:flex-row">
             <textarea
@@ -178,7 +181,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               value={props.playlistUrlInput}
               onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
               rows={1}
-              placeholder="Paste Spotify playlist URL"
+              placeholder={tr("Paste Spotify playlist URL")}
               aria-invalid={visiblePlaylistError ? true : undefined}
               aria-describedby={
                 visiblePlaylistError ? "playlist-url-error" : undefined
@@ -196,8 +199,10 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               role="alert"
               className="text-sm text-rose-300"
             >
-              <div className="font-semibold">Invalid playlist input</div>
-              <div>{visiblePlaylistError}</div>
+              <div className="font-semibold">
+                {tr("Invalid playlist input")}
+              </div>
+              <div>{tr(visiblePlaylistError)}</div>
             </div>
           ) : null}
         </div>
@@ -208,28 +213,28 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             className="text-sm font-semibold text-slate-200"
           >
             <span className="mr-2 text-slate-400">2.</span>
-            Rekordbox library{" "}
+            {tr("Rekordbox library")}{" "}
             <span className="font-normal text-slate-400">
-              (needed to match your library)
+              {tr("(needed to match your library)")}
             </span>
           </div>
           <p id="xml-help" className="text-sm leading-6 text-slate-400">
-            Choose a Rekordbox XML export, up to 50 MB. Without XML, you can
-            browse tracks and store links, but recordings stay unchecked.
-            Matching only covers tracks included in your selected XML export.
-            Matching runs on this device. Your XML and library metadata are not
-            sent to the server.
+            {tr(
+              "Choose a Rekordbox XML export, up to 50 MB. Without XML, you can browse tracks and store links, but recordings stay unchecked. Matching only covers tracks included in your selected XML export. Matching runs on this device. Your XML and library metadata are not sent to the server.",
+            )}
           </p>
           <details className="text-sm text-slate-300">
             <summary className="cursor-pointer rounded-sm py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-              How to export your Rekordbox XML
+              {tr("How to export your Rekordbox XML")}
             </summary>
             <ol className="mt-2 list-decimal space-y-1 pl-5 leading-6 text-slate-400">
-              <li>Open Rekordbox on your computer.</li>
+              <li>{tr("Open Rekordbox on your computer.")}</li>
               <li>
-                In the File menu, choose “Export Collection in xml format”.
+                {tr(
+                  "In the File menu, choose “Export Collection in xml format”.",
+                )}
               </li>
-              <li>Save the .xml file, then upload it here.</li>
+              <li>{tr("Save the .xml file, then upload it here.")}</li>
             </ol>
             <a
               href="https://rekordbox.com/en/support/faq/operation-hints-7/"
@@ -237,7 +242,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               rel="noreferrer"
               className="mt-2 inline-block underline underline-offset-4 hover:text-white"
             >
-              Rekordbox export help
+              {tr("Rekordbox export help")}
             </a>
           </details>
           <div className="flex flex-col gap-3 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
@@ -252,12 +257,16 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               </span>
               <span className="truncate text-slate-400">
                 {props.savedRekordboxXmlMeta
-                  ? `${formatBytes(props.savedRekordboxXmlMeta.size)} · updated ${formatDateTime(
-                      props.savedRekordboxXmlMeta.lastModified,
-                    )}`
+                  ? tr("{size} · updated {date}", {
+                      size: formatBytes(props.savedRekordboxXmlMeta.size),
+                      date: formatDateTime(
+                        props.savedRekordboxXmlMeta.lastModified,
+                        language,
+                      ),
+                    })
                   : props.rekordboxDate
-                    ? `updated ${props.rekordboxDate}`
-                    : "Upload Rekordbox XML"}
+                    ? tr("updated {date}", { date: props.rekordboxDate })
+                    : tr("Upload Rekordbox XML")}
               </span>
             </div>
 
@@ -268,7 +277,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 disabled={props.savedRekordboxXmlBusy}
                 className="rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 disabled:opacity-40"
               >
-                Upload
+                {tr("Upload")}
               </button>
               {hasXml ? (
                 <button
@@ -277,19 +286,19 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   disabled={props.savedRekordboxXmlBusy}
                   className="px-2 py-2 text-slate-400 hover:text-slate-100 disabled:opacity-40"
                 >
-                  Remove
+                  {tr("Remove")}
                 </button>
               ) : null}
             </div>
           </div>
           {localXmlError ? (
             <div role="alert" className="text-sm text-rose-300">
-              {localXmlError}
+              {tr(localXmlError)}
             </div>
           ) : null}
           {props.savedRekordboxXmlError ? (
             <div role="alert" className="text-sm text-rose-300">
-              {props.savedRekordboxXmlError}
+              {tr(props.savedRekordboxXmlError)}
             </div>
           ) : null}
         </div>
@@ -304,7 +313,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         <div className="space-y-3 border-t border-white/10 pt-6">
           <div className="text-sm font-semibold text-slate-200">
             <span className="mr-2 text-slate-400">3.</span>
-            {hasXml ? "Check your library" : "Browse the playlist"}
+            {hasXml ? tr("Check your library") : tr("Browse the playlist")}
           </div>
           <button
             type="submit"
@@ -317,17 +326,21 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             aria-describedby="analysis-help"
             className="min-h-11 w-full rounded-lg bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:bg-white/10 disabled:text-white/30 sm:w-auto sm:min-w-44"
           >
-            {hasXml ? "Match against XML" : "Browse playlist"}
+            {hasXml ? tr("Match against XML") : tr("Browse playlist")}
           </button>
           <p id="analysis-help" className="text-sm leading-6 text-slate-400">
             {hasXml
-              ? "Compare this playlist with your selected XML to find tracks missing from your library."
-              : "No XML selected. Tracks will be marked Not checked until you check them with XML."}
+              ? tr(
+                  "Compare this playlist with your selected XML to find tracks missing from your library.",
+                )
+              : tr(
+                  "No XML selected. Tracks will be marked Not checked until you check them with XML.",
+                )}
           </p>
           <p className="text-xs leading-5 text-slate-400">
-            The original XML is saved in this browser for reuse. Library
-            matching runs locally; XML, file paths and recording metadata stay
-            on this device. Use Remove to delete the browser’s saved XML.
+            {tr(
+              "The original XML is saved in this browser for reuse. Library matching runs locally; XML, file paths and recording metadata stay on this device. Use Remove to delete the browser’s saved XML.",
+            )}
           </p>
         </div>
 
@@ -338,7 +351,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               onClick={() => props.cancelAnalyze?.()}
               className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-slate-300 hover:border-slate-600 hover:bg-slate-800/50 hover:text-white"
             >
-              Cancel
+              {tr("Cancel")}
             </button>
           ) : null}
 
@@ -348,7 +361,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               onClick={() => props.retryFailed?.()}
               className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-slate-300 hover:border-slate-600 hover:bg-slate-800/50 hover:text-white"
             >
-              Retry
+              {tr("Retry")}
             </button>
           ) : null}
         </div>
@@ -367,14 +380,14 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         {hasRetryableError ? (
           <div className="pt-2">
             <ErrorAlert
-              title="Error"
+              title={tr("Error")}
               message={props.errorText}
               details={
                 props.errorMeta
                   ? JSON.stringify(props.errorMeta, null, 2)
                   : undefined
               }
-              hint="If this looks stale, try a hard refresh."
+              hint={tr("If this looks stale, try a hard refresh.")}
             />
             <div className="pt-2">
               <button
@@ -382,7 +395,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 onClick={() => props.setForceRefreshHint(true)}
                 className="text-xs px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white"
               >
-                Show refresh tips
+                {tr("Show refresh tips")}
               </button>
             </div>
           </div>

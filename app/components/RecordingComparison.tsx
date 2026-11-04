@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import type { PlaylistRow } from "@/lib/types";
 
 function normal(value: string) {
@@ -25,6 +27,8 @@ function Difference({ value, other }: { value: string; other: string }) {
   );
 }
 export default function RecordingComparison({ track }: { track: PlaylistRow }) {
+  const { t: tr } = useI18n();
+
   const candidate = track.libraryMatch;
   if (!candidate?.matched_title) return null;
   const fields = [
@@ -33,19 +37,19 @@ export default function RecordingComparison({ track }: { track: PlaylistRow }) {
   ];
   return (
     <div className="mt-3 space-y-2 break-words">
-      <p className="font-medium text-slate-100">Compare recordings</p>
+      <p className="font-medium text-slate-100">{tr("Compare recordings")}</p>
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-        {["Spotify recording", "XML candidate"].map((label, side) => (
+        {[tr("Spotify recording"), tr("XML candidate")].map((label, side) => (
           <div
             key={label}
             className="min-w-0 rounded border border-white/15 p-2"
           >
             <p className="mb-2 font-semibold">{label}</p>
             {fields.map(([name, left, right]) => (
-              <div key={name} className="mb-2">
+              <div key={tr(name)} className="mb-2">
                 <p className="text-slate-400">
-                  {name}
-                  {normal(left) !== normal(right) ? " · differs" : ""}
+                  {tr(name)}
+                  {normal(left) !== normal(right) ? tr(" · differs") : ""}
                 </p>
                 <p>
                   {(side ? right : left) ? (
@@ -54,7 +58,7 @@ export default function RecordingComparison({ track }: { track: PlaylistRow }) {
                       other={side ? left : right}
                     />
                   ) : (
-                    "Not supplied"
+                    tr("Not supplied")
                   )}
                 </p>
               </div>
@@ -63,9 +67,9 @@ export default function RecordingComparison({ track }: { track: PlaylistRow }) {
         ))}
       </div>
       <p className="text-slate-400">
-        Highlighted words differ. Check the full mix / remix name and artist
-        credits. XML candidate album and ISRC are not available in this
-        comparison.
+        {tr(
+          "Highlighted words differ. Check the full mix / remix name and artist credits. XML candidate album and ISRC are not available in this comparison.",
+        )}
       </p>
       {track.isrc && <p>Spotify ISRC: {track.isrc}</p>}
     </div>

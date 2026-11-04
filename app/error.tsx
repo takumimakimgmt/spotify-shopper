@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useEffect, useState } from "react";
 import { resetLocalData, type ResetScope } from "../lib/storage/resetLocalData";
 
@@ -10,6 +11,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t: tr } = useI18n();
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   useEffect(() => {
@@ -33,30 +35,32 @@ export default function GlobalError({
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-6">
-      <h1 className="text-lg font-semibold">Something went wrong</h1>
+      <h1 className="text-lg font-semibold">{tr("Something went wrong")}</h1>
       <p>
-        Try again first. If the problem continues, choose which saved data to
-        remove.
+        {tr(
+          "Try again first. If the problem continues, choose which saved data to remove.",
+        )}
       </p>
-      {failure && <p role="alert">{failure}</p>}
+      {failure && <p role="alert">{tr(failure)}</p>}
       <div className="flex flex-wrap gap-3">
         <button disabled={busy} onClick={() => reset()}>
-          Retry
+          {tr("Retry")}
         </button>
         <button disabled={busy} onClick={() => void clear("history")}>
-          Clear analysis history (keep XML and Buy Later)
+          {tr("Clear analysis history (keep XML and Buy Later)")}
         </button>
         <button disabled={busy} onClick={() => void clear("settings")}>
-          Reset display settings (keep saved data)
+          {tr("Reset display settings (keep saved data)")}
         </button>
         <button disabled={busy} onClick={() => void clear("all")}>
-          Delete all saved data (history, XML, Buy Later, confirmations and
-          settings)
+          {tr(
+            "Delete all saved data (history, XML, Buy Later, confirmations and settings)",
+          )}
         </button>
       </div>
-      {busy && <p role="status">Removing selected data…</p>}
+      {busy && <p role="status">{tr("Removing selected data\u2026")}</p>}
       <details>
-        <summary>Error details</summary>
+        <summary>{tr("Error details")}</summary>
         <pre className="whitespace-pre-wrap">
           {String(error?.message ?? error)}
           {error?.digest ? `\n\ndigest: ${error.digest}` : ""}

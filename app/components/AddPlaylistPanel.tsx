@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useEffect, useRef } from "react";
 
 interface AddPlaylistPanelProps {
@@ -13,6 +15,8 @@ export function AddPlaylistPanel({
   onSubmit,
   onCancel,
 }: AddPlaylistPanelProps) {
+  const { t: tr } = useI18n();
+
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     inputRef.current?.focus();
@@ -23,7 +27,7 @@ export function AddPlaylistPanel({
         ref={inputRef}
         type="text"
         className="px-3 py-2 rounded border border-slate-600 bg-slate-900 text-slate-100"
-        placeholder="Paste playlist URL..."
+        placeholder={tr("Paste playlist URL...")}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
@@ -35,13 +39,13 @@ export function AddPlaylistPanel({
           className="px-3 py-1 rounded bg-emerald-600 text-white"
           onClick={onSubmit}
         >
-          Add
+          {tr("Add")}
         </button>
         <button
           className="px-3 py-1 rounded bg-slate-600 text-white"
           onClick={onCancel}
         >
-          Cancel
+          {tr("Cancel")}
         </button>
       </div>
     </div>

@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React from "react";
 import type { ResultState } from "../../lib/types";
 
@@ -16,6 +18,8 @@ export function PlaylistTabs({
   onRemoveTab,
   onClearAll: _onClearAll,
 }: PlaylistTabsProps) {
+  const { t: tr } = useI18n();
+
   if (multiResults.length === 0) return null;
 
   return (
@@ -51,7 +55,7 @@ export function PlaylistTabs({
                   onRemoveTab(url);
                 }}
                 className="text-slate-400 hover:text-red-400 transition text-lg leading-none flex-shrink-0"
-                title="Remove this playlist"
+                title={tr("Remove this playlist")}
               >
                 ×
               </button>

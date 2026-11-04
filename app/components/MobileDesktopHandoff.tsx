@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildDesktopHandoffLink,
@@ -19,6 +20,8 @@ export default function MobileDesktopHandoff({
   activePlaylistId?: string | null;
   queryPlaylist?: string | null;
 }) {
+  const { t: tr } = useI18n();
+
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
@@ -62,10 +65,12 @@ export default function MobileDesktopHandoff({
     <aside className="rounded-lg border border-sky-400/30 bg-sky-400/[0.08] p-4 md:hidden">
       <div className="space-y-2">
         <h2 className="text-base font-semibold text-white">
-          Continue on your computer
+          {tr("Continue on your computer")}
         </h2>
         <p className="text-sm leading-6 text-slate-200">
-          Send this playlist to the computer that has your Rekordbox XML.
+          {tr(
+            "Send this playlist to the computer that has your Rekordbox XML.",
+          )}
         </p>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -74,13 +79,13 @@ export default function MobileDesktopHandoff({
           onClick={copyDesktopLink}
           className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-slate-200"
         >
-          {copied ? "Copied" : "Copy desktop link"}
+          {copied ? tr("Copied") : tr("Copy desktop link")}
         </button>
         <a
           href={emailHref}
           className="rounded-md border border-white/20 px-3 py-2 text-sm font-medium text-slate-100 hover:border-white/40"
         >
-          Email to myself
+          {tr("Email to myself")}
         </a>
       </div>
     </aside>

@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React from "react";
 import type { ResultState } from "../../lib/types";
 
@@ -16,6 +18,8 @@ export function ResultsTabs({
   onRemoveTab,
   onClearAll: _onClearAll,
 }: ResultsTabsProps) {
+  const { t: tr } = useI18n();
+
   // タブはtracks未定義でも必ず表示。UIで「未解析」表示はtracks未定義または空の場合。
   if (multiResults.length === 0) return null;
 
@@ -55,7 +59,7 @@ export function ResultsTabs({
                 )}
                 {isUnparsed && (
                   <span className="shrink-0 text-xs text-yellow-300/80">
-                    Not analyzed
+                    {tr("Not analyzed")}
                   </span>
                 )}
               </button>
@@ -66,8 +70,8 @@ export function ResultsTabs({
                   onRemoveTab(url);
                 }}
                 className="min-w-10 self-stretch border-l border-white/10 px-3 text-lg leading-none text-slate-400 transition hover:bg-rose-950/30 hover:text-rose-200"
-                title="Remove this playlist"
-                aria-label={`Remove ${result.title}`}
+                title={tr("Remove this playlist")}
+                aria-label={tr("Remove {title}", { title: result.title })}
               >
                 ×
               </button>

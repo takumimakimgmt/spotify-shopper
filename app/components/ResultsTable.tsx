@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React from "react";
 import type { PlaylistRow } from "../../lib/types";
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
@@ -46,6 +47,8 @@ function getPrimaryBuyLink(
 }
 
 function StoreLinksInline({ track }: { track: PlaylistRow }) {
+  const { t: tr } = useI18n();
+
   const stores = purchaseLinks(track);
 
   return (
@@ -62,19 +65,20 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
               : "inline-flex min-h-11 items-center px-2 py-2 text-xs text-slate-400 underline hover:text-white"
           }
         >
-          {s.label}
+          {tr(s.label)}
         </a>
       ))}
       <p className="w-full text-xs text-slate-400">
         {stores[0]?.product
-          ? "Track page · same version not verified"
-          : "Search only · availability not verified"}
+          ? tr("Track page · same version not verified")
+          : tr("Search only · availability not verified")}
       </p>
     </div>
   );
 }
 
 function TrackTitle({ track }: { track: PlaylistRow }) {
+  const { t: tr } = useI18n();
   const href = listenUrl(track);
   const title = track?.title ?? "";
 
@@ -89,7 +93,7 @@ function TrackTitle({ track }: { track: PlaylistRow }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      aria-label={`Listen to ${title}`}
+      aria-label={tr("Listen to {title}", { title })}
       className="inline-block max-w-full truncate border-b border-white/25 pb-0.5 text-sm font-medium text-white hover:border-white/60 hover:text-white focus-visible:rounded-sm focus-visible:border-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
     >
       {title}
@@ -107,6 +111,8 @@ export default function ResultsTable({
   onReviewDecision,
   reviewReady = true,
 }: Props) {
+  const { t: tr } = useI18n();
+
   if (!currentResult) return null;
   const rows = Array.isArray(displayedTracks) ? displayedTracks : [];
   if (rows.length === 0)
@@ -115,14 +121,14 @@ export default function ResultsTable({
         role="status"
         className="rounded-lg border border-white/15 bg-white/5 p-5 text-sm text-slate-300"
       >
-        <p>{emptyMessage ?? "No tracks to display."}</p>
+        <p>{tr(emptyMessage ?? "No tracks to display.")}</p>
         {onResetFilters && (
           <button
             type="button"
             onClick={onResetFilters}
             className="mt-3 rounded border border-white/20 px-3 py-2"
           >
-            Show all tracks
+            {tr("Show all tracks")}
           </button>
         )}
       </div>
@@ -133,7 +139,7 @@ export default function ResultsTable({
       <div className="md:hidden space-y-2">
         {rows.length === 0 ? (
           <div className="rounded-lg border border-white/15 bg-white/5 p-4 text-sm text-slate-300 text-center">
-            No tracks
+            {tr("No tracks")}
           </div>
         ) : (
           rows.map((t, i) => (
@@ -161,19 +167,19 @@ export default function ResultsTable({
           <thead className="border-b border-white/15 text-left text-xs font-semibold uppercase text-slate-400">
             <tr>
               <th scope="col" className="px-3 py-2">
-                Track
+                {tr("Track")}
               </th>
               <th scope="col" className="px-3 py-2">
-                Artist / album
+                {tr("Artist / album")}
               </th>
               <th scope="col" className="px-3 py-2">
-                Status
+                {tr("Status")}
               </th>
               <th scope="col" className="px-3 py-2">
-                Store
+                {tr("Store")}
               </th>
               <th scope="col" className="px-3 py-2">
-                Save
+                {tr("Save")}
               </th>
             </tr>
           </thead>
@@ -210,18 +216,18 @@ export default function ResultsTable({
                   <td className="px-3 py-3 align-middle text-white/60">
                     {isOwned ? (
                       <span className="truncate rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
-                        {libraryMatchLabel(t)}
+                        {tr(libraryMatchLabel(t))}
                       </span>
                     ) : (
                       <span
                         title={
                           t.owned == null
-                            ? libraryMatchExplanation(t)
+                            ? tr(libraryMatchExplanation(t))
                             : undefined
                         }
                         className="text-xs text-slate-300"
                       >
-                        {libraryMatchLabel(t)}
+                        {tr(libraryMatchLabel(t))}
                       </span>
                     )}
                   </td>
@@ -229,7 +235,9 @@ export default function ResultsTable({
                     {isOwned ? null : primary ? (
                       <StoreLinksInline track={t} />
                     ) : (
-                      <span className="text-sm text-slate-400">Not found</span>
+                      <span className="text-sm text-slate-400">
+                        {tr("Not found")}
+                      </span>
                     )}
                   </td>
                   <td className="px-3 py-3 align-middle">
@@ -242,16 +250,16 @@ export default function ResultsTable({
                         }}
                         className="min-h-9 whitespace-nowrap rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-slate-100 hover:bg-white/10 disabled:text-slate-400"
                       >
-                        {isQueued ? "Saved" : "Buy Later"}
+                        {isQueued ? tr("Saved") : tr("Buy Later")}
                       </button>
                     ) : (
                       <span className="text-sm text-slate-400">
                         {t.owned == null ? (
-                          <span title={libraryMatchExplanation(t)}>
-                            Review needed
+                          <span title={tr(libraryMatchExplanation(t))}>
+                            {tr("Review needed")}
                           </span>
                         ) : (
-                          "Unavailable"
+                          tr("Unavailable")
                         )}
                       </span>
                     )}
@@ -282,6 +290,8 @@ function TrackCard({
     buyLink: { name: string; url: string },
   ) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const primary = getPrimaryBuyLink(track);
   const isOwned = effectiveOwned(track) === true;
   const isQueued = queuedTrackIds?.has(getBuyQueueItemId(track)) ?? false;
@@ -303,11 +313,11 @@ function TrackCard({
         </div>
         {isOwned ? (
           <div className="shrink-0 rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
-            {libraryMatchLabel(track)}
+            {tr(libraryMatchLabel(track))}
           </div>
         ) : (
           <div className="shrink-0 text-xs text-slate-300">
-            {libraryMatchLabel(track)}
+            {tr(libraryMatchLabel(track))}
           </div>
         )}
       </div>
@@ -321,7 +331,9 @@ function TrackCard({
           <StoreLinksInline track={track} />
         </div>
       ) : (
-        <div className="mt-3 text-sm text-slate-400">No store found</div>
+        <div className="mt-3 text-sm text-slate-400">
+          {tr("No store found")}
+        </div>
       )}
       {!isOwned && canQueue ? (
         <div className="mt-2">
@@ -333,7 +345,7 @@ function TrackCard({
             }}
             className="min-h-9 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-slate-100 hover:bg-white/10 disabled:text-slate-400"
           >
-            {isQueued ? "Saved" : "Buy Later"}
+            {isQueued ? tr("Saved") : tr("Buy Later")}
           </button>
         </div>
       ) : null}
@@ -350,20 +362,22 @@ function MatchDetails({
   onReviewDecision?: ReviewHandler;
   reviewReady?: boolean;
 }) {
+  const { t: tr } = useI18n();
+
   const candidate = track.libraryMatch;
   return (
     <details className="mt-2 text-xs text-slate-300">
       <summary className="cursor-pointer">
-        Matching details
-        {track.changeStatus && track.changeStatus !== "unchanged"
-          ? ` · ${track.changeStatus}`
+        {tr("Matching details")}
+        {track.changeStatus && track.changeStatus !== tr("unchanged")
+          ? ` · ${tr(track.changeStatus)}`
           : ""}
       </summary>
-      <p className="mt-1">{libraryMatchExplanation(track)}</p>
+      <p className="mt-1">{tr(libraryMatchExplanation(track))}</p>
       {track.reviewDecision && (
         <p>
-          Automatic XML result:{" "}
-          {libraryMatchLabel({ ...track, reviewDecision: undefined })}
+          {tr("Automatic XML result:")}{" "}
+          {tr(libraryMatchLabel({ ...track, reviewDecision: undefined }))}
         </p>
       )}
       {onReviewDecision && (
@@ -373,7 +387,7 @@ function MatchDetails({
             type="button"
             onClick={() => onReviewDecision(track, "owned")}
           >
-            I own this recording
+            {tr("I own this recording")}
           </button>
           {candidate?.matched_title && (
             <button
@@ -381,7 +395,7 @@ function MatchDetails({
               type="button"
               onClick={() => onReviewDecision(track, "different_version")}
             >
-              This candidate is a different version
+              {tr("This candidate is a different version")}
             </button>
           )}
           {track.reviewDecision && (
@@ -390,7 +404,7 @@ function MatchDetails({
               type="button"
               onClick={() => onReviewDecision(track, null)}
             >
-              Forget my confirmation
+              {tr("Forget my confirmation")}
             </button>
           )}
         </div>

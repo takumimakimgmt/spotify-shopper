@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import type { BuyQueueItem } from "@/lib/state/useBuyQueue";
 
 type BuyQueuePanelProps = {
@@ -46,6 +47,8 @@ function QueueTitle({ item }: { item: BuyQueueItem }) {
 }
 
 export default function BuyQueuePanel({ items, onRemove }: BuyQueuePanelProps) {
+  const { t: tr } = useI18n();
+
   return (
     <details className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400">
       <summary className="cursor-pointer list-none font-medium text-slate-300">
@@ -54,7 +57,7 @@ export default function BuyQueuePanel({ items, onRemove }: BuyQueuePanelProps) {
 
       <div className="mt-3 space-y-2">
         {items.length === 0 ? (
-          <p>Save not-owned tracks here after analysis.</p>
+          <p>{tr("Save not-owned tracks here after analysis.")}</p>
         ) : (
           items.map((item) => (
             <div
@@ -88,7 +91,7 @@ export default function BuyQueuePanel({ items, onRemove }: BuyQueuePanelProps) {
                   onClick={() => onRemove(item.id)}
                   className="rounded-md border border-slate-700 px-2 py-1 text-slate-300 hover:text-white"
                 >
-                  Remove
+                  {tr("Remove")}
                 </button>
               </div>
             </div>
