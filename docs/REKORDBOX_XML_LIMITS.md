@@ -9,3 +9,9 @@ Malformed XML, DTD/entity declarations, multiple/missing collections, excessive 
 Results apply to the selected export only. Not in XML does not establish global non-ownership. Human confirmations are separate and reversible. Local fingerprints identify retained recording metadata, not raw paths/cues.
 
 See LOCAL_REVIEW_WORKFLOW.md for matching compatibility, review memory and test coverage.
+
+## Exact-boundary browser check (2026-11-05)
+
+In isolated desktop Chromium, a synthetic 52,428,800-byte XML containing 25,000 collection tracks and 125,000 cue points completed the normal form-to-worker flow. All 25,000 entries were retained. Comparing a two-track synthetic Spotify response returned one match and one not-found result, in 3,937 ms from file selection through displayed results (worker matching: 479 ms). Spotify/health responses were mocked to isolate local capacity; this is not a Spotify network performance measurement. API inspection recorded GET health and GET playlist only, with no XML or metadata upload. A 52,428,801-byte input was rejected before matching. Fixtures and browser profiles are not committed.
+
+This confirms the tested boundary and file structure on this PC, not every possible 50 MiB XML or device. The existing structure, depth, field-length and track-count limits still apply, and main-thread XML parsing can temporarily pause the interface.
