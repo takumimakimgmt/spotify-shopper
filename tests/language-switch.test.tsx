@@ -72,8 +72,8 @@ describe("language preference and UI", () => {
     expect(div.textContent).toContain("Compare recordings");
     await click("日本語");
     expect(document.documentElement.lang).toBe("ja");
-    expect(div.textContent).toContain("楽曲を比較");
-    expect(div.textContent).toContain("要確認");
+    expect(div.textContent).toContain("曲を見比べる");
+    expect(div.textContent).toContain("確認が必要");
     expect(div.textContent).toContain("Beatportで検索");
     expect(
       div.querySelector('a[aria-label="Search Beatportを試聴"]')?.textContent,
@@ -86,7 +86,7 @@ describe("language preference and UI", () => {
     act(() => root.unmount());
     div.remove();
     await mount();
-    expect(div.textContent).toContain("楽曲を比較");
+    expect(div.textContent).toContain("曲を見比べる");
     await click("English");
     expect(document.documentElement.lang).toBe("en");
     expect(div.textContent).toContain("Compare recordings");
@@ -94,7 +94,7 @@ describe("language preference and UI", () => {
   it("uses Japanese browser preference for new visitors and honours explicit English", async () => {
     vi.spyOn(navigator, "languages", "get").mockReturnValue(["ja-JP", "en"]);
     await mount();
-    expect(div.textContent).toContain("楽曲を比較");
+    expect(div.textContent).toContain("曲を見比べる");
     await click("English");
     act(() => root.unmount());
     div.remove();
@@ -107,8 +107,8 @@ describe("language preference and UI", () => {
       throw new Error("blocked");
     });
     await click("日本語");
-    expect(div.textContent).toContain("楽曲を比較");
-    expect(div.textContent).toContain("言語設定を保存できませんでした");
+    expect(div.textContent).toContain("曲を見比べる");
+    expect(div.textContent).toContain("言語の設定を保存できませんでした");
   });
   it("handles preference updates in another tab without touching work", async () => {
     localStorage.setItem(LANGUAGE_KEY, "en");
@@ -118,7 +118,7 @@ describe("language preference and UI", () => {
         new StorageEvent("storage", { key: LANGUAGE_KEY, newValue: "ja" }),
       );
     });
-    expect(div.textContent).toContain("楽曲を比較");
+    expect(div.textContent).toContain("曲を見比べる");
   });
   it("substitutes placeholders literally and preserves unmapped diagnostics", () => {
     expect(translate("ja", "Listen to {title}", { title: "$& <Remix>" })).toBe(
