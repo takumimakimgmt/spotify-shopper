@@ -28,10 +28,10 @@ export const metadata: Metadata = {
     alternateLocale: ["ja_JP"],
     images: [
       {
-        url: "/og/playlist-shopper-v1.jpg",
+        url: "/og/playlist-shopper-v2.jpg",
         width: 1734,
         height: 907,
-        alt: "Playlist Shopper — Find missing tracks in Rekordbox. A playlist beside a record collection.",
+        alt: "Playlist Shopper in bold lettering beside fine circular grooves.",
       },
     ],
   },
@@ -42,8 +42,8 @@ export const metadata: Metadata = {
       "Compare your Spotify playlists with Rekordbox and find purchase candidates on Beatport.",
     images: [
       {
-        url: "/og/playlist-shopper-v1.jpg",
-        alt: "Playlist Shopper — Find missing tracks in Rekordbox.",
+        url: "/og/playlist-shopper-v2.jpg",
+        alt: "Playlist Shopper in bold lettering beside fine circular grooves.",
       },
     ],
   },
