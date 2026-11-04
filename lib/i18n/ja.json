@@ -264,5 +264,6 @@
   "Confirmation could not be saved. Existing saved confirmations have been kept.": "判定を保存できませんでした。これまで保存した判定は残っています。",
   "Saved confirmations could not be removed.": "自分で付けた判定を削除できませんでした。",
   "Local matching is unavailable in this browser. Your XML has not been sent anywhere.": "このブラウザでは曲をチェックできません。XMLは外部に送っていません。",
-  "Local matching timed out. No partial result was applied.": "曲のチェックに時間がかかりすぎたため、処理を止めました。途中の結果は使っていません。"
+  "Local matching timed out. No partial result was applied.": "曲のチェックに時間がかかりすぎたため、処理を止めました。途中の結果は使っていません。",
+  "Store links open a search or track page. Check availability and version before buying.": "購入先のリンクは検索結果または曲のページを開きます。購入前に、販売状況とバージョンをご確認ください。"
 }

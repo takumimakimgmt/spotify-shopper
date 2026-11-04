@@ -448,18 +448,19 @@ function PageInner() {
                     actions.downloadCsv(vm.displayedTracks, vm.currentResult)
                   }
                 />
-                <div className="flex flex-col gap-4 border-y border-white/10 py-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-4 xl:flex-row xl:items-end xl:justify-between">
                   <div>
                     <div className="mb-2 text-sm font-medium text-slate-300">
                       {tr("Show tracks")}
                     </div>
                     <div
-                      className="flex flex-wrap gap-1.5"
+                      className="flex flex-wrap gap-1 rounded-lg bg-black/20 p-1"
                       role="group"
                       aria-label={tr("Track status filter")}
                     >
                       <button
                         type="button"
+                        aria-pressed={filters.categoryFilter === "all"}
                         onClick={() => filters.setCategoryFilter("all")}
                         className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${
                           filters.categoryFilter === "all"
@@ -471,6 +472,7 @@ function PageInner() {
                       </button>
                       <button
                         type="button"
+                        aria-pressed={filters.categoryFilter === "toBuy"}
                         onClick={() => filters.setCategoryFilter("toBuy")}
                         className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${
                           filters.categoryFilter === "toBuy"
@@ -482,6 +484,7 @@ function PageInner() {
                       </button>
                       <button
                         type="button"
+                        aria-pressed={filters.categoryFilter === "owned"}
                         onClick={() => filters.setCategoryFilter("owned")}
                         className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${
                           filters.categoryFilter === "owned"
