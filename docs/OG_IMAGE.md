@@ -1,4 +1,6 @@
-# Social share image
+# Original social share image (v1)
+
+The current cover is documented in `OG_IMAGE_V2.md`. This original asset remains available for older shared links.
 
 Asset: `public/og/playlist-shopper-v1.jpg` (1734 × 907; approximately 265 KiB). Generated with the built-in image_gen tool and exported as JPEG for delivery without changing the composition. The original PNG is retained in the generation output folder. The title, artwork and domain were checked visually.
 
