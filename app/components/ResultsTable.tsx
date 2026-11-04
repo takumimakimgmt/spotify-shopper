@@ -180,7 +180,7 @@ export default function ResultsTable({
           <tbody>
             {rows.map((track, i) => (
               <DesktopTrackRow
-                key={`${track?.isrc ?? ""}-${i}`}
+                key={`${getBuyQueueItemId(track)}-${i}`}
                 track={track}
                 queuedTrackIds={queuedTrackIds}
                 onAddToBuyQueue={onAddToBuyQueue}
