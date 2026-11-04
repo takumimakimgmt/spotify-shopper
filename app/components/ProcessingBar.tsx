@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React from "react";
 
 export interface ProcessingBarProps {
@@ -15,6 +16,8 @@ export default function ProcessingBar({
   progress,
   phaseLabel,
 }: ProcessingBarProps) {
+  const { t: tr } = useI18n();
+
   if (!analyzing && !reanalyzing) return null;
   const isFetchingSpotify = phaseLabel === "Fetching Spotify...";
   const label =
@@ -23,12 +26,14 @@ export default function ProcessingBar({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs text-slate-300">
-        <span>{label}</span>
-        <span>{isFetchingSpotify ? "Working..." : `${Math.round(pct)}%`}</span>
+        <span>{tr(label)}</span>
+        <span>
+          {isFetchingSpotify ? tr("Working...") : `${Math.round(pct)}%`}
+        </span>
       </div>
       {isFetchingSpotify ? (
         <div className="text-xs text-slate-500">
-          First run can take a few seconds while the server wakes up.
+          {tr("First run can take a few seconds while the server wakes up.")}
         </div>
       ) : null}
       <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-700">

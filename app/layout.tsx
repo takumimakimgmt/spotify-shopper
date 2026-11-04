@@ -1,3 +1,4 @@
+import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -14,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Playlist Shopper — Spotify",
+  title: "Playlist Shopper — Spotify, Rekordbox & Beatport",
   description:
-    "SpotifyのプレイリストとRekordbox XMLを照合して、未所持曲だけを抽出。購入リンクにすぐ飛べます。",
+    "Compare Spotify playlists with your Rekordbox XML library and find purchase candidates on Beatport. Library matching stays on your device.",
 };
 
 export default function RootLayout({
@@ -29,7 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
         <Analytics />
       </body>
     </html>

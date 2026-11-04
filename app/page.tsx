@@ -31,6 +31,7 @@ TODO:
 - Implement guard + fallback for activeTab
 - Implement XML max size and correct error message
 */
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useEffect, useRef, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePlaylistAnalyzer } from "../lib/state/usePlaylistAnalyzer";
@@ -58,6 +59,7 @@ const SidePanels = dynamic(
 );
 import ErrorAlert from "./components/ErrorAlert";
 import { z } from "zod";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 import PurchasePlan from "./components/PurchasePlan";
 import BuyLaterPanel from "./components/BuyLaterPanel";
 // --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
@@ -69,6 +71,8 @@ function parseTabQuery(raw: string | null): string | null {
 }
 
 function PageInner() {
+  const { t: tr } = useI18n();
+
   // 未対応URLブロック: 現在はSpotifyプレイリストURLのみ対応
   const [banner, setBanner] = React.useState<null | {
     kind: "error" | "info";
@@ -238,28 +242,33 @@ function PageInner() {
         setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
       />
       <div className="mx-auto max-w-[1024px] px-4 py-12 sm:px-6 lg:py-14">
+        <LanguageSwitcher />
         <div className="space-y-10">
           {reviews.warning && (
             <div role="alert" className="space-y-2 text-sm text-amber-200">
-              <p>{reviews.warning}</p>
+              <p>{tr(reviews.warning)}</p>
               <button type="button" onClick={reviews.clearAll}>
-                Clear saved confirmations (keep XML and results)
+                {tr("Clear saved confirmations (keep XML and results)")}
               </button>
             </div>
           )}
           {vm.storageWarning && (
             <div className="space-y-3">
               <ErrorAlert
-                title="Local data warning"
+                title={tr("Local data warning")}
                 message={vm.storageWarning}
-                hint="Keep this page open until saved data is safe. Clear analysis history removes saved results and progress only."
+                hint={tr(
+                  "Keep this page open until saved data is safe. Clear analysis history removes saved results and progress only.",
+                )}
               />
               <button
                 type="button"
                 className="rounded border border-white/20 px-3 py-2 text-sm"
                 onClick={actions.clearLocalData}
               >
-                Clear analysis history and progress (keep XML and Buy Later)
+                {tr(
+                  "Clear analysis history and progress (keep XML and Buy Later)",
+                )}
               </button>
             </div>
           )}
@@ -269,23 +278,27 @@ function PageInner() {
               className="rounded-lg border border-amber-400/30 p-4 text-sm"
             >
               <p>
-                {analyzer.resumableDraft.pendingUrls.length} playlists remain in
-                the saved batch.
+                {analyzer.resumableDraft.pendingUrls.length}
+                {tr(" playlists remain in the saved batch.")}
               </p>
               <p className="mt-1 text-slate-300">
-                Completed results are kept. Processing pauses when this page
-                closes. Resume checks remaining playlists using{" "}
+                {tr(
+                  "Completed results are kept. Processing pauses when this page closes. Resume checks remaining playlists using",
+                )}{" "}
                 {analyzer.resumableDraft.useXml
-                  ? `the currently selected XML (previous file: ${analyzer.resumableDraft.xmlFilename || "unknown"})`
-                  : "no XML"}
+                  ? tr("the currently selected XML (previous file: {file})", {
+                      file:
+                        analyzer.resumableDraft.xmlFilename || tr("unknown"),
+                    })
+                  : tr("no XML")}
                 .
               </p>
               <div className="mt-3 flex gap-4">
                 <button onClick={analyzer.resumeAnalysis}>
-                  Resume remaining playlists
+                  {tr("Resume remaining playlists")}
                 </button>
                 <button onClick={analyzer.discardAnalysisDraft}>
-                  Discard saved progress (keep results)
+                  {tr("Discard saved progress (keep results)")}
                 </button>
               </div>
             </div>
@@ -298,7 +311,7 @@ function PageInner() {
                     Playlist Shopper
                   </p>
                   <p className="mt-1 truncate text-sm text-slate-400">
-                    {vm.currentResult?.title ?? "Analysis results"}
+                    {vm.currentResult?.title ?? tr("Analysis results")}
                   </p>
                 </div>
                 <button
@@ -311,7 +324,7 @@ function PageInner() {
                   }}
                   className="shrink-0 rounded-md border border-white/20 px-3 py-2 text-sm font-medium text-slate-100 hover:border-white/40 hover:bg-white/5"
                 >
-                  New analysis
+                  {tr("New analysis")}
                 </button>
               </div>
             ) : (
@@ -321,11 +334,12 @@ function PageInner() {
                     Playlist Shopper
                   </p>
                   <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                    Find missing tracks in Rekordbox.
+                    {tr("Find missing tracks in Rekordbox.")}
                   </h1>
                   <p className="max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-                    Check a Spotify playlist against your library and build a
-                    focused purchase list.
+                    {tr(
+                      "Check a Spotify playlist against your library and build a focused purchase list.",
+                    )}
                   </p>
                 </header>
                 <AnalyzeForm
@@ -379,7 +393,7 @@ function PageInner() {
             className="scroll-mt-4 space-y-4 outline-none"
             id="results-top"
             tabIndex={-1}
-            aria-label="Analysis results"
+            aria-label={tr("Analysis results")}
           >
             <PurchasePlan
               results={vm.multiResults}
@@ -400,7 +414,7 @@ function PageInner() {
                     role="alert"
                     className="rounded border border-rose-400/30 p-3 text-sm text-rose-200"
                   >
-                    <p>{vm.currentResult.errorText}</p>
+                    <p>{tr(vm.currentResult.errorText)}</p>
                     <button
                       type="button"
                       onClick={() =>
@@ -409,7 +423,7 @@ function PageInner() {
                       }
                       className="mt-2 rounded border border-white/20 px-3 py-2"
                     >
-                      Retry loading playlist
+                      {tr("Retry loading playlist")}
                     </button>
                   </div>
                 )}
@@ -437,12 +451,12 @@ function PageInner() {
                 <div className="flex flex-col gap-4 border-y border-white/10 py-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <div className="mb-2 text-sm font-medium text-slate-300">
-                      Show tracks
+                      {tr("Show tracks")}
                     </div>
                     <div
                       className="flex flex-wrap gap-1.5"
                       role="group"
-                      aria-label="Track status filter"
+                      aria-label={tr("Track status filter")}
                     >
                       <button
                         type="button"
@@ -453,7 +467,7 @@ function PageInner() {
                             : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
                         }`}
                       >
-                        All
+                        {tr("All")}
                       </button>
                       <button
                         type="button"
@@ -464,7 +478,7 @@ function PageInner() {
                             : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
                         }`}
                       >
-                        Not in XML
+                        {tr("Not in XML")}
                       </button>
                       <button
                         type="button"
@@ -475,7 +489,7 @@ function PageInner() {
                             : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
                         }`}
                       >
-                        Matched / confirmed
+                        {tr("Matched / confirmed")}
                       </button>
                       <button
                         type="button"
@@ -483,23 +497,23 @@ function PageInner() {
                         onClick={() => filters.setCategoryFilter("unknown")}
                         className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${filters.categoryFilter === "unknown" ? "bg-amber-400/10 text-amber-100" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"}`}
                       >
-                        Not confirmed
+                        {tr("Not confirmed")}
                       </button>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(12rem,1fr)_auto]">
                     <label className="text-sm font-medium text-slate-300">
-                      <span className="mb-2 block">Search</span>
+                      <span className="mb-2 block">{tr("Search")}</span>
                       <input
                         type="search"
-                        placeholder="Title, artist, or album"
+                        placeholder={tr("Title, artist, or album")}
                         value={filters.searchQuery}
                         onChange={(e) => filters.setSearchQuery(e.target.value)}
                         className="min-h-9 w-full rounded-md border border-white/15 bg-transparent px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-white/40"
                       />
                     </label>
                     <label className="text-sm font-medium text-slate-300">
-                      <span className="mb-2 block">Sort</span>
+                      <span className="mb-2 block">{tr("Sort")}</span>
                       <select
                         value={filters.sortKey}
                         onChange={(e) =>
@@ -509,17 +523,17 @@ function PageInner() {
                         }
                         className="min-h-9 w-full rounded-md border border-white/15 bg-[#04060a] px-3 py-2 text-sm text-slate-200 outline-none focus:border-white/40"
                       >
-                        <option value="none">Sort: None</option>
-                        <option value="title">Sort: Title</option>
-                        <option value="artist">Sort: Artist</option>
-                        <option value="album">Sort: Album</option>
+                        <option value="none">{tr("Sort: None")}</option>
+                        <option value="title">{tr("Sort: Title")}</option>
+                        <option value="artist">{tr("Sort: Artist")}</option>
+                        <option value="album">{tr("Sort: Album")}</option>
                       </select>
                     </label>
                   </div>
                 </div>
                 {analyzer.savedRekordboxXmlError && (
                   <p role="alert" className="text-sm text-amber-200">
-                    {analyzer.savedRekordboxXmlError}
+                    {tr(analyzer.savedRekordboxXmlError)}
                   </p>
                 )}
                 {vm.currentResult.changeSummary?.hasPrevious && (
@@ -531,7 +545,7 @@ function PageInner() {
                         filters.setChangesOnly(event.target.checked)
                       }
                     />
-                    Show added, changed or rechecked tracks only
+                    {tr("Show added, changed or rechecked tracks only")}
                   </label>
                 )}
                 <ResultsTable
@@ -539,20 +553,26 @@ function PageInner() {
                     filters.changesOnly &&
                     vm.currentResult.changeSummary?.hasPrevious &&
                     vm.currentResult.tracks.every(
-                      (t) => t.changeStatus === "unchanged",
+                      (t) => t.changeStatus === tr("unchanged"),
                     )
-                      ? "Nothing changed since the last analysis. Show all tracks to review the full playlist."
+                      ? tr(
+                          "Nothing changed since the last analysis. Show all tracks to review the full playlist.",
+                        )
                       : filters.searchQuery.trim()
-                        ? "No tracks match your search."
+                        ? tr("No tracks match your search.")
                         : filters.categoryFilter === "toBuy" &&
                             vm.unknownCount > 0
-                          ? "No tracks are confirmed absent from this XML. Review the not-confirmed tracks before buying."
+                          ? tr(
+                              "No tracks are confirmed absent from this XML. Review the not-confirmed tracks before buying.",
+                            )
                           : filters.categoryFilter === "toBuy" &&
                               vm.ownedCount > 0
-                            ? "All checked tracks have a match in this XML."
+                            ? tr("All checked tracks have a match in this XML.")
                             : vm.currentResult.tracks.length === 0
-                              ? "No analyzable tracks were returned. Check skipped entries or retry loading the playlist."
-                              : "No tracks in this filter."
+                              ? tr(
+                                  "No analyzable tracks were returned. Check skipped entries or retry loading the playlist.",
+                                )
+                              : tr("No tracks in this filter.")
                   }
                   onResetFilters={
                     filters.changesOnly ||
@@ -587,20 +607,20 @@ function PageInner() {
                 />
                 <details className="text-xs text-slate-500">
                   <summary className="cursor-pointer list-none font-medium text-slate-400">
-                    Workspace utilities
+                    {tr("Workspace utilities")}
                   </summary>
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p>
-                      Analysis snapshots are saved on this device. Clearing
-                      history keeps your saved XML, Buy Later list and
-                      confirmations.
+                      {tr(
+                        "Analysis snapshots are saved on this device. Clearing history keeps your saved XML, Buy Later list and confirmations.",
+                      )}
                     </p>
                     <button
                       type="button"
                       onClick={() => actions.clearLocalData()}
                       className="self-start rounded border border-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-slate-700 hover:text-slate-100"
                     >
-                      Clear analysis history
+                      {tr("Clear analysis history")}
                     </button>
                   </div>
                 </details>

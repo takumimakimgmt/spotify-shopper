@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
 
 type QuietBuyLaterItem = {
@@ -24,6 +25,7 @@ function queueListenUrl(item: QuietBuyLaterItem): string {
 }
 
 function QueueTitle({ item }: { item: QuietBuyLaterItem }) {
+  const { t: tr } = useI18n();
   const href = queueListenUrl(item);
 
   if (!href) {
@@ -39,7 +41,7 @@ function QueueTitle({ item }: { item: QuietBuyLaterItem }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      aria-label={`Listen to ${item.title}`}
+      aria-label={tr("Listen to {title}", { title: item.title })}
       className="inline-block max-w-full truncate border-b border-white/25 pb-0.5 text-sm font-medium text-slate-200 hover:border-white/60 hover:text-white focus-visible:rounded-sm focus-visible:border-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
     >
       {item.title}
@@ -58,33 +60,35 @@ export default function BuyLaterPanel({
   storageWarning?: string | null;
   onRetrySave?: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   if (items.length === 0 && !storageWarning) return null;
 
   return (
     <section className="border-t border-white/15 pt-6 text-sm text-slate-400">
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <div className="font-semibold text-slate-200">Buy Later</div>
-          <div className="mt-2">Saved purchase candidates.</div>
+          <div className="font-semibold text-slate-200">{tr("Buy Later")}</div>
+          <div className="mt-2">{tr("Saved purchase candidates.")}</div>
         </div>
         <button
           type="button"
           onClick={() => items.forEach((item) => onRemove(item.id))}
           className="text-slate-400 hover:text-slate-100"
         >
-          Clear
+          {tr("Clear")}
         </button>
       </div>
 
       {storageWarning && (
         <div role="alert" className="mt-3 text-amber-200">
-          <p>{storageWarning}</p>
+          <p>{tr(storageWarning)}</p>
           <button
             type="button"
             onClick={onRetrySave}
             className="mt-2 rounded border border-white/20 px-3 py-2"
           >
-            Retry storage
+            {tr("Retry storage")}
           </button>
         </div>
       )}
@@ -124,11 +128,11 @@ export default function BuyLaterPanel({
                         : "min-h-11 px-2 py-2 text-xs underline"
                     }
                   >
-                    {link.label}
+                    {tr(link.label)}
                   </a>
                 ))}
                 <p className="w-full text-xs">
-                  Availability / same version unverified.
+                  {tr("Availability / same version unverified.")}
                 </p>
               </div>
               <div className="px-3 py-4">
@@ -137,7 +141,7 @@ export default function BuyLaterPanel({
                   onClick={() => onRemove(item.id)}
                   className="whitespace-nowrap text-slate-400 hover:text-slate-300"
                 >
-                  Remove
+                  {tr("Remove")}
                 </button>
               </div>
             </div>

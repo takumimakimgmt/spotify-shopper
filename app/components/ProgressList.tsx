@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React from "react";
 
 export interface ProgressItem {
@@ -33,6 +34,8 @@ export default function ProgressList({
   items,
   isProcessing,
 }: ProgressListProps) {
+  const { t: tr } = useI18n();
+
   if (!isProcessing || items.length === 0) {
     return null;
   }
@@ -45,7 +48,8 @@ export default function ProgressList({
   return (
     <div className="space-y-2">
       <p className="text-xs text-slate-400 font-medium">
-        Processing ({completed}/{total})
+        {tr("Processing (")}
+        {completed}/{total})
       </p>
       <div className="space-y-1">
         {items.map((item, idx) => {
@@ -67,9 +71,11 @@ export default function ProgressList({
               <span className="text-sm">{statusIcons[item.status] || "◯"}</span>
               <span className="flex-1 truncate font-mono">{item.url}</span>
               <span className="text-slate-500 text-xs whitespace-nowrap">
-                {label}
+                {tr(label)}
                 {messageToShow ? (
-                  <span className="text-slate-600 ml-1">({messageToShow})</span>
+                  <span className="text-slate-600 ml-1">
+                    ({tr(messageToShow)})
+                  </span>
                 ) : null}
               </span>
             </div>

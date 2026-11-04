@@ -1,4 +1,5 @@
 "use client";
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useState, useRef } from "react";
 import type { PlaylistRow, ResultState } from "../../lib/types";
 import ResultSummaryBar from "./ResultSummaryBar";
@@ -32,6 +33,8 @@ export function SidePanels({
   applySnapshotWithXml,
   handleExportCSV,
 }: SidePanelsProps) {
+  const { language, t: tr } = useI18n();
+
   const uploadRef = useRef<HTMLInputElement>(null);
   const [matching, setMatching] = useState(false);
   const [matchMessage, setMatchMessage] = useState<string | null>(null);
@@ -54,7 +57,11 @@ export function SidePanels({
       setMatchMessage(null);
       setXmlError(null);
       await applySnapshotWithXml(file, currentResult, currentResult.tracks);
-      setMatchMessage(`Checked all ${currentResult.tracks.length} tracks.`);
+      setMatchMessage(
+        tr("Checked all {count} tracks.", {
+          count: currentResult.tracks.length,
+        }),
+      );
     } catch (e: unknown) {
       const errorMsg = e instanceof Error ? e.message : String(e);
       setXmlError(`XML apply failed: ${errorMsg}`);
@@ -73,11 +80,11 @@ export function SidePanels({
               <div className="truncate">
                 XML: {currentResult.rekordboxMeta.filename ?? "—"}
                 <span className="ml-2">
-                  Updated:{" "}
+                  {tr("Updated:")}{" "}
                   {currentResult.rekordboxMeta.updatedAtISO
                     ? new Date(
                         currentResult.rekordboxMeta.updatedAtISO,
-                      ).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+                      ).toLocaleString(language === "ja" ? "ja-JP" : "en-US")
                     : "—"}
                 </span>
               </div>
@@ -92,14 +99,14 @@ export function SidePanels({
                 rel="noreferrer"
                 className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white"
               >
-                Open playlist
+                {tr("Open playlist")}
               </a>
             )}
             <input
               ref={uploadRef}
               type="file"
               accept=".xml"
-              aria-label="Re-analyze all tracks with XML"
+              aria-label={tr("Re-analyze all tracks with XML")}
               className="hidden"
               onChange={handleXmlChange}
             />
@@ -110,27 +117,27 @@ export function SidePanels({
               className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               {matching
-                ? "Checking all tracks…"
-                : "Re-analyze all tracks with XML"}
+                ? tr("Checking all tracks…")
+                : tr("Re-analyze all tracks with XML")}
             </button>
             <button
               type="button"
               onClick={handleExportCSV}
               className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white"
             >
-              Export CSV
+              {tr("Export CSV")}
             </button>
           </div>
         </div>
 
         {matchMessage && (
           <p role="status" className="text-sm text-slate-300">
-            {matchMessage}
+            {tr(matchMessage)}
           </p>
         )}
         {xmlError && (
           <div>
-            <ErrorAlert title="XML Error" message={xmlError} />
+            <ErrorAlert title={tr("XML Error")} message={xmlError} />
           </div>
         )}
       </div>

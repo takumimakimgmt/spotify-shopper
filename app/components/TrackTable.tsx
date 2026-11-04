@@ -1,3 +1,4 @@
+"use client";
 // --- MatchTypeBadge: shows ≈ or ~ for canonical/guess match, cleans up reason text ---
 function MatchTypeBadge({ ownedReason }: { ownedReason: string }) {
   if (!ownedReason) return null;
@@ -44,6 +45,7 @@ function MatchTypeBadge({ ownedReason }: { ownedReason: string }) {
   );
 }
 
+import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React from "react";
 import type { PlaylistRow, TrackCategory, ResultState } from "../../lib/types";
 import { sanitizeForCsvCell } from "@/lib/utils/csvSanitize";
@@ -79,6 +81,8 @@ export function TrackTable({
   getRecommendedStore,
   getOtherStores,
 }: TrackTableProps) {
+  const { t: tr } = useI18n();
+
   const safeTracks = Array.isArray(tracks) ? tracks : [];
   // --- Action Bar state ---
   const [actionBanner, setActionBanner] = React.useState<null | {
@@ -151,14 +155,14 @@ export function TrackTable({
             onClick={handleBuyAll}
             disabled={toBuyStoreLinks.length === 0}
           >
-            Buy all
+            {tr("Buy all")}
           </button>
           <button
             className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 hover:bg-white/10"
             onClick={handleExportCSV}
             disabled={toBuyTracks.length === 0}
           >
-            Export CSV
+            {tr("Export CSV")}
           </button>
           <div className="relative">
             <button
@@ -170,7 +174,7 @@ export function TrackTable({
               }
               type="button"
             >
-              Stores
+              {tr("Stores")}
             </button>
             {openStoreDropdown === "action-bar-stores" && (
               <div className="absolute left-0 mt-2 z-50 min-w-32 rounded-xl border border-white/10 bg-slate-900/95 shadow-lg">
@@ -205,7 +209,7 @@ export function TrackTable({
                 type="button"
                 onClick={() => setActionBanner(null)}
                 className="shrink-0 rounded-lg px-2 py-1 text-xs text-white/70 hover:bg-white/10"
-                aria-label="Dismiss"
+                aria-label={tr("Dismiss")}
               >
                 ✕
               </button>
@@ -304,19 +308,19 @@ export function TrackTable({
                   #
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap w-[30%]">
-                  Title
+                  {tr("Title")}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap w-[20%]">
-                  Artist
+                  {tr("Artist")}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap w-[20%]">
-                  Album
+                  {tr("Album")}
                 </th>
                 <th className="px-2 py-2 text-left text-xs font-semibold whitespace-nowrap w-[12%]">
                   ISRC
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap w-[18%]">
-                  Stores
+                  {tr("Stores")}
                 </th>
               </tr>
             </thead>
@@ -438,7 +442,7 @@ export function TrackTable({
                                           );
                                         }}
                                         className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 hover:bg-slate-700 transition text-[10px] text-slate-300"
-                                        title="Other stores"
+                                        title={tr("Other stores")}
                                       >
                                         +{others.length}
                                       </button>
