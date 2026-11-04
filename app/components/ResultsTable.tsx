@@ -1,7 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n/LanguageProvider";
-import React from "react";
+import React, { useId, useState } from "react";
 import type { PlaylistRow } from "../../lib/types";
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
 import RecordingComparison from "./RecordingComparison";
@@ -52,27 +52,27 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
   const stores = purchaseLinks(track);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       {stores.map((s) => (
         <a
           key={s.name}
           href={s.url}
           target="_blank"
           rel="noreferrer"
+          title={tr(
+            s.product
+              ? "Track page · same version not verified"
+              : "Search only · availability not verified",
+          )}
           className={
             s.name === "Beatport"
-              ? "inline-flex min-h-11 items-center rounded-md border border-emerald-400/50 bg-emerald-400/15 px-3 py-2 text-sm text-emerald-100 hover:bg-emerald-400/25"
-              : "inline-flex min-h-11 items-center px-2 py-2 text-xs text-slate-400 underline hover:text-white"
+              ? "inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-md border border-emerald-400/35 bg-emerald-400/10 px-3 py-2 text-xs font-medium text-emerald-100 transition-colors hover:border-emerald-400/60 hover:bg-emerald-400/20 focus-visible:outline-2 focus-visible:outline-emerald-300"
+              : "inline-flex min-h-9 items-center text-xs text-slate-400 underline decoration-white/20 underline-offset-4 hover:text-white"
           }
         >
           {tr(s.label)}
         </a>
       ))}
-      <p className="w-full text-xs text-slate-400">
-        {stores[0]?.product
-          ? tr("Track page · same version not verified")
-          : tr("Search only · availability not verified")}
-      </p>
     </div>
   );
 }
@@ -135,7 +135,12 @@ export default function ResultsTable({
     );
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      <p className="text-xs leading-relaxed text-slate-400">
+        {tr(
+          "Store links open a search or track page. Check availability and version before buying.",
+        )}
+      </p>
       <div className="md:hidden space-y-2">
         {rows.length === 0 ? (
           <div className="rounded-lg border border-white/15 bg-white/5 p-4 text-sm text-slate-300 text-center">
@@ -158,119 +163,139 @@ export default function ResultsTable({
       <div className="hidden md:block">
         <table className="w-full table-fixed text-sm">
           <colgroup>
-            <col className="w-[34%]" />
-            <col className="w-[25%]" />
-            <col className="w-[9%]" />
-            <col className="w-[20%]" />
-            <col className="w-[12%]" />
+            <col className="w-[45%]" />
+            <col className="w-[15%]" />
+            <col className="w-[26%]" />
+            <col className="w-[14%]" />
           </colgroup>
-          <thead className="border-b border-white/15 text-left text-xs font-semibold uppercase text-slate-400">
+          <thead className="border-b border-white/15 text-left text-[11px] font-medium uppercase tracking-wider text-slate-500">
             <tr>
-              <th scope="col" className="px-3 py-2">
-                {tr("Track")}
-              </th>
-              <th scope="col" className="px-3 py-2">
-                {tr("Artist / album")}
-              </th>
-              <th scope="col" className="px-3 py-2">
-                {tr("Status")}
-              </th>
-              <th scope="col" className="px-3 py-2">
-                {tr("Store")}
-              </th>
-              <th scope="col" className="px-3 py-2">
-                {tr("Save")}
-              </th>
+              {["Track", "Status", "Store", "Save"].map((label) => (
+                <th key={label} scope="col" className="px-3 py-3">
+                  {tr(label)}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/10">
-            {rows.map((t, i) => {
-              const primary = getPrimaryBuyLink(t);
-              const isOwned = effectiveOwned(t) === true;
-              const canQueue = effectiveOwned(t) === false && Boolean(primary);
-              const isQueued =
-                queuedTrackIds?.has(getBuyQueueItemId(t)) ?? false;
-
-              return (
-                <tr key={`${t?.isrc ?? ""}-${i}`} className="hover:bg-white/5">
-                  <td className="px-3 py-3 align-middle">
-                    <div className="min-w-0">
-                      <TrackTitle track={t} />
-                      <MatchDetails
-                        track={t}
-                        onReviewDecision={onReviewDecision}
-                        reviewReady={reviewReady}
-                      />
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 align-middle">
-                    <div className="min-w-0">
-                      <div className="truncate text-white/70">
-                        {t?.artist ?? ""}
-                      </div>
-                      {t?.album ? (
-                        <div className="truncate text-white/40">{t.album}</div>
-                      ) : null}
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 align-middle text-white/60">
-                    {isOwned ? (
-                      <span className="truncate rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
-                        {tr(libraryMatchLabel(t))}
-                      </span>
-                    ) : (
-                      <span
-                        title={
-                          t.owned == null
-                            ? tr(libraryMatchExplanation(t))
-                            : undefined
-                        }
-                        className="text-xs text-slate-300"
-                      >
-                        {tr(libraryMatchLabel(t))}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 align-middle">
-                    {isOwned ? null : primary ? (
-                      <StoreLinksInline track={t} />
-                    ) : (
-                      <span className="text-sm text-slate-400">
-                        {tr("Not found")}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 align-middle">
-                    {isOwned ? null : canQueue ? (
-                      <button
-                        type="button"
-                        disabled={isQueued}
-                        onClick={() => {
-                          if (primary) onAddToBuyQueue?.(t, primary);
-                        }}
-                        className="min-h-9 whitespace-nowrap rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-slate-100 hover:bg-white/10 disabled:text-slate-400"
-                      >
-                        {isQueued ? tr("Saved") : tr("Buy Later")}
-                      </button>
-                    ) : (
-                      <span className="text-sm text-slate-400">
-                        {t.owned == null ? (
-                          <span title={tr(libraryMatchExplanation(t))}>
-                            {tr("Review needed")}
-                          </span>
-                        ) : (
-                          tr("Unavailable")
-                        )}
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+          <tbody>
+            {rows.map((track, i) => (
+              <DesktopTrackRow
+                key={`${track?.isrc ?? ""}-${i}`}
+                track={track}
+                queuedTrackIds={queuedTrackIds}
+                onAddToBuyQueue={onAddToBuyQueue}
+                onReviewDecision={onReviewDecision}
+                reviewReady={reviewReady}
+              />
+            ))}
           </tbody>
         </table>
       </div>
     </div>
+  );
+}
+
+function DesktopTrackRow({
+  track,
+  queuedTrackIds,
+  onAddToBuyQueue,
+  onReviewDecision,
+  reviewReady,
+}: {
+  track: PlaylistRow;
+} & Pick<
+  Props,
+  "queuedTrackIds" | "onAddToBuyQueue" | "onReviewDecision" | "reviewReady"
+>) {
+  const { t: tr } = useI18n();
+  const [expanded, setExpanded] = useState(false);
+  const detailsId = useId();
+  const primary = getPrimaryBuyLink(track);
+  const owned = effectiveOwned(track);
+  const isQueued = queuedTrackIds?.has(getBuyQueueItemId(track)) ?? false;
+  return (
+    <>
+      <tr className="group border-b border-white/10 transition-colors hover:bg-white/[0.025]">
+        <td className="px-3 py-4 align-middle">
+          <div className="min-w-0">
+            <TrackTitle track={track} />
+          </div>
+          <div
+            className="mt-0.5 truncate text-xs text-slate-300"
+            title={track.artist}
+          >
+            {track.artist}
+          </div>
+          {track.album && (
+            <div
+              className="mt-0.5 truncate text-xs text-slate-500"
+              title={track.album}
+            >
+              {track.album}
+            </div>
+          )}
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={detailsId}
+            onClick={() => setExpanded(!expanded)}
+            className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-[11px] text-slate-400 hover:text-white focus-visible:outline-2 focus-visible:outline-emerald-300"
+          >
+            <span aria-hidden="true">{expanded ? "−" : "+"}</span>
+            {tr("Matching details")}
+            {track.changeStatus && track.changeStatus !== "unchanged"
+              ? ` · ${tr(track.changeStatus)}`
+              : ""}
+          </button>
+        </td>
+        <td className="px-3 py-4 align-middle">
+          <span
+            title={tr(libraryMatchExplanation(track))}
+            className={`inline-block rounded-full border px-2 py-1 text-[11px] leading-snug ${owned === true ? "border-emerald-400/20 bg-emerald-400/5 text-emerald-200" : owned === false ? "border-white/10 bg-white/5 text-slate-300" : "border-amber-400/20 bg-amber-400/5 text-amber-200"}`}
+          >
+            {tr(libraryMatchLabel(track))}
+          </span>
+        </td>
+        <td className="px-3 py-4 align-middle">
+          {owned === true ? null : primary ? (
+            <StoreLinksInline track={track} />
+          ) : (
+            <span className="text-xs text-slate-400">{tr("Not found")}</span>
+          )}
+        </td>
+        <td className="px-3 py-4 align-middle">
+          {owned === true ? null : owned === false && primary ? (
+            <button
+              type="button"
+              disabled={isQueued}
+              onClick={() => onAddToBuyQueue?.(track, primary)}
+              className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-md border border-white/15 px-3 py-2 text-xs text-slate-200 transition-colors hover:bg-white/5 disabled:border-transparent disabled:text-slate-500"
+            >
+              {isQueued ? `✓ ${tr("Saved")}` : tr("Buy Later")}
+            </button>
+          ) : (
+            <span
+              className="text-xs text-slate-500"
+              title={tr(libraryMatchExplanation(track))}
+            >
+              {tr(owned == null ? "Review needed" : "Unavailable")}
+            </span>
+          )}
+        </td>
+      </tr>
+      <tr hidden={!expanded} id={detailsId}>
+        <td
+          colSpan={4}
+          className="border-b border-white/10 bg-white/[0.025] px-5 py-5 text-xs text-slate-300"
+        >
+          <MatchEvidence
+            track={track}
+            onReviewDecision={onReviewDecision}
+            reviewReady={reviewReady}
+          />
+        </td>
+      </tr>
+    </>
   );
 }
 
@@ -364,15 +389,36 @@ function MatchDetails({
 }) {
   const { t: tr } = useI18n();
 
-  const candidate = track.libraryMatch;
   return (
     <details className="mt-2 text-xs text-slate-300">
       <summary className="cursor-pointer">
         {tr("Matching details")}
-        {track.changeStatus && track.changeStatus !== tr("unchanged")
+        {track.changeStatus && track.changeStatus !== "unchanged"
           ? ` · ${tr(track.changeStatus)}`
           : ""}
       </summary>
+      <MatchEvidence
+        track={track}
+        onReviewDecision={onReviewDecision}
+        reviewReady={reviewReady}
+      />
+    </details>
+  );
+}
+
+function MatchEvidence({
+  track,
+  onReviewDecision,
+  reviewReady,
+}: {
+  track: PlaylistRow;
+  onReviewDecision?: ReviewHandler;
+  reviewReady?: boolean;
+}) {
+  const { t: tr } = useI18n();
+  const candidate = track.libraryMatch;
+  return (
+    <div className="space-y-3">
       <p className="mt-1">{tr(libraryMatchExplanation(track))}</p>
       {track.reviewDecision && (
         <p>
@@ -410,6 +456,6 @@ function MatchDetails({
         </div>
       )}
       <RecordingComparison track={track} />
-    </details>
+    </div>
   );
 }
