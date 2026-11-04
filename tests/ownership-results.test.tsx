@@ -117,7 +117,9 @@ it("shows export scope and candidate evidence without claiming global ownership"
       ]}
     />,
   );
-  expect(html).toContain("Song (Other Remix)");
+  const rendered = document.createElement("div");
+  rendered.innerHTML = html;
+  expect(rendered.textContent).toContain("Song (Other Remix)");
   expect(html).toContain("Needs review");
   expect(html).toContain("Matching details");
 });

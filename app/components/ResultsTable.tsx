@@ -1,16 +1,15 @@
 "use client";
 
 import React from "react";
-import type { PlaylistRow, StoreLinks } from "../../lib/types";
-import { withBeatportAid } from "../../lib/affiliates/beatport";
+import type { PlaylistRow } from "../../lib/types";
+import { purchaseLinks } from "@/lib/domain/purchaseLinks";
+import RecordingComparison from "./RecordingComparison";
 import {
   effectiveOwned,
   libraryMatchLabel,
   libraryMatchExplanation,
 } from "@/lib/domain/libraryMatch";
 import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
-
-const BEATPORT_A_AID = process.env.NEXT_PUBLIC_BEATPORT_A_AID;
 
 type ReviewAction = "owned" | "different_version" | null;
 type ReviewHandler = (track: PlaylistRow, action: ReviewAction) => void;
@@ -27,63 +26,6 @@ type Props = {
     buyLink: { name: string; url: string },
   ) => void;
 };
-
-function purchaseLinks(
-  track: PlaylistRow,
-): Array<{ name: string; url: string }> {
-  const stores = track.stores ?? ({} as StoreLinks);
-  const links: Array<{ name: string; url: string }> = [];
-  const beatport =
-    withBeatportAid(stores.beatport ?? "", BEATPORT_A_AID) ||
-    beatportSearchUrl(track);
-  if (beatport) links.push({ name: "Beatport", url: beatport });
-
-  const bandcamp = stores.bandcamp || bandcampSearchUrl(track);
-  if (bandcamp) links.push({ name: "Bandcamp", url: bandcamp });
-
-  return links;
-}
-
-function beatportSearchUrl(track: PlaylistRow): string {
-  const isrc = (track as { isrc?: string }).isrc ?? "";
-  const artist = track.artist ?? "";
-  const title = track.title ?? "";
-
-  // ISRC があれば最優先（最もブレが少ない）
-  const q = (isrc || `${artist} ${title}` || title || artist).trim();
-  if (!q) return "";
-
-  try {
-    const u = new URL("https://beatport.com");
-    u.hostname = "beatport.com";
-    u.pathname = "/search";
-    u.searchParams.set("q", q);
-    // 可能なら tracks に寄せる（Beatport側で無視されても害なし）
-    u.searchParams.set("type", "tracks");
-    return withBeatportAid(u.toString(), BEATPORT_A_AID);
-  } catch {
-    return "";
-  }
-}
-
-function bandcampSearchUrl(track: PlaylistRow): string {
-  const artist = track.artist ?? "";
-  const title = track.title ?? "";
-  const q = (`${artist} ${title}`.trim() || title || artist).trim();
-  if (!q) return "";
-
-  try {
-    const u = new URL("https://bandcamp.com");
-    u.hostname = "bandcamp.com";
-    u.pathname = "/search";
-    u.searchParams.set("q", q);
-    // track検索に寄せる（Bandcamp側で無視されても害なし）
-    u.searchParams.set("item_type", "t");
-    return u.toString();
-  } catch {
-    return "";
-  }
-}
 
 function youtubeTopicUrl(track: { title?: string; artist?: string }) {
   const q = [track.artist, track.title, "topic"].filter(Boolean).join(" ");
@@ -114,11 +56,20 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
           href={s.url}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex min-h-9 items-center gap-1 whitespace-nowrap rounded-md border border-white/15 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/15"
+          className={
+            s.name === "Beatport"
+              ? "inline-flex min-h-11 items-center rounded-md border border-emerald-400/50 bg-emerald-400/15 px-3 py-2 text-sm text-emerald-100 hover:bg-emerald-400/25"
+              : "inline-flex min-h-11 items-center px-2 py-2 text-xs text-slate-400 underline hover:text-white"
+          }
         >
-          {s.name}
+          {s.label}
         </a>
       ))}
+      <p className="w-full text-xs text-slate-400">
+        {stores[0]?.product
+          ? "Track page · same version not verified"
+          : "Search only · availability not verified"}
+      </p>
     </div>
   );
 }
@@ -444,12 +395,7 @@ function MatchDetails({
           )}
         </div>
       )}
-      {candidate?.matched_title && (
-        <p className="mt-1 break-words">
-          XML candidate: {candidate.matched_title} —{" "}
-          {candidate.matched_artist || "Artist not supplied"}
-        </p>
-      )}
+      <RecordingComparison track={track} />
     </details>
   );
 }

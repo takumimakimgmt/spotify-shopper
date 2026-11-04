@@ -1,12 +1,13 @@
 "use client";
 
-import { withBeatportAid } from "@/lib/affiliates/beatport";
+import { purchaseLinks } from "@/lib/domain/purchaseLinks";
 
 type QuietBuyLaterItem = {
   id: string;
   title: string;
   artist: string;
   album?: string;
+  isrc?: string;
   spotifyUrl?: string;
   buyUrl: string;
   buyStore: string;
@@ -20,10 +21,6 @@ function queueListenUrl(item: QuietBuyLaterItem): string {
   const proto = ["ht", "tps", ":", "//"].join("");
   const host = ["music", "youtube", "com"].join(".");
   return `${proto}${host}/search?q=${encodeURIComponent(q)}`;
-}
-
-function isQueuePurchaseStore(store: string): boolean {
-  return store === "Beatport" || store === "Bandcamp";
 }
 
 function QueueTitle({ item }: { item: QuietBuyLaterItem }) {
@@ -109,16 +106,30 @@ export default function BuyLaterPanel({
               </div>
               <div className="hidden px-3 py-4 md:block" />
               <div className="flex flex-wrap gap-2 px-3 py-4">
-                {isQueuePurchaseStore(item.buyStore) ? (
+                {purchaseLinks({
+                  ...item,
+                  stores:
+                    item.buyStore === "Beatport"
+                      ? { beatport: item.buyUrl }
+                      : { bandcamp: item.buyUrl },
+                }).map((link) => (
                   <a
-                    href={withBeatportAid(item.buyUrl)}
+                    key={link.name}
+                    href={link.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="whitespace-nowrap rounded border border-slate-800 px-2 py-1 text-slate-400 hover:border-slate-700 hover:text-slate-100"
+                    className={
+                      link.name === "Beatport"
+                        ? "min-h-11 rounded border border-emerald-400/40 bg-emerald-400/10 px-3 py-2 text-emerald-100"
+                        : "min-h-11 px-2 py-2 text-xs underline"
+                    }
                   >
-                    {item.buyStore}
+                    {link.label}
                   </a>
-                ) : null}
+                ))}
+                <p className="w-full text-xs">
+                  Availability / same version unverified.
+                </p>
               </div>
               <div className="px-3 py-4">
                 <button

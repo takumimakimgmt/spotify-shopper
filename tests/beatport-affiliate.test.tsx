@@ -61,7 +61,7 @@ describe("Beatport attribution", () => {
     );
     const links = Array.from(container.querySelectorAll("a"));
     const beatport = new URL(
-      links.find((a) => a.textContent === "Beatport")!.href,
+      links.find((a) => a.textContent === "Search Beatport")!.href,
     );
     expect(beatport.hostname).toBe("beatport.com");
     expect(beatport.searchParams.get("q")).toBe("Artist A & B");
@@ -84,7 +84,7 @@ describe("Beatport attribution", () => {
     );
     const direct = new URL(
       Array.from(container.querySelectorAll("a")).find(
-        (a) => a.textContent === "Beatport",
+        (a) => a.textContent === "Beatport track page",
       )!.href,
     );
     expect(direct.pathname).toBe("/track/example/123");

@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import type { PlaylistRow, ResultState } from "@/lib/types";
 import { buildPurchasePlan } from "@/lib/domain/purchasePlan";
-import { withBeatportAid } from "@/lib/affiliates/beatport";
+import { purchaseLinks } from "@/lib/domain/purchaseLinks";
 import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
 
 export default function PurchasePlan({
@@ -28,10 +28,8 @@ export default function PurchasePlan({
         <summary className="cursor-pointer">Review combined candidates</summary>
         <ul className="mt-3 space-y-4">
           {entries.map((entry) => {
-            const url = withBeatportAid(
-              entry.track.stores.beatport ||
-                `https://beatport.com/search?q=${encodeURIComponent(entry.track.isrc || `${entry.track.artist} ${entry.track.title}`)}&type=tracks`,
-            );
+            const link = purchaseLinks(entry.track)[0];
+            const url = link.url;
             const queued = queuedIds.has(getBuyQueueItemId(entry.track));
             return (
               <li key={entry.id} className="border-t border-white/10 pt-3">
@@ -42,9 +40,12 @@ export default function PurchasePlan({
                   Appears in {entry.playlists.length} playlists:{" "}
                   {entry.playlists.map((p) => p.title).join(", ")}
                 </p>
+                <p className="text-xs text-slate-400">
+                  Search availability and product versions are unverified.
+                </p>
                 <div className="mt-2 flex gap-4">
                   <a href={url} target="_blank" rel="noreferrer">
-                    Search Beatport
+                    {link.label}
                   </a>
                   <button
                     disabled={queued}
