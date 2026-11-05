@@ -1,5 +1,5 @@
 import type { PlaylistRow } from "../types";
-import { withBeatportAid } from "../affiliates/beatport";
+import { beatportDestination, withBeatportAid } from "../affiliates/beatport";
 
 export type PurchaseLink = {
   name: string;
@@ -16,10 +16,12 @@ export function safeStoreUrl(
   raw: string | undefined,
   store: "Beatport" | "Bandcamp",
 ): string | null {
+  if (store === "Beatport")
+    return beatportDestination(raw || "")?.toString() ?? null;
   try {
     const url = new URL(raw || "");
     const host = url.hostname.toLowerCase();
-    const domain = store === "Beatport" ? "beatport.com" : "bandcamp.com";
+    const domain = "bandcamp.com";
     if (
       url.protocol !== "https:" ||
       url.username ||
