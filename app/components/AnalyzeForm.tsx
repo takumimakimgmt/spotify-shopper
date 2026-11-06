@@ -221,12 +221,12 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               {tr("(needed to match your library)")}
             </span>
           </div>
-          <p id="xml-help" className="text-sm leading-6 text-slate-400">
+          <p id="xml-help" className="text-sm leading-6 text-slate-300">
             {tr(
               "Choose your rekordbox XML to check your library (up to 50 MB). Without XML, you can still browse the playlist and search Beatport.",
             )}
           </p>
-          <ul className="list-disc space-y-1 pl-5 text-xs leading-5 text-slate-400">
+          <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-slate-300">
             <li>
               {tr(
                 "The export contains your whole collection, not just one playlist.",
@@ -243,6 +243,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               )}
             </li>
           </ul>
+          <p className="rounded-lg border border-amber-300/20 bg-amber-300/5 p-3 text-sm leading-6 text-amber-100">
+            {tr(
+              "Not in your XML means no match in this export, not proof that you do not own the track. Tracks added after export and streaming-only tracks may be absent.",
+            )}
+          </p>
           <details className="text-sm text-slate-300">
             <summary className="cursor-pointer rounded-sm py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
               {tr("How to export your rekordbox XML")}

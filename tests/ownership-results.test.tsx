@@ -96,7 +96,7 @@ it("shows export scope and candidate evidence without claiming global ownership"
       unknownCount={0}
     />,
   );
-  expect(summary).toContain("Check the rest of your library before buying");
+  expect(summary).toContain("not proof that you do not own");
   expect(summary).toContain("123 library entries");
   expect(summary).toContain("partial.xml");
   const html = renderToStaticMarkup(

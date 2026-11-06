@@ -118,3 +118,23 @@ test("distinguishes Spotify configuration, permission, expiry and rate limit fai
     }
   }
 });
+
+test("explains legacy Spotify rejections and proxy validation without leaking details", () => {
+  const error = normalizeApiError({
+    status: 400,
+    data: {
+      detail: {
+        error:
+          "Request could not be processed. Check your input and try again.",
+        used_source: "spotify",
+        meta: {},
+      },
+    },
+  });
+  expect(error.message).toContain("availability or access may be restricted");
+  expect(normalizeApiError(error)).toEqual(error);
+  expect(
+    normalizeApiError({ status: 400, data: { error: "invalid_input" } })
+      .message,
+  ).toContain("Spotify playlist URL");
+});
