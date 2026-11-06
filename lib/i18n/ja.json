@@ -295,5 +295,12 @@
   "“Search Beatport” opens search results in a new tab. “Beatport track page” opens a product page. Check the version and availability before buying.": "「Beatportで検索」は検索結果を、「Beatportの曲ページ」は商品ページを新しいタブで開きます。購入前に、バージョンと販売状況を確認してください。",
   "Spotify denied access. Official or personalized playlists may be restricted. If connected, check that your account is allowed to use this app and that you own or collaborate on this playlist.": "Spotify側で取得が拒否されました。公式・個人向けプレイリストなどは取得が制限される場合があります。接続済みの場合は、アプリの利用許可と、プレイリストの所有・共同編集権限も確認してください。",
   "Spotify could not find this playlist or you do not have permission to read it. Public playlists, including official playlists, may also be restricted by Spotify.": "プレイリストが見つからないか、読み取る権限がありません。公式プレイリストなど、公開されていてもSpotify側で取得が制限される場合があります。",
-  "Spotify could not load this playlist. Its availability or access may be restricted. Try another playlist or check your Spotify connection.": "Spotifyからこのプレイリストを取得できませんでした。公開状況やアクセスの制限が考えられます。別のプレイリストを試すか、Spotifyの接続状況を確認してください。"
+  "Spotify could not load this playlist. Its availability or access may be restricted. Try another playlist or check your Spotify connection.": "Spotifyからこのプレイリストを取得できませんでした。公開状況やアクセスの制限が考えられます。別のプレイリストを試すか、Spotifyの接続状況を確認してください。",
+  "Try a personal copy": "自分のプレイリストで試す",
+  "Official playlist unavailable? Try a personal copy.": "公式プレイリストが取得できない場合は、自分のプレイリストで試せます",
+  "Open the original playlist in Spotify on your computer.": "PCのSpotifyで、元のプレイリストを開きます。",
+  "Add its tracks to a new playlist you create in your own account.": "自分のアカウントで新しいプレイリストを作り、元のプレイリストの曲を追加します。",
+  "Connect Spotify here with that same account, then paste the new playlist URL and try again.": "このサイトで同じアカウントのSpotifyに接続し、新しいプレイリストのURLを貼り付けて、もう一度お試しください。",
+  "This requires Spotify connection and an account approved for this app. If Connect Spotify is not shown, this option is not enabled yet.": "Spotifyへの接続と、このアプリの利用許可が必要です。「Spotifyに接続」が表示されない場合、この方法はまだ利用できません。",
+  "The copy will not automatically follow updates to the original playlist. Spotify access restrictions still apply.": "コピーしたプレイリストは、元のプレイリストが更新されても自動では変わりません。Spotify側の取得制限が適用される場合もあります。"
 }

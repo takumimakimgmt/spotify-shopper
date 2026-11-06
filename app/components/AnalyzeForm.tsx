@@ -119,6 +119,13 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   const hasRetryableError = Boolean(
     props.errorText && !visiblePlaylistError && !visibleXmlError,
   );
+  const showPlaylistCopyHelp =
+    hasRetryableError &&
+    [
+      "SPOTIFY_ACCESS_RESTRICTED",
+      "SPOTIFY_PLAYLIST_UNAVAILABLE",
+      "SPOTIFY_PLAYLIST_RESTRICTED",
+    ].includes(props.errorMeta?.error_code ?? "");
   const replaceXml = () => {
     fileInputRef.current?.click();
   };
@@ -412,8 +419,49 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   ? JSON.stringify(props.errorMeta, null, 2)
                   : undefined
               }
-              hint={tr("If this looks stale, try a hard refresh.")}
+              hint={
+                showPlaylistCopyHelp
+                  ? undefined
+                  : tr("If this looks stale, try a hard refresh.")
+              }
             />
+            {showPlaylistCopyHelp && (
+              <aside
+                className="mt-3 space-y-3 rounded-lg border border-white/20 bg-white/5 p-4 text-sm leading-6 text-slate-200"
+                aria-label={tr("Try a personal copy")}
+              >
+                <h3 className="font-semibold text-white">
+                  {tr("Official playlist unavailable? Try a personal copy.")}
+                </h3>
+                <ol className="list-decimal space-y-2 pl-5">
+                  <li>
+                    {tr(
+                      "Open the original playlist in Spotify on your computer.",
+                    )}
+                  </li>
+                  <li>
+                    {tr(
+                      "Add its tracks to a new playlist you create in your own account.",
+                    )}
+                  </li>
+                  <li>
+                    {tr(
+                      "Connect Spotify here with that same account, then paste the new playlist URL and try again.",
+                    )}
+                  </li>
+                </ol>
+                <p>
+                  {tr(
+                    "This requires Spotify connection and an account approved for this app. If Connect Spotify is not shown, this option is not enabled yet.",
+                  )}
+                </p>
+                <p className="text-slate-300">
+                  {tr(
+                    "The copy will not automatically follow updates to the original playlist. Spotify access restrictions still apply.",
+                  )}
+                </p>
+              </aside>
+            )}
             <div className="pt-2">
               <button
                 type="button"
