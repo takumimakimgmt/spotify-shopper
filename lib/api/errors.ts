@@ -64,6 +64,18 @@ function isNetworkLike(message?: string): boolean {
 }
 
 function isRetryable(status?: number, code?: string, rawMessage?: string) {
+  if (
+    code &&
+    [
+      "SPOTIFY_AUTH_CONFIG",
+      "SPOTIFY_LOGIN_EXPIRED",
+      "SPOTIFY_PLAYLIST_UNAVAILABLE",
+      "SPOTIFY_ACCESS_RESTRICTED",
+      "SPOTIFY_PLAYLIST_RESTRICTED",
+      "SPOTIFY_PLAYLIST_TOO_LARGE",
+    ].includes(code)
+  )
+    return false;
   if (status && (status === 429 || status >= 500)) return true;
   if (code && /timeout|network|unavailable|rate/i.test(code)) return true;
   return (
@@ -89,6 +101,28 @@ function userMessage(input: {
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+
+  const spotifyMessages: Record<string, string> = {
+    SPOTIFY_AUTH_CONFIG:
+      "Spotify connection is not configured correctly. Please contact the site owner.",
+    SPOTIFY_LOGIN_EXPIRED:
+      "Your Spotify connection expired. Connect Spotify again.",
+    SPOTIFY_PLAYLIST_RESTRICTED:
+      "Spotify could not read this playlist. Spotify may restrict access to editorial or other playlists you do not own. Try a playlist you own or collaborate on.",
+    SPOTIFY_ACCESS_RESTRICTED:
+      "Spotify denied access. Check that your account is allowed to use this app and that you own or collaborate on this playlist.",
+    SPOTIFY_PLAYLIST_UNAVAILABLE:
+      "Spotify could not find this playlist or you do not have permission to read it.",
+    SPOTIFY_RATE_LIMITED:
+      "Spotify is receiving too many requests. Wait before trying again.",
+    SPOTIFY_UNAVAILABLE:
+      "Spotify is temporarily unavailable. Please try again later.",
+    SPOTIFY_PLAYLIST_TOO_LARGE:
+      "This playlist exceeds the 10,000-track limit. Split it into smaller playlists.",
+  };
+  const spotifyCode = input.code?.toUpperCase();
+  if (spotifyCode && spotifyMessages[spotifyCode])
+    return spotifyMessages[spotifyCode];
 
   if (input.abortLike || /timeout|timed out|aborted/.test(raw)) {
     return "Analysis took too long. Please try again.";

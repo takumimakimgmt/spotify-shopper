@@ -75,13 +75,13 @@ describe("AnalyzeForm", () => {
     });
   }
 
-  test("renders the ordered playlist and Rekordbox steps", async () => {
+  test("renders the ordered playlist and rekordbox steps", async () => {
     await renderForm(makeProps());
 
     expect(container.textContent).toContain("1.Spotify playlist");
-    expect(container.textContent).toContain("2.Rekordbox library");
+    expect(container.textContent).toContain("2.rekordbox library");
     expect(container.textContent).toContain("No XML selected");
-    expect(container.textContent).toContain("Upload Rekordbox XML");
+    expect(container.textContent).toContain("Upload rekordbox XML");
     expect(textButton(container, "Upload")).toBeDefined();
     const submit = textButton(container, "Browse playlist");
     expect(
@@ -89,7 +89,9 @@ describe("AnalyzeForm", () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(container.textContent).toContain("up to 50 MB");
-    expect(container.textContent).toContain("recordings stay unchecked");
+    expect(container.textContent).toContain(
+      "Without XML, you can still browse",
+    );
     expect(
       Array.from(container.querySelectorAll("button")).some(
         (button) => button.textContent === "Remove",
@@ -111,7 +113,7 @@ describe("AnalyzeForm", () => {
 
     await renderForm(props);
 
-    expect(container.textContent).toContain("Rekordbox library");
+    expect(container.textContent).toContain("rekordbox library");
     expect(container.textContent).toContain("collection.xml");
     expect(container.textContent).toContain("2 KB");
     expect(textButton(container, "Match against XML").type).toBe("submit");

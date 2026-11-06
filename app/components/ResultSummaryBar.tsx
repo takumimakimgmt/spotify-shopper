@@ -40,7 +40,7 @@ export default function ResultSummaryBar({
         {ownedCount}
         {tr(" matched or confirmed · ")}
         {unknownCount}
-        {tr(" not confirmed")}
+        {tr(" need review")}
       </div>
       {result.tracks?.some((t) => t.reviewDecision) && (
         <p>
@@ -58,7 +58,7 @@ export default function ResultSummaryBar({
       )}
       {result.changeSummary?.hasPrevious && (
         <p>
-          {tr("Since last analysis: ")}
+          {tr("Since the last check: ")}
           {result.changeSummary.added}
           {tr(" added ·")} {result.changeSummary.changed}
           {tr(" changed ·")} {result.changeSummary.rechecked}
@@ -71,7 +71,7 @@ export default function ResultSummaryBar({
         <div className="space-y-1">
           <p>
             {tr(
-              "Results cover only the selected XML. Not in XML does not mean you do not own the track.",
+              "These tracks were not found in this XML. Check the rest of your library before buying.",
             )}
           </p>
           <details>

@@ -51,7 +51,7 @@ export function ResultsControls({
             className="px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-slate-200 text-xs font-medium hover:bg-slate-600"
             type="button"
           >
-            {tr("Re-analyze with XML")}
+            {tr("Check again with XML")}
           </button>
           <button
             onClick={onExportCsv}

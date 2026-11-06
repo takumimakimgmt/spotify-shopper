@@ -99,3 +99,22 @@ describe("normalizeApiError", () => {
     });
   });
 });
+
+test("distinguishes Spotify configuration, permission, expiry and rate limit failures", () => {
+  const cases = [
+    [400, "SPOTIFY_PLAYLIST_RESTRICTED", "editorial", false],
+    [503, "SPOTIFY_AUTH_CONFIG", "not configured correctly", false],
+    [401, "SPOTIFY_LOGIN_EXPIRED", "expired", false],
+    [403, "SPOTIFY_ACCESS_RESTRICTED", "account is allowed", false],
+    [404, "SPOTIFY_PLAYLIST_UNAVAILABLE", "permission", false],
+    [429, "SPOTIFY_RATE_LIMITED", "too many requests", true],
+    [502, "SPOTIFY_UNAVAILABLE", "temporarily unavailable", true],
+  ] as const;
+  for (const [status, code, text, retryable] of cases) {
+    for (const data of [{ code }, { detail: { code } }]) {
+      const error = normalizeApiError({ status, data });
+      expect(error.message).toContain(text);
+      expect(error.retryable).toBe(retryable);
+    }
+  }
+});

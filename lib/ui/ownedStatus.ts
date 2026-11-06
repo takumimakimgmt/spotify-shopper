@@ -24,7 +24,7 @@ export function getOwnedStatusStyle(
   if (owned == null) {
     return {
       borderClass: "border-l-4 border-amber-500",
-      tooltip: "Not confirmed: Check the recording with XML",
+      tooltip: "Needs review: Check the recording with XML",
     };
   }
   return {

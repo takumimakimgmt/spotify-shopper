@@ -69,7 +69,7 @@ describe("three-state ownership results", () => {
         unknownCount={2}
       />,
     );
-    expect(html).toContain("2 not confirmed");
+    expect(html).toContain("2 need review");
     expect(html).toContain("excluded from Not in XML");
   });
 });
@@ -96,7 +96,7 @@ it("shows export scope and candidate evidence without claiming global ownership"
       unknownCount={0}
     />,
   );
-  expect(summary).toContain("does not mean you do not own");
+  expect(summary).toContain("Check the rest of your library before buying");
   expect(summary).toContain("123 library entries");
   expect(summary).toContain("partial.xml");
   const html = renderToStaticMarkup(

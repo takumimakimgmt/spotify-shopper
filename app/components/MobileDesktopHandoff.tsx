@@ -55,7 +55,7 @@ export default function MobileDesktopHandoff({
 
   const emailHref = desktopLink
     ? `mailto:?subject=${encodeURIComponent("Playlist Shopper desktop link")}&body=${encodeURIComponent(
-        `Open this on your computer:\n${desktopLink}\n\nThen export your Rekordbox XML and upload it to check which tracks are missing.`,
+        `Open this on your computer:\n${desktopLink}\n\nThen export your rekordbox XML and upload it to check which tracks are missing.`,
       )}`
     : undefined;
 
@@ -69,7 +69,7 @@ export default function MobileDesktopHandoff({
         </h2>
         <p className="text-sm leading-6 text-slate-200">
           {tr(
-            "Send this playlist to the computer that has your Rekordbox XML.",
+            "Send this playlist to the computer that has your rekordbox XML.",
           )}
         </p>
       </div>

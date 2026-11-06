@@ -21,9 +21,9 @@ export const metadata: Metadata = {
     type: "website",
     url: "/",
     siteName: "Playlist Shopper",
-    title: "Playlist Shopper — Spotify, Rekordbox & Beatport",
+    title: "Playlist Shopper — Spotify, rekordbox & Beatport",
     description:
-      "Compare Spotify playlists with your Rekordbox XML library and find purchase candidates on Beatport. Library matching stays on your device.",
+      "Compare Spotify playlists with your rekordbox XML library and find tracks to buy on Beatport. Library matching stays on your device.",
     locale: "en_US",
     alternateLocale: ["ja_JP"],
     images: [
@@ -37,9 +37,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Playlist Shopper — Spotify, Rekordbox & Beatport",
+    title: "Playlist Shopper — Spotify, rekordbox & Beatport",
     description:
-      "Compare your Spotify playlists with Rekordbox and find purchase candidates on Beatport.",
+      "Compare your Spotify playlists with rekordbox and find tracks to buy on Beatport.",
     images: [
       {
         url: "/og/playlist-shopper-v2.jpg",
@@ -47,9 +47,9 @@ export const metadata: Metadata = {
       },
     ],
   },
-  title: "Playlist Shopper — Spotify, Rekordbox & Beatport",
+  title: "Playlist Shopper — Spotify, rekordbox & Beatport",
   description:
-    "Compare Spotify playlists with your Rekordbox XML library and find purchase candidates on Beatport. Library matching stays on your device.",
+    "Compare Spotify playlists with your rekordbox XML library and find tracks to buy on Beatport. Library matching stays on your device.",
 };
 
 export default function RootLayout({

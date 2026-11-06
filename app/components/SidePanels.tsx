@@ -84,7 +84,10 @@ export function SidePanels({
                   {currentResult.rekordboxMeta.updatedAtISO
                     ? new Date(
                         currentResult.rekordboxMeta.updatedAtISO,
-                      ).toLocaleString(language === "ja" ? "ja-JP" : "en-US")
+                      ).toLocaleString(language === "ja" ? "ja-JP" : "en-GB", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })
                     : "—"}
                 </span>
               </div>
@@ -106,7 +109,7 @@ export function SidePanels({
               ref={uploadRef}
               type="file"
               accept=".xml"
-              aria-label={tr("Re-analyze all tracks with XML")}
+              aria-label={tr("Check all tracks against XML")}
               className="hidden"
               onChange={handleXmlChange}
             />
@@ -118,7 +121,7 @@ export function SidePanels({
             >
               {matching
                 ? tr("Checking all tracks…")
-                : tr("Re-analyze all tracks with XML")}
+                : tr("Check all tracks against XML")}
             </button>
             <button
               type="button"
