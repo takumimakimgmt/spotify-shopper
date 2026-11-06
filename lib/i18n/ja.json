@@ -299,8 +299,9 @@
   "Try a personal copy": "自分のプレイリストで試す",
   "Official playlist unavailable? Try a personal copy.": "公式プレイリストが取得できない場合は、自分のプレイリストで試せます",
   "Open the original playlist in Spotify on your computer.": "PCのSpotifyで、元のプレイリストを開きます。",
-  "Add its tracks to a new playlist you create in your own account.": "自分のアカウントで新しいプレイリストを作り、元のプレイリストの曲を追加します。",
-  "Connect Spotify here with that same account, then paste the new playlist URL and try again.": "このサイトで同じアカウントのSpotifyに接続し、新しいプレイリストのURLを貼り付けて、もう一度お試しください。",
-  "This requires Spotify connection and an account approved for this app. If Connect Spotify is not shown, this option is not enabled yet.": "Spotifyへの接続と、このアプリの利用許可が必要です。「Spotifyに接続」が表示されない場合、この方法はまだ利用できません。",
-  "The copy will not automatically follow updates to the original playlist. Spotify access restrictions still apply.": "コピーしたプレイリストは、元のプレイリストが更新されても自動では変わりません。Spotify側の取得制限が適用される場合もあります。"
+  "The copy will not automatically follow updates to the original playlist. Spotify access restrictions still apply.": "コピーしたプレイリストは、元のプレイリストが更新されても自動では変わりません。Spotify側の取得制限が適用される場合もあります。",
+  "Add its tracks to a new public playlist you create in your own account.": "自分のアカウントで新しい公開プレイリストを作り、元のプレイリストの曲を追加します。",
+  "Paste the new public playlist URL here and try again. No Spotify login is needed.": "新しい公開プレイリストのURLを貼り付けて、もう一度お試しください。Spotifyへのログインは不要です。",
+  "Public playlists can be checked without Spotify login. Private playlists and some Spotify-generated playlists cannot be read this way.": "公開プレイリストはSpotifyへのログインなしで使えます。非公開プレイリストや、Spotifyが生成した一部のプレイリストは、この方法では取得できません。",
+  "Use a public Spotify playlist. No Spotify login needed.": "公開Spotifyプレイリストに対応。Spotifyへのログインは不要です。"
 }

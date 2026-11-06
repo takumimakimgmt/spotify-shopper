@@ -441,18 +441,18 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   </li>
                   <li>
                     {tr(
-                      "Add its tracks to a new playlist you create in your own account.",
+                      "Add its tracks to a new public playlist you create in your own account.",
                     )}
                   </li>
                   <li>
                     {tr(
-                      "Connect Spotify here with that same account, then paste the new playlist URL and try again.",
+                      "Paste the new public playlist URL here and try again. No Spotify login is needed.",
                     )}
                   </li>
                 </ol>
                 <p>
                   {tr(
-                    "This requires Spotify connection and an account approved for this app. If Connect Spotify is not shown, this option is not enabled yet.",
+                    "Public playlists can be checked without Spotify login. Private playlists and some Spotify-generated playlists cannot be read this way.",
                   )}
                 </p>
                 <p className="text-slate-300">

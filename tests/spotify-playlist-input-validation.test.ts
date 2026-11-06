@@ -202,7 +202,13 @@ describe("proxyToBackend playlist validation", () => {
     );
     const req = new NextRequest(
       `https://app.example/api/playlist?url=${playlistId}`,
-      { headers: { "x-backend-token": "attacker-token" } },
+      {
+        headers: {
+          "x-backend-token": "attacker-token",
+          cookie: "ps_spotify_session=synthetic",
+          authorization: "Bearer synthetic",
+        },
+      },
     );
 
     const res = await proxyToBackend(req, "playlist");
@@ -210,5 +216,7 @@ describe("proxyToBackend playlist validation", () => {
     expect(res.status).toBe(200);
     const forwardedHeaders = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
     expect(forwardedHeaders.get("x-backend-token")).toBe("server-token");
+    expect(forwardedHeaders.has("cookie")).toBe(false);
+    expect(forwardedHeaders.has("authorization")).toBe(false);
   });
 });

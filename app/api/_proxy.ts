@@ -588,6 +588,9 @@ export async function proxyToBackend(req: NextRequest, endpoint: string) {
   }
   upstreamHeaders.set("x-request-id", requestId);
   upstreamHeaders.delete("expect");
+  // Browser cookies and user authorization belong to Vercel, not the public backend.
+  upstreamHeaders.delete("cookie");
+  upstreamHeaders.delete("authorization");
   upstreamHeaders.delete("x-backend-token");
   upstreamHeaders.set("accept-encoding", "identity");
   const backendProxyToken = process.env.BACKEND_PROXY_TOKEN?.trim();
