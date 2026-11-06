@@ -361,6 +361,11 @@ function PageInner() {
                       "Compare a Spotify playlist with your rekordbox XML, then find tracks to buy on Beatport.",
                     )}
                   </p>
+                  <p className="text-sm font-medium text-emerald-200">
+                    {tr(
+                      "Use a public Spotify playlist. No Spotify login needed.",
+                    )}
+                  </p>
                   <div className="space-y-2 rounded-lg border border-white/15 bg-white/[0.03] p-4 text-sm leading-6 text-slate-200">
                     <p>
                       {tr(

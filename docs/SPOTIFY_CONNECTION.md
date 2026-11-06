@@ -2,7 +2,13 @@
 
 Reviewed 2026-11-05. App identity: Playlist Shopper, identified by the owner after comparing dashboard settings. Production Client ID values have not been independently read.
 
-## Public access limits
+## Public playlist path (verified 2026-11-06)
+
+The existing production Client Credentials path successfully returned 57 and 5 tracks for two public playlists with no visitor login, cookies, or allowlist entry. The five-user limit below applies to authenticated user connections; it must not be described as a five-visitor limit on the existing anonymous path. This observation does not prove access to every public playlist or future provider availability, and does not itself establish commercial approval.
+
+GET /api/playlist tries the public backend first, including for visitors with Spotify cookies. Only a classified access failure plus a valid visitor session can invoke the private user path. Public proxy requests strip visitor cookies and Authorization. Rate limits or configuration errors do not trigger credential fallback.
+
+## Authenticated user access limits
 
 Official sources:
 

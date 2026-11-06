@@ -291,13 +291,13 @@ describe("AnalyzeForm", () => {
         }),
       );
       expect(container.querySelector("aside")?.textContent).toContain(
-        "new playlist you create",
+        "new public playlist you create",
       );
       expect(container.querySelector("aside")?.textContent).toContain(
-        "same account",
+        "No Spotify login is needed",
       );
       expect(container.querySelector("aside")?.textContent).toContain(
-        "not enabled yet",
+        "Private playlists",
       );
       expect(container.querySelector("aside")?.textContent).toContain(
         "not automatically follow updates",
