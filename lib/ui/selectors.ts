@@ -81,5 +81,5 @@ export const categoryLabels: Record<"all" | TrackCategory, string> = {
   all: "All",
   checkout: "Not in XML",
   owned: "Matched / confirmed",
-  unknown: "Not confirmed",
+  unknown: "Needs review",
 };

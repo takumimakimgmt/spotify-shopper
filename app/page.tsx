@@ -59,6 +59,7 @@ const SidePanels = dynamic(
 );
 import ErrorAlert from "./components/ErrorAlert";
 import { z } from "zod";
+import SpotifyConnection from "./components/SpotifyConnection";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import PurchasePlan from "./components/PurchasePlan";
 import BuyLaterPanel from "./components/BuyLaterPanel";
@@ -127,6 +128,24 @@ function PageInner() {
 
   const reviews = useReviewDecisions();
   const vm = useViewModel(analyzer, filters, activeTab, reviews.decisions);
+  // Default once per playlist / matching revision, preserving manual filter choices.
+  const defaultFilterKey = vm.currentResult
+    ? JSON.stringify([
+        activeTab,
+        !!vm.currentResult.hasRekordboxData,
+        vm.currentResult.meta?.rekordbox?.matched_at,
+        vm.currentResult.meta?.rekordbox?.library_sha256,
+      ])
+    : null;
+  const lastDefaultFilter = useRef<string | null>(null);
+  const { setCategoryFilter } = filters;
+  const hasMatchedXml = !!vm.currentResult?.hasRekordboxData;
+  useEffect(() => {
+    if (!defaultFilterKey || lastDefaultFilter.current === defaultFilterKey)
+      return;
+    lastDefaultFilter.current = defaultFilterKey;
+    setCategoryFilter(hasMatchedXml ? "toBuy" : "all");
+  }, [defaultFilterKey, hasMatchedXml, setCategoryFilter]);
   const TAB_QS_KEY = "t";
   // URL(ASCII)を短く安全にクエリ化（base64url）
   const encodeTab = (url: string) =>
@@ -243,6 +262,7 @@ function PageInner() {
       />
       <div className="mx-auto max-w-[1024px] px-4 py-12 sm:px-6 lg:py-14">
         <LanguageSwitcher />
+        <SpotifyConnection />
         <div className="space-y-10">
           {reviews.warning && (
             <div role="alert" className="space-y-2 text-sm text-amber-200">
@@ -311,7 +331,7 @@ function PageInner() {
                     Playlist Shopper
                   </p>
                   <p className="mt-1 truncate text-sm text-slate-400">
-                    {vm.currentResult?.title ?? tr("Analysis results")}
+                    {vm.currentResult?.title ?? tr("Playlist results")}
                   </p>
                 </div>
                 <button
@@ -324,7 +344,7 @@ function PageInner() {
                   }}
                   className="shrink-0 rounded-md border border-white/20 px-3 py-2 text-sm font-medium text-slate-100 hover:border-white/40 hover:bg-white/5"
                 >
-                  {tr("New analysis")}
+                  {tr("Check another playlist")}
                 </button>
               </div>
             ) : (
@@ -334,11 +354,11 @@ function PageInner() {
                     Playlist Shopper
                   </p>
                   <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                    {tr("Find missing tracks in Rekordbox.")}
+                    {tr("Buy new tracks. Skip the duplicates.")}
                   </h1>
                   <p className="max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
                     {tr(
-                      "Check a Spotify playlist against your library and build a focused purchase list.",
+                      "Compare a Spotify playlist with your rekordbox XML, then find tracks to buy on Beatport.",
                     )}
                   </p>
                 </header>
@@ -393,7 +413,7 @@ function PageInner() {
             className="scroll-mt-4 space-y-4 outline-none"
             id="results-top"
             tabIndex={-1}
-            aria-label={tr("Analysis results")}
+            aria-label={tr("Playlist results")}
           >
             <PurchasePlan
               results={vm.multiResults}
@@ -500,7 +520,7 @@ function PageInner() {
                         onClick={() => filters.setCategoryFilter("unknown")}
                         className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${filters.categoryFilter === "unknown" ? "bg-amber-400/10 text-amber-100" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"}`}
                       >
-                        {tr("Not confirmed")}
+                        {tr("Needs review")}
                       </button>
                     </div>
                   </div>
@@ -610,12 +630,12 @@ function PageInner() {
                 />
                 <details className="text-xs text-slate-500">
                   <summary className="cursor-pointer list-none font-medium text-slate-400">
-                    {tr("Workspace utilities")}
+                    {tr("Saved data and tools")}
                   </summary>
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p>
                       {tr(
-                        "Analysis snapshots are saved on this device. Clearing history keeps your saved XML, Buy Later list and confirmations.",
+                        "Playlist results are saved on this device. Clearing history keeps your saved XML, Buy Later list and confirmations.",
                       )}
                     </p>
                     <button

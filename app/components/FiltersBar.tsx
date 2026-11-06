@@ -32,7 +32,7 @@ export function FiltersBar({
             </div>
             <div className="text-xs text-slate-400">
               {tr(
-                "Review unverified tracks with XML before adding purchase candidates.",
+                "Check these tracks against your XML before adding them to your shopping list.",
               )}
             </div>
           </div>
@@ -62,7 +62,7 @@ export function FiltersBar({
             aria-pressed={categoryFilter === "unknown"}
             className="flex-1 px-3 py-1 rounded border text-xs"
           >
-            {tr("Not confirmed")}
+            {tr("Needs review")}
           </button>
         </div>
       </div>

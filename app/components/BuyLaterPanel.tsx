@@ -69,7 +69,7 @@ export default function BuyLaterPanel({
       <div className="flex items-baseline justify-between gap-3">
         <div>
           <div className="font-semibold text-slate-200">{tr("Buy Later")}</div>
-          <div className="mt-2">{tr("Saved purchase candidates.")}</div>
+          <div className="mt-2">{tr("Save tracks to buy later.")}</div>
         </div>
         <button
           type="button"

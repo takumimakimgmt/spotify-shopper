@@ -63,7 +63,10 @@ function formatBytes(bytes: number) {
 function formatDateTime(value: string | number, language: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString(language === "ja" ? "ja-JP" : "en-US");
+  return date.toLocaleString(language === "ja" ? "ja-JP" : "en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 export default function AnalyzeForm(props: AnalyzeFormProps) {
@@ -160,7 +163,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           ref={fileInputRef}
           type="file"
           accept=".xml"
-          aria-label={tr("Upload Rekordbox XML")}
+          aria-label={tr("Upload rekordbox XML")}
           aria-describedby="xml-help"
           onChange={props.handleRekordboxChange}
           className="hidden"
@@ -213,22 +216,39 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             className="text-sm font-semibold text-slate-200"
           >
             <span className="mr-2 text-slate-400">2.</span>
-            {tr("Rekordbox library")}{" "}
+            {tr("rekordbox library")}{" "}
             <span className="font-normal text-slate-400">
               {tr("(needed to match your library)")}
             </span>
           </div>
           <p id="xml-help" className="text-sm leading-6 text-slate-400">
             {tr(
-              "Choose a Rekordbox XML export, up to 50 MB. Without XML, you can browse tracks and store links, but recordings stay unchecked. Matching only covers tracks included in your selected XML export. Matching runs on this device. Your XML and library metadata are not sent to the server.",
+              "Choose your rekordbox XML to check your library (up to 50 MB). Without XML, you can still browse the playlist and search Beatport.",
             )}
           </p>
+          <ul className="list-disc space-y-1 pl-5 text-xs leading-5 text-slate-400">
+            <li>
+              {tr(
+                "The export contains your whole collection, not just one playlist.",
+              )}
+            </li>
+            <li>
+              {tr(
+                "Only tracks included in the XML can be checked. Streaming-only tracks may be absent.",
+              )}
+            </li>
+            <li>
+              {tr(
+                "Files over 50 MB cannot be opened here. Matching runs in your browser; your XML stays on this device.",
+              )}
+            </li>
+          </ul>
           <details className="text-sm text-slate-300">
             <summary className="cursor-pointer rounded-sm py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-              {tr("How to export your Rekordbox XML")}
+              {tr("How to export your rekordbox XML")}
             </summary>
             <ol className="mt-2 list-decimal space-y-1 pl-5 leading-6 text-slate-400">
-              <li>{tr("Open Rekordbox on your computer.")}</li>
+              <li>{tr("Open rekordbox on your computer.")}</li>
               <li>
                 {tr(
                   "In the File menu, choose “Export Collection in xml format”.",
@@ -242,7 +262,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               rel="noreferrer"
               className="mt-2 inline-block underline underline-offset-4 hover:text-white"
             >
-              {tr("Rekordbox export help")}
+              {tr("rekordbox export help")}
             </a>
           </details>
           <div className="flex flex-col gap-3 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
@@ -266,7 +286,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                     })
                   : props.rekordboxDate
                     ? tr("updated {date}", { date: props.rekordboxDate })
-                    : tr("Upload Rekordbox XML")}
+                    : tr("Upload rekordbox XML")}
               </span>
             </div>
 

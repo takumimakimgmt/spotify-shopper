@@ -167,7 +167,7 @@ describe("persistent purchase queue and XML actions", () => {
       );
     });
     const button = Array.from(container.querySelectorAll("button")).find(
-      (b) => b.textContent === "Re-analyze all tracks with XML",
+      (b) => b.textContent === "Check all tracks against XML",
     )!;
     expect(button.type).toBe("button");
     expect(button.tabIndex).toBe(0);

@@ -435,7 +435,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     expect(postPlaylistWithRekordboxUploadMock).not.toHaveBeenCalled();
   });
 
-  test("uses uploaded Rekordbox XML on the main Analyze action", async () => {
+  test("uses uploaded rekordbox XML on the main Analyze action", async () => {
     const file = new File(["<DJ_PLAYLISTS />"], "collection.xml", {
       type: "text/xml",
       lastModified: Date.UTC(2026, 5, 12, 0, 0, 0),
@@ -504,7 +504,7 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
     );
   });
 
-  test("loads saved Rekordbox XML and uses it on the main Analyze action", async () => {
+  test("loads saved rekordbox XML and uses it on the main Analyze action", async () => {
     const file = new File(["<DJ_PLAYLISTS />"], "saved-collection.xml", {
       type: "text/xml",
       lastModified: Date.UTC(2026, 5, 11, 0, 0, 0),

@@ -21,7 +21,7 @@ export default function ProcessingBar({
   if (!analyzing && !reanalyzing) return null;
   const isFetchingSpotify = phaseLabel === "Fetching Spotify...";
   const label =
-    phaseLabel ?? (analyzing ? "Analyzing playlist..." : "Matching Rekordbox");
+    phaseLabel ?? (analyzing ? "Analyzing playlist..." : "Matching rekordbox");
   const pct = Math.max(progress, 5);
   return (
     <div className="space-y-2">
