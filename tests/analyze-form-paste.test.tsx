@@ -278,4 +278,45 @@ describe("AnalyzeForm", () => {
     expect(textButton(container, "Match against XML").disabled).toBe(true);
     expect(container.textContent).toContain("max 50MB");
   });
+  test("shows personal-copy instructions for Spotify access failures, without promising access", async () => {
+    for (const error_code of [
+      "SPOTIFY_ACCESS_RESTRICTED",
+      "SPOTIFY_PLAYLIST_UNAVAILABLE",
+      "SPOTIFY_PLAYLIST_RESTRICTED",
+    ]) {
+      await renderForm(
+        makeProps({
+          errorText: "Spotify access is restricted.",
+          errorMeta: { error_code },
+        }),
+      );
+      expect(container.querySelector("aside")?.textContent).toContain(
+        "new playlist you create",
+      );
+      expect(container.querySelector("aside")?.textContent).toContain(
+        "same account",
+      );
+      expect(container.querySelector("aside")?.textContent).toContain(
+        "not enabled yet",
+      );
+      expect(container.querySelector("aside")?.textContent).toContain(
+        "not automatically follow updates",
+      );
+      expect(container.textContent).not.toContain("If this looks stale");
+    }
+  });
+  test("does not suggest copying for unrelated failures or successful input", async () => {
+    for (const error_code of [
+      "SPOTIFY_RATE_LIMITED",
+      "SPOTIFY_AUTH_CONFIG",
+      "XML_PARSE_FAILED",
+    ]) {
+      await renderForm(
+        makeProps({ errorText: "Other failure", errorMeta: { error_code } }),
+      );
+      expect(container.querySelector("aside")).toBeNull();
+    }
+    await renderForm(makeProps());
+    expect(container.querySelector("aside")).toBeNull();
+  });
 });
