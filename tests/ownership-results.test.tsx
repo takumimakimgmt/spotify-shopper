@@ -69,7 +69,8 @@ describe("three-state ownership results", () => {
         unknownCount={2}
       />,
     );
-    expect(html).toContain("2 need review");
+    expect(html).toContain("Needs review</dt>");
+    expect(html).toContain(">2</dd>");
     expect(html).toContain("excluded from Not in XML");
   });
 });

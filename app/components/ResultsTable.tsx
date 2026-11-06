@@ -1,7 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n/LanguageProvider";
-import React, { useId, useState } from "react";
+import React, { useId, useState, useRef } from "react";
 import type { PlaylistRow } from "../../lib/types";
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
 import RecordingComparison from "./RecordingComparison";
@@ -15,6 +15,7 @@ import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
 type ReviewAction = "owned" | "different_version" | null;
 type ReviewHandler = (track: PlaylistRow, action: ReviewAction) => void;
 type Props = {
+  paginationKey?: string;
   onReviewDecision?: ReviewHandler;
   reviewReady?: boolean;
   currentResult: unknown | null;
@@ -84,7 +85,7 @@ function TrackTitle({ track }: { track: PlaylistRow }) {
 
   if (!href) {
     return (
-      <div className="truncate text-sm font-medium text-white">{title}</div>
+      <div className="truncate text-base font-medium text-white">{title}</div>
     );
   }
 
@@ -94,7 +95,7 @@ function TrackTitle({ track }: { track: PlaylistRow }) {
       target="_blank"
       rel="noreferrer"
       aria-label={tr("Listen to {title}", { title })}
-      className="inline-block max-w-full truncate border-b border-white/25 pb-0.5 text-sm font-medium text-white hover:border-white/60 hover:text-white focus-visible:rounded-sm focus-visible:border-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+      className="inline-block max-w-full truncate border-b border-white/25 pb-0.5 text-base font-medium text-white hover:border-white/60 hover:text-white focus-visible:rounded-sm focus-visible:border-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
     >
       {title}
     </a>
@@ -102,6 +103,7 @@ function TrackTitle({ track }: { track: PlaylistRow }) {
 }
 
 export default function ResultsTable({
+  paginationKey,
   currentResult,
   displayedTracks,
   queuedTrackIds,
@@ -113,8 +115,89 @@ export default function ResultsTable({
 }: Props) {
   const { t: tr } = useI18n();
 
-  if (!currentResult) return null;
   const rows = Array.isArray(displayedTracks) ? displayedTracks : [];
+  const viewKey = paginationKey ?? displayedTracks;
+  const [pageSize, setPageSize] = useState(20);
+  const [selection, setSelection] = useState<{ key: unknown; page: number }>({
+    key: viewKey,
+    page: 1,
+  });
+  // Commit the new view identity so clearing a search cannot revive an old page.
+  if (selection.key !== viewKey) setSelection({ key: viewKey, page: 1 });
+  const listRef = useRef<HTMLDivElement>(null);
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const page =
+    selection.key === viewKey ? Math.min(selection.page, pageCount) : 1;
+  const start = (page - 1) * pageSize;
+  const pageRows = rows.slice(start, start + pageSize);
+  const goToPage = (next: number) => {
+    setSelection({
+      key: viewKey,
+      page: Math.max(1, Math.min(next, pageCount)),
+    });
+    listRef.current?.focus({ preventScroll: true });
+    listRef.current?.scrollIntoView?.({ block: "start" });
+  };
+  const pageControls = (position: string) => (
+    <nav
+      aria-label={tr(position)}
+      className="flex flex-wrap items-center justify-between gap-3 py-2 text-sm text-slate-300"
+    >
+      <p role="status">
+        {tr("{start}–{end} of {total} tracks", {
+          start: start + 1,
+          end: Math.min(start + pageSize, rows.length),
+          total: rows.length,
+        })}
+      </p>
+      <div className="flex items-center gap-2">
+        {position === "Track pages" && (
+          <label className="mr-2 flex items-center gap-2 text-xs text-slate-400">
+            {tr("Per page")}
+            <select
+              aria-label={tr("Tracks per page")}
+              value={pageSize}
+              onChange={(event) => {
+                setPageSize(Number(event.target.value));
+                setSelection({ key: viewKey, page: 1 });
+              }}
+              className="min-h-10 rounded-md border border-white/15 bg-[#080c10] px-2 text-sm text-slate-200"
+            >
+              {[20, 50, 100].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {pageCount > 1 && (
+          <>
+            <button
+              type="button"
+              disabled={page === 1}
+              onClick={() => goToPage(page - 1)}
+              className="min-h-10 rounded-md border border-white/15 px-3 hover:bg-white/5 disabled:opacity-30"
+            >
+              {tr("Previous")}
+            </button>
+            <span className="px-1 tabular-nums">
+              {tr("{page} / {pages}", { page, pages: pageCount })}
+            </span>
+            <button
+              type="button"
+              disabled={page === pageCount}
+              onClick={() => goToPage(page + 1)}
+              className="min-h-10 rounded-md border border-white/15 px-3 hover:bg-white/5 disabled:opacity-30"
+            >
+              {tr("Next")}
+            </button>
+          </>
+        )}
+      </div>
+    </nav>
+  );
+  if (!currentResult) return null;
   if (rows.length === 0)
     return (
       <div
@@ -135,21 +218,31 @@ export default function ResultsTable({
     );
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm leading-6 text-slate-300">
-        {tr(
-          "“Search Beatport” opens search results in a new tab. “Beatport track page” opens a product page. Check the version and availability before buying.",
-        )}
-      </p>
+    <div
+      ref={listRef}
+      tabIndex={-1}
+      className="scroll-mt-44 space-y-3 outline-none"
+    >
+      {pageControls("Track pages")}
+      <details className="text-xs leading-5 text-slate-400">
+        <summary className="cursor-pointer hover:text-slate-200">
+          {tr("About store links")}
+        </summary>
+        <p className="mt-2 text-sm leading-6 text-slate-300">
+          {tr(
+            "“Search Beatport” opens search results in a new tab. “Beatport track page” opens a product page. Check the version and availability before buying.",
+          )}
+        </p>
+      </details>
       <div className="md:hidden space-y-2">
         {rows.length === 0 ? (
           <div className="rounded-lg border border-white/15 bg-white/5 p-4 text-sm text-slate-300 text-center">
             {tr("No tracks")}
           </div>
         ) : (
-          rows.map((t, i) => (
+          pageRows.map((t, i) => (
             <TrackCard
-              key={`${t?.isrc ?? ""}-${i}`}
+              key={`${getBuyQueueItemId(t)}-${i}`}
               track={t}
               queuedTrackIds={queuedTrackIds}
               onAddToBuyQueue={onAddToBuyQueue}
@@ -178,7 +271,7 @@ export default function ResultsTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((track, i) => (
+            {pageRows.map((track, i) => (
               <DesktopTrackRow
                 key={`${getBuyQueueItemId(track)}-${i}`}
                 track={track}
@@ -191,6 +284,7 @@ export default function ResultsTable({
           </tbody>
         </table>
       </div>
+      {pageCount > 1 && pageControls("Track pages bottom")}
     </div>
   );
 }

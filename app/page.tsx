@@ -260,8 +260,19 @@ function PageInner() {
       <PlaylistQueryPrefill
         setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
       />
-      <div className="mx-auto max-w-[1024px] px-4 py-12 sm:px-6 lg:py-14">
-        <LanguageSwitcher />
+      <div
+        className={`mx-auto max-w-[1200px] px-4 sm:px-6 ${vm.multiResults.length ? "py-5 lg:py-6" : "py-12 lg:py-14"}`}
+      >
+        {vm.multiResults.length ? (
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <p className="text-sm font-semibold tracking-wide text-slate-300">
+              Playlist Shopper
+            </p>
+            <LanguageSwitcher compact />
+          </div>
+        ) : (
+          <LanguageSwitcher />
+        )}
         <SpotifyConnection />
         <div className="space-y-10">
           {reviews.warning && (
@@ -327,10 +338,7 @@ function PageInner() {
             {selection.formCollapsed && vm.multiResults.length > 0 ? (
               <div className="flex items-center justify-between gap-4 border-b border-white/15 pb-5">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white">
-                    Playlist Shopper
-                  </p>
-                  <p className="mt-1 truncate text-sm text-slate-400">
+                  <p className="truncate text-lg font-semibold text-white">
                     {vm.currentResult?.title ?? tr("Playlist results")}
                   </p>
                 </div>
@@ -485,7 +493,7 @@ function PageInner() {
                     actions.downloadCsv(vm.displayedTracks, vm.currentResult)
                   }
                 />
-                <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-4 xl:flex-row xl:items-end xl:justify-between">
+                <div className="sticky top-0 z-20 flex flex-col gap-3 rounded-xl border border-white/15 bg-[#080c10]/95 p-4 shadow-lg backdrop-blur-md lg:flex-row lg:items-end lg:justify-between">
                   <div>
                     <div className="mb-2 text-sm font-medium text-slate-300">
                       {tr("Show tracks")}
@@ -589,6 +597,13 @@ function PageInner() {
                   </label>
                 )}
                 <ResultsTable
+                  paginationKey={JSON.stringify([
+                    selection.activeTab,
+                    filters.categoryFilter,
+                    filters.searchQuery,
+                    filters.sortKey,
+                    filters.changesOnly,
+                  ])}
                   emptyMessage={
                     filters.changesOnly &&
                     vm.currentResult.changeSummary?.hasPrevious &&

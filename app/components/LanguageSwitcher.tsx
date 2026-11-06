@@ -1,12 +1,24 @@
 "use client";
 import { useI18n } from "@/lib/i18n/LanguageProvider";
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({
+  compact = false,
+}: {
+  compact?: boolean;
+}) {
   const { language, setLanguage, t, warning } = useI18n();
   return (
-    <div className="mb-6 flex flex-col items-end gap-2">
-      <span className="text-sm font-medium text-slate-200">
-        Language / 言語
-      </span>
+    <div
+      className={
+        compact
+          ? "flex flex-col items-end gap-1"
+          : "mb-6 flex flex-col items-end gap-2"
+      }
+    >
+      {!compact && (
+        <span className="text-sm font-medium text-slate-200">
+          Language / 言語
+        </span>
+      )}
       <div
         role="group"
         aria-label="Language / 言語"
