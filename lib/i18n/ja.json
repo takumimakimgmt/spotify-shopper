@@ -303,5 +303,17 @@
   "Add its tracks to a new public playlist you create in your own account.": "自分のアカウントで新しい公開プレイリストを作り、元のプレイリストの曲を追加します。",
   "Paste the new public playlist URL here and try again. No Spotify login is needed.": "新しい公開プレイリストのURLを貼り付けて、もう一度お試しください。Spotifyへのログインは不要です。",
   "Public playlists can be checked without Spotify login. Private playlists and some Spotify-generated playlists cannot be read this way.": "公開プレイリストはSpotifyへのログインなしで使えます。非公開プレイリストや、Spotifyが生成した一部のプレイリストは、この方法では取得できません。",
-  "Use a public Spotify playlist. No Spotify login needed.": "公開Spotifyプレイリストに対応。Spotifyへのログインは不要です。"
+  "Use a public Spotify playlist. No Spotify login needed.": "公開Spotifyプレイリストに対応。Spotifyへのログインは不要です。",
+  "Tracks": "全曲",
+  "About these results": "照合内容と注意点",
+  "About store links": "購入先リンクについて",
+  "Not in XML means absent from this export. Check your library before buying.": "「XMLになし」は、このファイルに見つからなかった曲です。購入前に所持状況をご確認ください。",
+  "Add your rekordbox XML to check which tracks you already have.": "rekordboxのXMLを選ぶと、持っている曲を確認できます。",
+  "{start}–{end} of {total} tracks": "{total}曲中 {start}〜{end}曲",
+  "Per page": "表示件数",
+  "Tracks per page": "1ページの表示件数",
+  "Previous": "前へ",
+  "Next": "次へ",
+  "Track pages": "曲一覧のページ切り替え",
+  "Track pages bottom": "曲一覧のページ切り替え（下部）"
 }
