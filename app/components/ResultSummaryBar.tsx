@@ -69,9 +69,9 @@ export default function ResultSummaryBar({
       )}
       {result.hasRekordboxData && (
         <div className="space-y-1">
-          <p>
+          <p className="rounded-lg border border-amber-300/20 bg-amber-300/5 p-3 leading-6 text-amber-100">
             {tr(
-              "These tracks were not found in this XML. Check the rest of your library before buying.",
+              "Not in your XML means no match in this export, not proof that you do not own the track. Tracks added after export and streaming-only tracks may be absent.",
             )}
           </p>
           <details>

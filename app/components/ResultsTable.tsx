@@ -136,9 +136,9 @@ export default function ResultsTable({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs leading-relaxed text-slate-400">
+      <p className="text-sm leading-6 text-slate-300">
         {tr(
-          "Store links open a search or track page. Check availability and version before buying.",
+          "“Search Beatport” opens search results in a new tab. “Beatport track page” opens a product page. Check the version and availability before buying.",
         )}
       </p>
       <div className="md:hidden space-y-2">

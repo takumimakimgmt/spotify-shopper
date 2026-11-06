@@ -7,7 +7,7 @@ export function libraryMatchLabel(track: PlaylistRow): string {
     return "Different version (you)";
   if (track.owned === true) return "Matches XML";
   if (track.owned === false) return "Not in XML";
-  return track.ownedReason ? "Needs review" : "Not checked";
+  return track.ownedReason ? "Needs review" : "Not checked — add XML";
 }
 
 export function libraryMatchExplanation(track: PlaylistRow): string {

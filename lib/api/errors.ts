@@ -110,9 +110,9 @@ function userMessage(input: {
     SPOTIFY_PLAYLIST_RESTRICTED:
       "Spotify could not read this playlist. Spotify may restrict access to editorial or other playlists you do not own. Try a playlist you own or collaborate on.",
     SPOTIFY_ACCESS_RESTRICTED:
-      "Spotify denied access. Check that your account is allowed to use this app and that you own or collaborate on this playlist.",
+      "Spotify denied access. Official or personalized playlists may be restricted. If connected, check that your account is allowed to use this app and that you own or collaborate on this playlist.",
     SPOTIFY_PLAYLIST_UNAVAILABLE:
-      "Spotify could not find this playlist or you do not have permission to read it.",
+      "Spotify could not find this playlist or you do not have permission to read it. Public playlists, including official playlists, may also be restricted by Spotify.",
     SPOTIFY_RATE_LIMITED:
       "Spotify is receiving too many requests. Wait before trying again.",
     SPOTIFY_UNAVAILABLE:
@@ -139,6 +139,15 @@ function userMessage(input: {
   ) {
     return "Enter a Spotify playlist URL, URI, or ID.";
   }
+
+  if (input.status === 400 && input.code === "invalid_input")
+    return "Enter a Spotify playlist URL, URI, or ID.";
+  if (
+    input.status === 400 &&
+    isRecord(input.detail) &&
+    input.detail.used_source === "spotify"
+  )
+    return "Spotify could not load this playlist. Its availability or access may be restricted. Try another playlist or check your Spotify connection.";
 
   if (/xml|rekordbox|match_snapshot|matching/.test(raw)) {
     return "Could not analyze the Rekordbox XML. Please check the file and try again.";

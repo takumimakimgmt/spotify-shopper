@@ -4,6 +4,9 @@ export default function LanguageSwitcher() {
   const { language, setLanguage, t, warning } = useI18n();
   return (
     <div className="mb-6 flex flex-col items-end gap-2">
+      <span className="text-sm font-medium text-slate-200">
+        Language / 言語
+      </span>
       <div
         role="group"
         aria-label="Language / 言語"
@@ -21,7 +24,7 @@ export default function LanguageSwitcher() {
             lang={code}
             aria-pressed={language === code}
             onClick={() => setLanguage(code)}
-            className={`min-h-11 rounded-md px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${language === code ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"}`}
+            className={`min-h-11 rounded-md px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${language === code ? "bg-white/15 text-white" : "text-slate-200 hover:text-white"}`}
           >
             {label}
           </button>

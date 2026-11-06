@@ -23,7 +23,8 @@ describe("fetchJson", () => {
     await expect(
       fetchJson("/api/playlist", undefined, PlaylistResponseSchema),
     ).rejects.toMatchObject({
-      message: "Something went wrong. Please try again.",
+      message:
+        "Spotify could not load this playlist. Its availability or access may be restricted. Try another playlist or check your Spotify connection.",
       status: 400,
       detail: { error: "backend failed", used_source: "spotify" },
       retryable: false,

@@ -287,5 +287,13 @@
   "Only tracks included in the XML can be checked. Streaming-only tracks may be absent.": "照合できるのはXMLに入っている曲だけです。ストリーミングの曲などは含まれない場合があります。",
   "Files over 50 MB cannot be opened here. Matching runs in your browser; your XML stays on this device.": "50 MBを超えるファイルは使えません。照合はブラウザ内で行い、XMLはサーバーへ送りません。",
   "Reconnect Spotify": "Spotifyに再接続",
-  "Spotify could not read this playlist. Spotify may restrict access to editorial or other playlists you do not own. Try a playlist you own or collaborate on.": "このプレイリストを取得できませんでした。Spotify公式など、自分が所有・共同編集していないプレイリストは取得が制限される場合があります。自分のプレイリストでお試しください。"
+  "Spotify could not read this playlist. Spotify may restrict access to editorial or other playlists you do not own. Try a playlist you own or collaborate on.": "このプレイリストを取得できませんでした。Spotify公式など、自分が所有・共同編集していないプレイリストは取得が制限される場合があります。自分のプレイリストでお試しください。",
+  "Your rekordbox XML is a track list exported from rekordbox. Use it to check for tracks you already have before buying.": "rekordboxのXMLは、書き出した曲の一覧ファイルです。買う前に、すでに持っている曲がないか確認できます。",
+  "No XML handy? Browse the playlist and search Beatport now. Library status stays unchecked until you add XML.": "XMLがなくても、プレイリストの一覧とBeatportの検索は使えます。持っている曲との照合は、XMLを選んでから行います。",
+  "Not in your XML means no match in this export, not proof that you do not own the track. Tracks added after export and streaming-only tracks may be absent.": "「XMLになし」は、このファイルに見つからなかったという意味です。持っていないと断定するものではありません。書き出した後に追加した曲や、ストリーミングの曲などは含まれない場合があります。",
+  "Not checked — add XML": "未照合（XMLを選択してください）",
+  "“Search Beatport” opens search results in a new tab. “Beatport track page” opens a product page. Check the version and availability before buying.": "「Beatportで検索」は検索結果を、「Beatportの曲ページ」は商品ページを新しいタブで開きます。購入前に、バージョンと販売状況を確認してください。",
+  "Spotify denied access. Official or personalized playlists may be restricted. If connected, check that your account is allowed to use this app and that you own or collaborate on this playlist.": "Spotify側で取得が拒否されました。公式・個人向けプレイリストなどは取得が制限される場合があります。接続済みの場合は、アプリの利用許可と、プレイリストの所有・共同編集権限も確認してください。",
+  "Spotify could not find this playlist or you do not have permission to read it. Public playlists, including official playlists, may also be restricted by Spotify.": "プレイリストが見つからないか、読み取る権限がありません。公式プレイリストなど、公開されていてもSpotify側で取得が制限される場合があります。",
+  "Spotify could not load this playlist. Its availability or access may be restricted. Try another playlist or check your Spotify connection.": "Spotifyからこのプレイリストを取得できませんでした。公開状況やアクセスの制限が考えられます。別のプレイリストを試すか、Spotifyの接続状況を確認してください。"
 }

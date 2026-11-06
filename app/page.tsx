@@ -361,6 +361,18 @@ function PageInner() {
                       "Compare a Spotify playlist with your rekordbox XML, then find tracks to buy on Beatport.",
                     )}
                   </p>
+                  <div className="space-y-2 rounded-lg border border-white/15 bg-white/[0.03] p-4 text-sm leading-6 text-slate-200">
+                    <p>
+                      {tr(
+                        "Your rekordbox XML is a track list exported from rekordbox. Use it to check for tracks you already have before buying.",
+                      )}
+                    </p>
+                    <p>
+                      {tr(
+                        "No XML handy? Browse the playlist and search Beatport now. Library status stays unchecked until you add XML.",
+                      )}
+                    </p>
+                  </div>
                 </header>
                 <AnalyzeForm
                   playlistUrlInput={analyzer.playlistUrlInput}
