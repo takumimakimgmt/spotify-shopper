@@ -30,7 +30,10 @@ function QueueTitle({ item }: { item: QuietBuyLaterItem }) {
 
   if (!href) {
     return (
-      <div className="truncate text-sm font-medium text-slate-300">
+      <div
+        title={item.title}
+        className="line-clamp-2 break-words text-base font-medium text-slate-100"
+      >
         {item.title}
       </div>
     );
@@ -42,7 +45,8 @@ function QueueTitle({ item }: { item: QuietBuyLaterItem }) {
       target="_blank"
       rel="noreferrer"
       aria-label={tr("Listen to {title}", { title: item.title })}
-      className="inline-block max-w-full truncate border-b border-white/25 pb-0.5 text-sm font-medium text-slate-200 hover:border-white/60 hover:text-white focus-visible:rounded-sm focus-visible:border-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+      title={item.title}
+      className="line-clamp-2 break-words text-base font-medium text-slate-100 underline decoration-white/20 underline-offset-4 hover:text-white focus-visible:outline-2 focus-visible:outline-emerald-300"
     >
       {item.title}
     </a>
@@ -54,100 +58,101 @@ export default function BuyLaterPanel({
   onRemove,
   storageWarning,
   onRetrySave,
+  showHeading = true,
 }: {
   items: QuietBuyLaterItem[];
   onRemove: (id: string) => void;
   storageWarning?: string | null;
   onRetrySave?: () => void;
+  showHeading?: boolean;
 }) {
   const { t: tr } = useI18n();
-
   if (items.length === 0 && !storageWarning) return null;
-
   return (
-    <section className="border-t border-white/15 pt-6 text-sm text-slate-400">
-      <div className="flex items-baseline justify-between gap-3">
-        <div>
-          <div className="font-semibold text-slate-200">{tr("Buy Later")}</div>
-          <div className="mt-2">{tr("Save tracks to buy later.")}</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => items.forEach((item) => onRemove(item.id))}
-          className="text-slate-400 hover:text-slate-100"
-        >
-          {tr("Clear")}
-        </button>
-      </div>
-
+    <section className="text-sm text-slate-300">
+      {showHeading && (
+        <h2 className="text-lg font-semibold text-white">{tr("Buy Later")}</h2>
+      )}
       {storageWarning && (
-        <div role="alert" className="mt-3 text-amber-200">
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-amber-300/25 p-3 text-amber-200"
+        >
           <p>{tr(storageWarning)}</p>
           <button
             type="button"
             onClick={onRetrySave}
-            className="mt-2 rounded border border-white/20 px-3 py-2"
+            className="mt-2 min-h-10 rounded border border-white/20 px-3"
           >
             {tr("Retry storage")}
           </button>
         </div>
       )}
-      <div className="mt-6 border-b border-white/10">
-        <div className="divide-y divide-white/10">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="grid grid-cols-1 items-center rounded-lg border border-white/10 p-2 md:grid-cols-[minmax(0,34%)_minmax(0,25%)_9%_minmax(0,20%)_12%] md:rounded-none md:border-0 md:p-0"
-            >
-              <div className="min-w-0 px-3 py-4">
+      {items.length > 0 && (
+        <>
+          <p className="mb-4 text-xs leading-5 text-slate-400">
+            {tr("Availability / same version unverified.")}
+          </p>
+          <ul className="divide-y divide-white/10">
+            {items.map((item) => (
+              <li key={item.id} className="py-5 first:pt-0">
                 <QueueTitle item={item} />
-              </div>
-              <div className="min-w-0 px-3 py-4">
-                <div className="truncate text-slate-400">{item.artist}</div>
-                {item.album ? (
-                  <div className="truncate text-slate-500">{item.album}</div>
-                ) : null}
-              </div>
-              <div className="hidden px-3 py-4 md:block" />
-              <div className="flex flex-wrap gap-2 px-3 py-4">
-                {purchaseLinks({
-                  ...item,
-                  stores:
-                    item.buyStore === "Beatport"
-                      ? { beatport: item.buyUrl }
-                      : { bandcamp: item.buyUrl },
-                }).map((link) => (
-                  <a
-                    key={link.name}
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={
-                      link.name === "Beatport"
-                        ? "min-h-11 rounded border border-emerald-400/40 bg-emerald-400/10 px-3 py-2 text-emerald-100"
-                        : "min-h-11 px-2 py-2 text-xs underline"
-                    }
+                <p className="mt-1 text-sm text-slate-300">{item.artist}</p>
+                {item.album && item.album !== item.title && (
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {item.album}
+                  </p>
+                )}
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  {purchaseLinks({
+                    ...item,
+                    stores:
+                      item.buyStore === "Beatport"
+                        ? { beatport: item.buyUrl }
+                        : { bandcamp: item.buyUrl },
+                  }).map((link) => (
+                    <a
+                      key={link.name}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={
+                        link.name === "Beatport"
+                          ? "inline-flex min-h-10 items-center rounded-md border border-emerald-400/40 bg-emerald-400/10 px-3 text-sm font-medium text-emerald-100 hover:bg-emerald-400/20"
+                          : "inline-flex min-h-10 items-center text-xs text-slate-400 underline underline-offset-4 hover:text-white"
+                      }
+                    >
+                      {tr(link.label)}
+                    </a>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => onRemove(item.id)}
+                    aria-label={tr("Remove {title} from Buy Later", {
+                      title: item.title,
+                    })}
+                    className="ml-auto min-h-10 px-1 text-xs text-slate-400 hover:text-white"
                   >
-                    {tr(link.label)}
-                  </a>
-                ))}
-                <p className="w-full text-xs">
-                  {tr("Availability / same version unverified.")}
-                </p>
-              </div>
-              <div className="px-3 py-4">
-                <button
-                  type="button"
-                  onClick={() => onRemove(item.id)}
-                  className="whitespace-nowrap text-slate-400 hover:text-slate-300"
-                >
-                  {tr("Remove")}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+                    {tr("Remove")}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <details className="mt-5 border-t border-white/10 pt-4 text-xs text-slate-500">
+            <summary className="cursor-pointer">
+              {tr("Manage saved tracks")}
+            </summary>
+            <button
+              type="button"
+              onClick={() => items.forEach((item) => onRemove(item.id))}
+              className="mt-2 min-h-10 text-slate-300 hover:text-white"
+            >
+              {tr("Clear")}
+            </button>
+          </details>
+        </>
+      )}
     </section>
   );
 }

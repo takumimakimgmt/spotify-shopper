@@ -127,7 +127,7 @@ export function useBuyQueue() {
         setStorageWarning(
           "Buy Later is not ready. Retry loading saved tracks first.",
         );
-        return;
+        return false;
       }
       const nextItem: BuyQueueItem = {
         id: itemId(track),
@@ -145,6 +145,7 @@ export function useBuyQueue() {
         if (prev.some((item) => item.id === nextItem.id)) return prev;
         return [nextItem, ...prev];
       });
+      return true;
     },
     [restored],
   );
