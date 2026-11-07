@@ -40,7 +40,7 @@ import { useSelectionState } from "../lib/state/useSelectionState";
 import { useReviewDecisions } from "../lib/state/useReviewDecisions";
 import { useViewModel } from "../lib/state/useViewModel";
 import { useActions } from "../lib/state/useActions";
-import { useBuyQueue } from "../lib/state/useBuyQueue";
+import { getBuyQueueItemId, useBuyQueue } from "../lib/state/useBuyQueue";
 import { getOtherStores as _getOtherStores } from "../lib/playlist/stores";
 import AnalyzeForm from "./components/AnalyzeForm";
 import PlaylistQueryPrefill from "./components/PlaylistQueryPrefill";
@@ -62,7 +62,7 @@ import { z } from "zod";
 import SpotifyConnection from "./components/SpotifyConnection";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import PurchasePlan from "./components/PurchasePlan";
-import BuyLaterPanel from "./components/BuyLaterPanel";
+import BuyLaterDrawer from "./components/BuyLaterDrawer";
 // --- Gate-1 / FE-1: zod guard for query param boundary (tab) ---
 const TabQuerySchema = z.string().trim().min(1).max(64);
 
@@ -86,6 +86,37 @@ function PageInner() {
   const selection = useSelectionState(null, false);
   const { activeTab, setActiveTab } = selection;
   const buyQueue = useBuyQueue();
+  const [queueOpen, setQueueOpen] = React.useState(false);
+  const [queueNotice, setQueueNotice] = React.useState<string | null>(null);
+  useEffect(() => {
+    if (!queueNotice) return;
+    const timer = window.setTimeout(() => setQueueNotice(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [queueNotice]);
+  const saveForLater: typeof buyQueue.addTrack = (track, link) => {
+    if (buyQueue.queuedIds.has(getBuyQueueItemId(track))) return false;
+    const added = buyQueue.addTrack(track, link);
+    if (added) setQueueNotice(track.title);
+    return added;
+  };
+  const queueButton = () => (
+    <button
+      type="button"
+      onClick={() => setQueueOpen(true)}
+      aria-controls="buy-later-drawer"
+      aria-haspopup="dialog"
+      aria-expanded={queueOpen}
+      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg border border-emerald-300/35 bg-emerald-300/10 px-4 text-sm font-semibold text-emerald-100 hover:border-emerald-300/60 hover:bg-emerald-300/20 focus-visible:outline-2 focus-visible:outline-emerald-300"
+    >
+      {tr("Buy Later")}{" "}
+      <span className="rounded-full bg-emerald-200/15 px-2 py-0.5 text-xs tabular-nums">
+        {buyQueue.items.length}
+      </span>
+      {buyQueue.storageWarning && (
+        <span aria-label={tr("Local data warning")}>!</span>
+      )}
+    </button>
+  );
   const resultsSectionRef = useRef<HTMLElement | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -273,6 +304,52 @@ function PageInner() {
         ) : (
           <LanguageSwitcher />
         )}
+        {vm.multiResults.length === 0 && (
+          <div className="mb-6 flex justify-end">{queueButton()}</div>
+        )}
+        <BuyLaterDrawer
+          open={queueOpen}
+          onClose={() => setQueueOpen(false)}
+          items={buyQueue.items}
+          onRemove={buyQueue.removeItem}
+          storageWarning={buyQueue.storageWarning}
+          onRetrySave={buyQueue.retrySave}
+        />
+        {queueNotice && !buyQueue.storageWarning && (
+          <div
+            role="status"
+            className="fixed bottom-5 left-1/2 z-40 flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-4 rounded-xl border border-emerald-300/30 bg-[#14231f] px-5 py-3 text-sm text-emerald-100 shadow-xl"
+          >
+            <span className="truncate">
+              {tr("Added {title} to Buy Later", { title: queueNotice })}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setQueueOpen(true);
+                setQueueNotice(null);
+              }}
+              className="shrink-0 underline underline-offset-4"
+            >
+              {tr("View saved tracks")}
+            </button>
+          </div>
+        )}
+        {buyQueue.storageWarning && !queueOpen && (
+          <div
+            role="alert"
+            className="mb-4 rounded-lg border border-amber-300/30 p-3 text-sm text-amber-200"
+          >
+            {tr(buyQueue.storageWarning)}{" "}
+            <button
+              type="button"
+              onClick={() => setQueueOpen(true)}
+              className="ml-2 underline"
+            >
+              {tr("View saved tracks")}
+            </button>
+          </div>
+        )}
         <SpotifyConnection />
         <div className="space-y-10">
           {reviews.warning && (
@@ -338,7 +415,7 @@ function PageInner() {
             {selection.formCollapsed && vm.multiResults.length > 0 ? (
               <div className="flex items-center justify-between gap-4 border-b border-white/15 pb-5">
                 <div className="min-w-0">
-                  <p className="truncate text-lg font-semibold text-white">
+                  <p className="truncate text-2xl font-semibold tracking-tight text-white">
                     {vm.currentResult?.title ?? tr("Playlist results")}
                   </p>
                 </div>
@@ -422,14 +499,6 @@ function PageInner() {
               </>
             )}
           </section>
-          {vm.multiResults.length === 0 && (
-            <BuyLaterPanel
-              items={buyQueue.items}
-              onRemove={buyQueue.removeItem}
-              storageWarning={buyQueue.storageWarning}
-              onRetrySave={buyQueue.retrySave}
-            />
-          )}
         </div>
         {/* Results */}
         {vm.multiResults.length > 0 && (
@@ -443,7 +512,7 @@ function PageInner() {
             <PurchasePlan
               results={vm.multiResults}
               queuedIds={buyQueue.queuedIds}
-              onSave={buyQueue.addTrack}
+              onSave={saveForLater}
             />
             {/* Tabs */}
             <ResultsTabs
@@ -493,7 +562,7 @@ function PageInner() {
                     actions.downloadCsv(vm.displayedTracks, vm.currentResult)
                   }
                 />
-                <div className="sticky top-0 z-20 flex flex-col gap-3 rounded-xl border border-white/15 bg-[#080c10]/95 p-4 shadow-lg backdrop-blur-md lg:flex-row lg:items-end lg:justify-between">
+                <div className="sticky top-0 z-20 flex flex-col gap-3 rounded-xl border border-white/15 bg-[#080c10]/95 p-4 shadow-lg backdrop-blur-md lg:flex-row lg:flex-wrap lg:items-end lg:justify-between xl:flex-nowrap">
                   <div>
                     <div className="mb-2 text-sm font-medium text-slate-300">
                       {tr("Show tracks")}
@@ -578,6 +647,7 @@ function PageInner() {
                       </select>
                     </label>
                   </div>
+                  {queueButton()}
                 </div>
                 {analyzer.savedRekordboxXmlError && (
                   <p role="alert" className="text-sm text-amber-200">
@@ -652,14 +722,9 @@ function PageInner() {
                   currentResult={vm.currentResult}
                   displayedTracks={vm.displayedTracks}
                   queuedTrackIds={buyQueue.queuedIds}
-                  onAddToBuyQueue={buyQueue.addTrack}
+                  onAddToBuyQueue={saveForLater}
                 />
-                <BuyLaterPanel
-                  items={buyQueue.items}
-                  onRemove={buyQueue.removeItem}
-                  storageWarning={buyQueue.storageWarning}
-                  onRetrySave={buyQueue.retrySave}
-                />
+
                 <details className="text-xs text-slate-500">
                   <summary className="cursor-pointer list-none font-medium text-slate-400">
                     {tr("Saved data and tools")}

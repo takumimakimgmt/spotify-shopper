@@ -315,5 +315,14 @@
   "Previous": "前へ",
   "Next": "次へ",
   "Track pages": "曲一覧のページ切り替え",
-  "Track pages bottom": "曲一覧のページ切り替え（下部）"
+  "Track pages bottom": "曲一覧のページ切り替え（下部）",
+  "Saved across your playlists on this browser.": "このブラウザで保存した、すべてのプレイリストの曲",
+  "Close saved tracks": "あとで買うを閉じる",
+  "Your shopping list starts here.": "買いたい曲を、ここに。",
+  "Use Buy Later beside a track to keep it here while you browse.": "曲の横の「あとで買う」を押すと、このリストに保存できます。",
+  "Remove {title} from Buy Later": "「{title}」をあとで買うから削除",
+  "Manage saved tracks": "保存リストの管理",
+  "Added {title} to Buy Later": "「{title}」をあとで買うに追加しました",
+  "View saved tracks": "リストを見る",
+  "Change status": "前回からの変更"
 }

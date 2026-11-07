@@ -310,60 +310,59 @@ function DesktopTrackRow({
   return (
     <>
       <tr className="group border-b border-white/10 transition-colors hover:bg-white/[0.025]">
-        <td className="px-3 py-4 align-middle">
+        <td className="px-3 py-3 align-middle">
           <div className="min-w-0">
             <TrackTitle track={track} />
           </div>
           <div
-            className="mt-0.5 truncate text-xs text-slate-300"
+            className="mt-1 truncate text-sm text-slate-300"
             title={track.artist}
           >
             {track.artist}
           </div>
-          {track.album && (
-            <div
-              className="mt-0.5 truncate text-xs text-slate-500"
-              title={track.album}
-            >
-              {track.album}
-            </div>
-          )}
-          <button
-            type="button"
-            aria-expanded={expanded}
-            aria-controls={detailsId}
-            onClick={() => setExpanded(!expanded)}
-            className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-[11px] text-slate-400 hover:text-white focus-visible:outline-2 focus-visible:outline-emerald-300"
-          >
-            <span aria-hidden="true">{expanded ? "−" : "+"}</span>
-            {tr("Matching details")}
-            {track.changeStatus && track.changeStatus !== "unchanged"
-              ? ` · ${tr(track.changeStatus)}`
-              : ""}
-          </button>
+          {track.album &&
+            track.album.trim().toLowerCase() !==
+              track.title.trim().toLowerCase() && (
+              <div
+                className="mt-0.5 truncate text-xs text-slate-500"
+                title={track.album}
+              >
+                {track.album}
+              </div>
+            )}
         </td>
-        <td className="px-3 py-4 align-middle">
+        <td className="px-3 py-3 align-middle">
           <span
             title={tr(libraryMatchExplanation(track))}
             className={`inline-block rounded-full border px-2 py-1 text-[11px] leading-snug ${owned === true ? "border-emerald-400/20 bg-emerald-400/5 text-emerald-200" : owned === false ? "border-white/10 bg-white/5 text-slate-300" : "border-amber-400/20 bg-amber-400/5 text-amber-200"}`}
           >
             {tr(libraryMatchLabel(track))}
           </span>
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={detailsId}
+            onClick={() => setExpanded(!expanded)}
+            className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-xs text-slate-400 hover:text-white focus-visible:outline-2 focus-visible:outline-emerald-300"
+          >
+            <span aria-hidden="true">{expanded ? "−" : "+"}</span>
+            {tr("Matching details")}
+          </button>
         </td>
-        <td className="px-3 py-4 align-middle">
+        <td className="px-3 py-3 align-middle">
           {owned === true ? null : primary ? (
             <StoreLinksInline track={track} />
           ) : (
             <span className="text-xs text-slate-400">{tr("Not found")}</span>
           )}
         </td>
-        <td className="px-3 py-4 align-middle">
+        <td className="px-3 py-3 align-middle">
           {owned === true ? null : owned === false && primary ? (
             <button
               type="button"
               disabled={isQueued}
               onClick={() => onAddToBuyQueue?.(track, primary)}
-              className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-md border border-white/15 px-3 py-2 text-xs text-slate-200 transition-colors hover:bg-white/5 disabled:border-transparent disabled:text-slate-500"
+              className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-md border border-white/15 px-3 py-2 text-xs text-slate-200 transition-colors hover:bg-white/5 disabled:border-emerald-300/20 disabled:bg-emerald-300/5 disabled:text-emerald-200"
             >
               {isQueued ? `✓ ${tr("Saved")}` : tr("Buy Later")}
             </button>
@@ -382,6 +381,11 @@ function DesktopTrackRow({
           colSpan={4}
           className="border-b border-white/10 bg-white/[0.025] px-5 py-5 text-xs text-slate-300"
         >
+          {track.changeStatus && track.changeStatus !== "unchanged" && (
+            <p className="mb-3 text-slate-400">
+              {tr("Change status")}: {tr(track.changeStatus)}
+            </p>
+          )}
           <MatchEvidence
             track={track}
             onReviewDecision={onReviewDecision}
