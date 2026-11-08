@@ -324,5 +324,21 @@
   "Manage saved tracks": "保存リストの管理",
   "Added {title} to Buy Later": "「{title}」をあとで買うに追加しました",
   "View saved tracks": "リストを見る",
-  "Change status": "前回からの変更"
+  "Change status": "前回からの変更",
+  "Optional": "任意",
+  "Add your rekordbox XML to check tracks you already have (up to 50 MB).": "rekordboxのXMLを選ぶと、持っている曲と照合できます（50 MBまで）。",
+  "Public playlists · No Spotify login needed": "公開プレイリストに対応 · Spotifyログイン不要",
+  "No XML? You can add it after opening the playlist.": "XMLがなくても始められます。曲の一覧を開いてから追加することもできます。",
+  "XML stays on this device. Not in XML does not prove you do not own a track.": "XMLはこの端末内で照合します。「XMLになし」は、持っていないと断定するものではありません。",
+  "XML help and limitations": "XMLの書き出し方・照合の範囲",
+  "Save {count} tracks": "{count}曲をまとめて保存",
+  "Save filtered tracks": "まとめて保存",
+  "Added {count} tracks to Buy Later": "{count}曲をあとで買うに追加しました",
+  "Adds matching unsaved tracks from every page. Tracks needing review are excluded.": "すべてのページの対象曲をまとめて追加します。保存済み・所持済み・確認が必要な曲は除きます。",
+  "Across all filtered pages": "絞り込んだ全ページが対象",
+  "No unsaved eligible tracks. Check XML matching or change filters.": "未保存の対象曲はありません。照合結果や絞り込みをご確認ください。",
+  "Save {count} track": "{count}曲をまとめて保存",
+  "Added {count} track to Buy Later": "{count}曲をあとで買うに追加しました",
+  "All saved": "すべて保存済み",
+  "All eligible tracks in this filter are already saved.": "この絞り込み条件の対象曲は、すべて保存済みです。"
 }

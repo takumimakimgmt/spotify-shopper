@@ -40,6 +40,7 @@ import { useSelectionState } from "../lib/state/useSelectionState";
 import { useReviewDecisions } from "../lib/state/useReviewDecisions";
 import { useViewModel } from "../lib/state/useViewModel";
 import { useActions } from "../lib/state/useActions";
+import { buyLaterBatch } from "@/lib/domain/buyLaterBatch";
 import { getBuyQueueItemId, useBuyQueue } from "../lib/state/useBuyQueue";
 import { getOtherStores as _getOtherStores } from "../lib/playlist/stores";
 import AnalyzeForm from "./components/AnalyzeForm";
@@ -87,7 +88,10 @@ function PageInner() {
   const { activeTab, setActiveTab } = selection;
   const buyQueue = useBuyQueue();
   const [queueOpen, setQueueOpen] = React.useState(false);
-  const [queueNotice, setQueueNotice] = React.useState<string | null>(null);
+  const [queueNotice, setQueueNotice] = React.useState<{
+    title?: string;
+    count?: number;
+  } | null>(null);
   useEffect(() => {
     if (!queueNotice) return;
     const timer = window.setTimeout(() => setQueueNotice(null), 4000);
@@ -96,7 +100,7 @@ function PageInner() {
   const saveForLater: typeof buyQueue.addTrack = (track, link) => {
     if (buyQueue.queuedIds.has(getBuyQueueItemId(track))) return false;
     const added = buyQueue.addTrack(track, link);
-    if (added) setQueueNotice(track.title);
+    if (added) setQueueNotice({ title: track.title });
     return added;
   };
   const queueButton = () => (
@@ -106,7 +110,7 @@ function PageInner() {
       aria-controls="buy-later-drawer"
       aria-haspopup="dialog"
       aria-expanded={queueOpen}
-      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg border border-emerald-300/35 bg-emerald-300/10 px-4 text-sm font-semibold text-emerald-100 hover:border-emerald-300/60 hover:bg-emerald-300/20 focus-visible:outline-2 focus-visible:outline-emerald-300"
+      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg border border-white/15 bg-white/[0.03] px-4 text-sm font-semibold text-slate-200 hover:border-white/35 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-emerald-300"
     >
       {tr("Buy Later")}{" "}
       <span className="rounded-full bg-emerald-200/15 px-2 py-0.5 text-xs tabular-nums">
@@ -177,6 +181,11 @@ function PageInner() {
     lastDefaultFilter.current = defaultFilterKey;
     setCategoryFilter(hasMatchedXml ? "toBuy" : "all");
   }, [defaultFilterKey, hasMatchedXml, setCategoryFilter]);
+  const saveBatch = buyLaterBatch(vm.displayedTracks, buyQueue.queuedIds);
+  const saveFilteredTracks = () => {
+    const count = buyQueue.addTracks(saveBatch);
+    if (count > 0) setQueueNotice({ count });
+  };
   const TAB_QS_KEY = "t";
   // URL(ASCII)を短く安全にクエリ化（base64url）
   const encodeTab = (url: string) =>
@@ -292,21 +301,17 @@ function PageInner() {
         setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
       />
       <div
-        className={`mx-auto max-w-[1200px] px-4 sm:px-6 ${vm.multiResults.length ? "py-5 lg:py-6" : "py-12 lg:py-14"}`}
+        className={`mx-auto max-w-[1200px] px-4 sm:px-6 ${vm.multiResults.length ? "py-5 lg:py-6" : "py-6 lg:py-8"}`}
       >
-        {vm.multiResults.length ? (
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <p className="text-sm font-semibold tracking-wide text-slate-300">
-              Playlist Shopper
-            </p>
+        <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <p className="text-sm font-semibold tracking-wide text-slate-300">
+            Playlist Shopper
+          </p>
+          <div className="flex items-center gap-3">
+            {vm.multiResults.length === 0 && queueButton()}
             <LanguageSwitcher compact />
           </div>
-        ) : (
-          <LanguageSwitcher />
-        )}
-        {vm.multiResults.length === 0 && (
-          <div className="mb-6 flex justify-end">{queueButton()}</div>
-        )}
+        </header>
         <BuyLaterDrawer
           open={queueOpen}
           onClose={() => setQueueOpen(false)}
@@ -321,7 +326,16 @@ function PageInner() {
             className="fixed bottom-5 left-1/2 z-40 flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-4 rounded-xl border border-emerald-300/30 bg-[#14231f] px-5 py-3 text-sm text-emerald-100 shadow-xl"
           >
             <span className="truncate">
-              {tr("Added {title} to Buy Later", { title: queueNotice })}
+              {queueNotice.title
+                ? tr("Added {title} to Buy Later", { title: queueNotice.title })
+                : tr(
+                    queueNotice.count === 1
+                      ? "Added {count} track to Buy Later"
+                      : "Added {count} tracks to Buy Later",
+                    {
+                      count: queueNotice.count ?? 0,
+                    },
+                  )}
             </span>
             <button
               type="button"
@@ -434,10 +448,7 @@ function PageInner() {
               </div>
             ) : (
               <>
-                <header className="mb-8 max-w-3xl space-y-3">
-                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-400">
-                    Playlist Shopper
-                  </p>
+                <header className="mb-7 max-w-3xl space-y-3">
                   <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                     {tr("Buy new tracks. Skip the duplicates.")}
                   </h1>
@@ -446,23 +457,6 @@ function PageInner() {
                       "Compare a Spotify playlist with your rekordbox XML, then find tracks to buy on Beatport.",
                     )}
                   </p>
-                  <p className="text-sm font-medium text-emerald-200">
-                    {tr(
-                      "Use a public Spotify playlist. No Spotify login needed.",
-                    )}
-                  </p>
-                  <div className="space-y-2 rounded-lg border border-white/15 bg-white/[0.03] p-4 text-sm leading-6 text-slate-200">
-                    <p>
-                      {tr(
-                        "Your rekordbox XML is a track list exported from rekordbox. Use it to check for tracks you already have before buying.",
-                      )}
-                    </p>
-                    <p>
-                      {tr(
-                        "No XML handy? Browse the playlist and search Beatport now. Library status stays unchecked until you add XML.",
-                      )}
-                    </p>
-                  </div>
                 </header>
                 <AnalyzeForm
                   playlistUrlInput={analyzer.playlistUrlInput}
@@ -667,6 +661,8 @@ function PageInner() {
                   </label>
                 )}
                 <ResultsTable
+                  onSaveBatch={saveFilteredTracks}
+                  saveBatchCount={saveBatch.length}
                   paginationKey={JSON.stringify([
                     selection.activeTab,
                     filters.categoryFilter,

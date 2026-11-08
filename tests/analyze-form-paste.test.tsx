@@ -75,22 +75,23 @@ describe("AnalyzeForm", () => {
     });
   }
 
-  test("renders the ordered playlist and rekordbox steps", async () => {
+  test("keeps the primary action beside the playlist input and marks XML optional", async () => {
     await renderForm(makeProps());
 
-    expect(container.textContent).toContain("1.Spotify playlist");
-    expect(container.textContent).toContain("2.rekordbox library");
+    expect(container.textContent).toContain("Spotify playlist");
+    expect(container.textContent).toContain("rekordbox library");
     expect(container.textContent).toContain("No XML selected");
+    expect(container.textContent).toContain("Optional");
     expect(container.textContent).toContain("Upload rekordbox XML");
     expect(textButton(container, "Upload")).toBeDefined();
     const submit = textButton(container, "Browse playlist");
     expect(
-      textButton(container, "Upload").compareDocumentPosition(submit) &
+      submit.compareDocumentPosition(textButton(container, "Upload")) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(container.textContent).toContain("up to 50 MB");
     expect(container.textContent).toContain(
-      "Without XML, you can still browse",
+      "No XML? You can add it after opening",
     );
     expect(
       Array.from(container.querySelectorAll("button")).some(
@@ -290,18 +291,22 @@ describe("AnalyzeForm", () => {
           errorMeta: { error_code },
         }),
       );
-      expect(container.querySelector("aside")?.textContent).toContain(
-        "new public playlist you create",
-      );
-      expect(container.querySelector("aside")?.textContent).toContain(
-        "No Spotify login is needed",
-      );
-      expect(container.querySelector("aside")?.textContent).toContain(
-        "Private playlists",
-      );
-      expect(container.querySelector("aside")?.textContent).toContain(
-        "not automatically follow updates",
-      );
+      expect(
+        container.querySelector('aside[aria-label="Try a personal copy"]')
+          ?.textContent,
+      ).toContain("new public playlist you create");
+      expect(
+        container.querySelector('aside[aria-label="Try a personal copy"]')
+          ?.textContent,
+      ).toContain("No Spotify login is needed");
+      expect(
+        container.querySelector('aside[aria-label="Try a personal copy"]')
+          ?.textContent,
+      ).toContain("Private playlists");
+      expect(
+        container.querySelector('aside[aria-label="Try a personal copy"]')
+          ?.textContent,
+      ).toContain("not automatically follow updates");
       expect(container.textContent).not.toContain("If this looks stale");
     }
   });
@@ -314,9 +319,13 @@ describe("AnalyzeForm", () => {
       await renderForm(
         makeProps({ errorText: "Other failure", errorMeta: { error_code } }),
       );
-      expect(container.querySelector("aside")).toBeNull();
+      expect(
+        container.querySelector('aside[aria-label="Try a personal copy"]'),
+      ).toBeNull();
     }
     await renderForm(makeProps());
-    expect(container.querySelector("aside")).toBeNull();
+    expect(
+      container.querySelector('aside[aria-label="Try a personal copy"]'),
+    ).toBeNull();
   });
 });

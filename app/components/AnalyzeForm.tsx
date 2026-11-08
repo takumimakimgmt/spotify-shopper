@@ -176,205 +176,223 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           className="hidden"
         />
 
-        <div className="space-y-2">
-          <label
-            htmlFor="playlist-url"
-            className="block text-sm font-semibold text-slate-200"
-          >
-            <span className="mr-2 text-slate-400">1.</span>
-            {tr("Spotify playlist")}
-          </label>
-          <div className="flex flex-col items-stretch gap-3 sm:flex-row">
-            <textarea
-              id="playlist-url"
-              ref={playlistInputRef}
-              value={props.playlistUrlInput}
-              onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
-              rows={1}
-              placeholder={tr("Paste Spotify playlist URL")}
-              aria-invalid={visiblePlaylistError ? true : undefined}
-              aria-describedby={
-                visiblePlaylistError ? "playlist-url-error" : undefined
-              }
-              className={`min-h-11 w-full resize-none rounded-lg border bg-transparent px-4 py-3 text-sm font-medium text-slate-100 outline-none placeholder:text-slate-500 ${
-                visiblePlaylistError
-                  ? "border-rose-400"
-                  : "border-white/15 focus:border-white/40"
-              }`}
-            />
-          </div>
-          {visiblePlaylistError ? (
-            <div
-              id="playlist-url-error"
-              role="alert"
-              className="text-sm text-rose-300"
-            >
-              <div className="font-semibold">
-                {tr("Invalid playlist input")}
-              </div>
-              <div>{tr(visiblePlaylistError)}</div>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <div
-            id="xml-heading"
-            className="text-sm font-semibold text-slate-200"
-          >
-            <span className="mr-2 text-slate-400">2.</span>
-            {tr("rekordbox library")}{" "}
-            <span className="font-normal text-slate-400">
-              {tr("(needed to match your library)")}
-            </span>
-          </div>
-          <p id="xml-help" className="text-sm leading-6 text-slate-300">
-            {tr(
-              "Choose your rekordbox XML to check your library (up to 50 MB). Without XML, you can still browse the playlist and search Beatport.",
-            )}
-          </p>
-          <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-slate-300">
-            <li>
-              {tr(
-                "The export contains your whole collection, not just one playlist.",
-              )}
-            </li>
-            <li>
-              {tr(
-                "Only tracks included in the XML can be checked. Streaming-only tracks may be absent.",
-              )}
-            </li>
-            <li>
-              {tr(
-                "Files over 50 MB cannot be opened here. Matching runs in your browser; your XML stays on this device.",
-              )}
-            </li>
-          </ul>
-          <p className="rounded-lg border border-amber-300/20 bg-amber-300/5 p-3 text-sm leading-6 text-amber-100">
-            {tr(
-              "Not in your XML means no match in this export, not proof that you do not own the track. Tracks added after export and streaming-only tracks may be absent.",
-            )}
-          </p>
-          <details className="text-sm text-slate-300">
-            <summary className="cursor-pointer rounded-sm py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-              {tr("How to export your rekordbox XML")}
-            </summary>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 leading-6 text-slate-400">
-              <li>{tr("Open rekordbox on your computer.")}</li>
-              <li>
-                {tr(
-                  "In the File menu, choose “Export Collection in xml format”.",
-                )}
-              </li>
-              <li>{tr("Save the .xml file, then upload it here.")}</li>
-            </ol>
-            <a
-              href="https://rekordbox.com/en/support/faq/operation-hints-7/"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 inline-block underline underline-offset-4 hover:text-white"
-            >
-              {tr("rekordbox export help")}
-            </a>
-          </details>
-          <div className="flex flex-col gap-3 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  hasXml ? "bg-emerald-400" : "bg-slate-700"
-                }`}
-              />
-              <span className="truncate font-medium text-slate-300">
-                {xmlName}
-              </span>
-              <span className="truncate text-slate-400">
-                {props.savedRekordboxXmlMeta
-                  ? tr("{size} · updated {date}", {
-                      size: formatBytes(props.savedRekordboxXmlMeta.size),
-                      date: formatDateTime(
-                        props.savedRekordboxXmlMeta.lastModified,
-                        language,
-                      ),
-                    })
-                  : props.rekordboxDate
-                    ? tr("updated {date}", { date: props.rekordboxDate })
-                    : tr("Upload rekordbox XML")}
-              </span>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={replaceXml}
-                disabled={props.savedRekordboxXmlBusy}
-                className="rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 disabled:opacity-40"
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          <div className="rounded-2xl border border-emerald-300/25 bg-[#0b1514] p-5 sm:p-6">
+            <div className="space-y-2">
+              <label
+                htmlFor="playlist-url"
+                className="block text-sm font-semibold text-slate-200"
               >
-                {tr("Upload")}
-              </button>
-              {hasXml ? (
-                <button
-                  type="button"
-                  onClick={removeXml}
-                  disabled={props.savedRekordboxXmlBusy}
-                  className="px-2 py-2 text-slate-400 hover:text-slate-100 disabled:opacity-40"
+                {tr("Spotify playlist")}
+              </label>
+              <div className="flex flex-col items-stretch gap-3 sm:flex-row">
+                <textarea
+                  id="playlist-url"
+                  ref={playlistInputRef}
+                  value={props.playlistUrlInput}
+                  onChange={(e) => props.setPlaylistUrlInput(e.target.value)}
+                  rows={1}
+                  placeholder={tr("Paste Spotify playlist URL")}
+                  aria-invalid={visiblePlaylistError ? true : undefined}
+                  aria-describedby={
+                    visiblePlaylistError ? "playlist-url-error" : undefined
+                  }
+                  className={`min-h-14 w-full resize-none rounded-lg border bg-transparent px-4 py-3 text-sm font-medium text-slate-100 outline-none placeholder:text-slate-500 ${
+                    visiblePlaylistError
+                      ? "border-rose-400"
+                      : "border-white/20 focus:border-emerald-300/70"
+                  }`}
+                />
+              </div>
+              {visiblePlaylistError ? (
+                <div
+                  id="playlist-url-error"
+                  role="alert"
+                  className="text-sm text-rose-300"
                 >
-                  {tr("Remove")}
-                </button>
+                  <div className="font-semibold">
+                    {tr("Invalid playlist input")}
+                  </div>
+                  <div>{tr(visiblePlaylistError)}</div>
+                </div>
               ) : null}
             </div>
+            <p className="mt-3 text-xs text-slate-400">
+              {tr("Public playlists · No Spotify login needed")}
+            </p>
+            <div className="space-y-3 pt-4">
+              <button
+                type="submit"
+                disabled={
+                  props.loading ||
+                  props.savedRekordboxXmlBusy ||
+                  !!localXmlError ||
+                  !props.playlistUrlInput.trim()
+                }
+                aria-describedby="analysis-help"
+                className="min-h-12 w-full rounded-lg bg-emerald-300 px-6 py-3 text-sm font-semibold text-[#062016] hover:bg-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:bg-white/10 disabled:text-slate-400 sm:min-w-52"
+              >
+                {hasXml ? tr("Match against XML") : tr("Browse playlist")}
+              </button>
+              <p
+                id="analysis-help"
+                className="text-sm leading-6 text-slate-400"
+              >
+                {hasXml
+                  ? tr(
+                      "Compare this playlist with your selected XML to find tracks missing from your library.",
+                    )
+                  : tr("No XML? You can add it after opening the playlist.")}
+              </p>
+            </div>
           </div>
-          {localXmlError ? (
-            <div role="alert" className="text-sm text-rose-300">
-              {tr(localXmlError)}
-            </div>
-          ) : null}
-          {props.savedRekordboxXmlError ? (
-            <div role="alert" className="text-sm text-rose-300">
-              {tr(props.savedRekordboxXmlError)}
-            </div>
-          ) : null}
-        </div>
+          <aside
+            aria-labelledby="xml-heading"
+            className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 sm:p-6"
+          >
+            <div className="space-y-2">
+              <div
+                id="xml-heading"
+                className="text-sm font-semibold text-slate-200"
+              >
+                {tr("rekordbox library")}{" "}
+                <span className="rounded-full bg-white/5 px-2 py-1 text-xs font-normal text-slate-400">
+                  {tr("Optional")}
+                </span>
+              </div>
+              <p id="xml-help" className="text-sm leading-6 text-slate-300">
+                {tr(
+                  "Add your rekordbox XML to check tracks you already have (up to 50 MB).",
+                )}
+              </p>
 
+              <div className="flex flex-col gap-3 rounded-lg border border-dashed border-white/20 p-4 text-sm text-slate-400">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      hasXml ? "bg-emerald-400" : "bg-slate-700"
+                    }`}
+                  />
+                  <span className="truncate font-medium text-slate-300">
+                    {xmlName}
+                  </span>
+                  <span className="truncate text-slate-400">
+                    {props.savedRekordboxXmlMeta
+                      ? tr("{size} · updated {date}", {
+                          size: formatBytes(props.savedRekordboxXmlMeta.size),
+                          date: formatDateTime(
+                            props.savedRekordboxXmlMeta.lastModified,
+                            language,
+                          ),
+                        })
+                      : props.rekordboxDate
+                        ? tr("updated {date}", { date: props.rekordboxDate })
+                        : tr("Upload rekordbox XML")}
+                  </span>
+                </div>
+
+                <div className="flex shrink-0 flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={replaceXml}
+                    disabled={props.savedRekordboxXmlBusy}
+                    className="rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 disabled:opacity-40"
+                  >
+                    {tr("Upload")}
+                  </button>
+                  {hasXml ? (
+                    <button
+                      type="button"
+                      onClick={removeXml}
+                      disabled={props.savedRekordboxXmlBusy}
+                      className="px-2 py-2 text-slate-400 hover:text-slate-100 disabled:opacity-40"
+                    >
+                      {tr("Remove")}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              {localXmlError ? (
+                <div role="alert" className="text-sm text-rose-300">
+                  {tr(localXmlError)}
+                </div>
+              ) : null}
+              {props.savedRekordboxXmlError ? (
+                <div role="alert" className="text-sm text-rose-300">
+                  {tr(props.savedRekordboxXmlError)}
+                </div>
+              ) : null}
+              <p className="text-xs leading-5 text-slate-400">
+                {tr(
+                  "XML stays on this device. Not in XML does not prove you do not own a track.",
+                )}
+              </p>
+              <details className="text-sm text-slate-400">
+                <summary className="cursor-pointer py-2">
+                  {tr("XML help and limitations")}
+                </summary>
+                <div className="space-y-4 pt-2">
+                  {" "}
+                  <div className="text-sm text-slate-300">
+                    <h3 className="font-medium text-slate-200">
+                      {tr("How to export your rekordbox XML")}
+                    </h3>
+                    <ol className="mt-2 list-decimal space-y-1 pl-5 leading-6 text-slate-400">
+                      <li>{tr("Open rekordbox on your computer.")}</li>
+                      <li>
+                        {tr(
+                          "In the File menu, choose “Export Collection in xml format”.",
+                        )}
+                      </li>
+                      <li>{tr("Save the .xml file, then upload it here.")}</li>
+                    </ol>
+                    <a
+                      href="https://rekordbox.com/en/support/faq/operation-hints-7/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-block underline underline-offset-4 hover:text-white"
+                    >
+                      {tr("rekordbox export help")}
+                    </a>
+                  </div>{" "}
+                  <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-slate-300">
+                    <li>
+                      {tr(
+                        "The export contains your whole collection, not just one playlist.",
+                      )}
+                    </li>
+                    <li>
+                      {tr(
+                        "Only tracks included in the XML can be checked. Streaming-only tracks may be absent.",
+                      )}
+                    </li>
+                    <li>
+                      {tr(
+                        "Files over 50 MB cannot be opened here. Matching runs in your browser; your XML stays on this device.",
+                      )}
+                    </li>
+                  </ul>
+                  <p className="rounded-lg border border-amber-300/20 bg-amber-300/5 p-3 text-sm leading-6 text-amber-100">
+                    {tr(
+                      "Not in your XML means no match in this export, not proof that you do not own the track. Tracks added after export and streaming-only tracks may be absent.",
+                    )}
+                  </p>
+                  <p className="text-xs leading-5 text-slate-400">
+                    {tr(
+                      "The original XML is saved in this browser for reuse. Library matching runs locally; XML, file paths and recording metadata stay on this device. Use Remove to delete the browser’s saved XML.",
+                    )}
+                  </p>
+                </div>
+              </details>
+            </div>
+          </aside>
+        </div>
         <MobileDesktopHandoff
           playlistInput={props.playlistUrlInput}
           activePlaylistInput={props.activePlaylistInput}
           activePlaylistId={props.activePlaylistId}
           queryPlaylist={props.queryPlaylist}
         />
-
-        <div className="space-y-3 border-t border-white/10 pt-6">
-          <div className="text-sm font-semibold text-slate-200">
-            <span className="mr-2 text-slate-400">3.</span>
-            {hasXml ? tr("Check your library") : tr("Browse the playlist")}
-          </div>
-          <button
-            type="submit"
-            disabled={
-              props.loading ||
-              props.savedRekordboxXmlBusy ||
-              !!localXmlError ||
-              !props.playlistUrlInput.trim()
-            }
-            aria-describedby="analysis-help"
-            className="min-h-11 w-full rounded-lg bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:bg-white/10 disabled:text-white/30 sm:w-auto sm:min-w-44"
-          >
-            {hasXml ? tr("Match against XML") : tr("Browse playlist")}
-          </button>
-          <p id="analysis-help" className="text-sm leading-6 text-slate-400">
-            {hasXml
-              ? tr(
-                  "Compare this playlist with your selected XML to find tracks missing from your library.",
-                )
-              : tr(
-                  "No XML selected. Tracks will be marked Not checked until you check them with XML.",
-                )}
-          </p>
-          <p className="text-xs leading-5 text-slate-400">
-            {tr(
-              "The original XML is saved in this browser for reuse. Library matching runs locally; XML, file paths and recording metadata stay on this device. Use Remove to delete the browser’s saved XML.",
-            )}
-          </p>
-        </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
           {props.cancelAnalyze && props.loading ? (

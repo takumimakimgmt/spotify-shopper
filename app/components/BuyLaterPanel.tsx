@@ -1,7 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n/LanguageProvider";
-import { purchaseLinks } from "@/lib/domain/purchaseLinks";
+import { TrackIdentity, TrackStoreLinks } from "./TrackPresentation";
 
 type QuietBuyLaterItem = {
   id: string;
@@ -13,45 +13,6 @@ type QuietBuyLaterItem = {
   buyUrl: string;
   buyStore: string;
 };
-
-function queueListenUrl(item: QuietBuyLaterItem): string {
-  if (item.spotifyUrl) return item.spotifyUrl;
-
-  const q = [item.artist, item.title, "topic"].filter(Boolean).join(" ");
-  if (!q) return "";
-  const proto = ["ht", "tps", ":", "//"].join("");
-  const host = ["music", "youtube", "com"].join(".");
-  return `${proto}${host}/search?q=${encodeURIComponent(q)}`;
-}
-
-function QueueTitle({ item }: { item: QuietBuyLaterItem }) {
-  const { t: tr } = useI18n();
-  const href = queueListenUrl(item);
-
-  if (!href) {
-    return (
-      <div
-        title={item.title}
-        className="line-clamp-2 break-words text-base font-medium text-slate-100"
-      >
-        {item.title}
-      </div>
-    );
-  }
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={tr("Listen to {title}", { title: item.title })}
-      title={item.title}
-      className="line-clamp-2 break-words text-base font-medium text-slate-100 underline decoration-white/20 underline-offset-4 hover:text-white focus-visible:outline-2 focus-visible:outline-emerald-300"
-    >
-      {item.title}
-    </a>
-  );
-}
 
 export default function BuyLaterPanel({
   items,
@@ -95,36 +56,18 @@ export default function BuyLaterPanel({
           </p>
           <ul className="divide-y divide-white/10">
             {items.map((item) => (
-              <li key={item.id} className="py-5 first:pt-0">
-                <QueueTitle item={item} />
-                <p className="mt-1 text-sm text-slate-300">{item.artist}</p>
-                {item.album && item.album !== item.title && (
-                  <p className="mt-1 truncate text-xs text-slate-500">
-                    {item.album}
-                  </p>
-                )}
+              <li key={item.id} className="py-3 first:pt-0">
+                <TrackIdentity track={item} />
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  {purchaseLinks({
-                    ...item,
-                    stores:
-                      item.buyStore === "Beatport"
-                        ? { beatport: item.buyUrl }
-                        : { bandcamp: item.buyUrl },
-                  }).map((link) => (
-                    <a
-                      key={link.name}
-                      href={link.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={
-                        link.name === "Beatport"
-                          ? "inline-flex min-h-10 items-center rounded-md border border-emerald-400/40 bg-emerald-400/10 px-3 text-sm font-medium text-emerald-100 hover:bg-emerald-400/20"
-                          : "inline-flex min-h-10 items-center text-xs text-slate-400 underline underline-offset-4 hover:text-white"
-                      }
-                    >
-                      {tr(link.label)}
-                    </a>
-                  ))}
+                  <TrackStoreLinks
+                    track={{
+                      ...item,
+                      stores:
+                        item.buyStore === "Beatport"
+                          ? { beatport: item.buyUrl }
+                          : { bandcamp: item.buyUrl },
+                    }}
+                  />
                   <button
                     type="button"
                     onClick={() => onRemove(item.id)}
