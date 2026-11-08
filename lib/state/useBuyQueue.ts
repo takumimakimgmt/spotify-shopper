@@ -121,33 +121,50 @@ export function useBuyQueue() {
     [items],
   );
 
-  const addTrack = useCallback(
-    (track: PlaylistRow, buyLink: { name: string; url: string }) => {
+  const addTracks = useCallback(
+    (
+      entries: Array<{
+        track: PlaylistRow;
+        buyLink: { name: string; url: string };
+      }>,
+    ) => {
       if (!restored) {
         setStorageWarning(
           "Buy Later is not ready. Retry loading saved tracks first.",
         );
-        return false;
+        return 0;
       }
-      const nextItem: BuyQueueItem = {
-        id: itemId(track),
-        title: track.title,
-        artist: track.artist,
-        album: track.album,
-        isrc: track.isrc,
-        spotifyUrl: track.spotifyUrl,
-        buyUrl: buyLink.url,
-        buyStore: buyLink.name,
-        addedAt: Date.now(),
-      };
-
+      const known = new Set(items.map((item) => item.id));
+      const additions: BuyQueueItem[] = [];
+      for (const { track, buyLink } of entries) {
+        const id = itemId(track);
+        if (known.has(id)) continue;
+        known.add(id);
+        additions.push({
+          id,
+          title: track.title,
+          artist: track.artist,
+          album: track.album,
+          isrc: track.isrc,
+          spotifyUrl: track.spotifyUrl,
+          buyUrl: buyLink.url,
+          buyStore: buyLink.name,
+          addedAt: Date.now(),
+        });
+      }
+      if (!additions.length) return 0;
       setItems((prev) => {
-        if (prev.some((item) => item.id === nextItem.id)) return prev;
-        return [nextItem, ...prev];
+        const previous = new Set(prev.map((item) => item.id));
+        return [...additions.filter((item) => !previous.has(item.id)), ...prev];
       });
-      return true;
+      return additions.length;
     },
-    [restored],
+    [restored, items],
+  );
+  const addTrack = useCallback(
+    (track: PlaylistRow, buyLink: { name: string; url: string }) =>
+      addTracks([{ track, buyLink }]) > 0,
+    [addTracks],
   );
 
   const removeItem = useCallback(
@@ -167,6 +184,7 @@ export function useBuyQueue() {
     items,
     queuedIds,
     addTrack,
+    addTracks,
     removeItem,
     storageWarning,
     retrySave,

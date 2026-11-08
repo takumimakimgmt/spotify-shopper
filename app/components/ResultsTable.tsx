@@ -4,6 +4,7 @@ import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useId, useState, useRef } from "react";
 import type { PlaylistRow } from "../../lib/types";
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
+import { TrackName, TrackIdentity, TrackStoreLinks } from "./TrackPresentation";
 import RecordingComparison from "./RecordingComparison";
 import {
   effectiveOwned,
@@ -15,6 +16,8 @@ import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
 type ReviewAction = "owned" | "different_version" | null;
 type ReviewHandler = (track: PlaylistRow, action: ReviewAction) => void;
 type Props = {
+  onSaveBatch?: () => void;
+  saveBatchCount?: number;
   paginationKey?: string;
   onReviewDecision?: ReviewHandler;
   reviewReady?: boolean;
@@ -29,18 +32,6 @@ type Props = {
   ) => void;
 };
 
-function youtubeTopicUrl(track: { title?: string; artist?: string }) {
-  const q = [track.artist, track.title, "topic"].filter(Boolean).join(" ");
-  if (!q) return "";
-  const proto = ["ht", "tps", ":", "//"].join("");
-  const host = ["music", "youtube", "com"].join(".");
-  return `${proto}${host}/search?q=${encodeURIComponent(q)}`;
-}
-
-function listenUrl(track: PlaylistRow): string {
-  return track.spotifyUrl || youtubeTopicUrl(track);
-}
-
 function getPrimaryBuyLink(
   track: PlaylistRow,
 ): { name: string; url: string } | null {
@@ -48,61 +39,15 @@ function getPrimaryBuyLink(
 }
 
 function StoreLinksInline({ track }: { track: PlaylistRow }) {
-  const { t: tr } = useI18n();
-
-  const stores = purchaseLinks(track);
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-      {stores.map((s) => (
-        <a
-          key={s.name}
-          href={s.url}
-          target="_blank"
-          rel="noreferrer"
-          title={tr(
-            s.product
-              ? "Track page · same version not verified"
-              : "Search only · availability not verified",
-          )}
-          className={
-            s.name === "Beatport"
-              ? "inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-md border border-emerald-400/35 bg-emerald-400/10 px-3 py-2 text-xs font-medium text-emerald-100 transition-colors hover:border-emerald-400/60 hover:bg-emerald-400/20 focus-visible:outline-2 focus-visible:outline-emerald-300"
-              : "inline-flex min-h-9 items-center text-xs text-slate-400 underline decoration-white/20 underline-offset-4 hover:text-white"
-          }
-        >
-          {tr(s.label)}
-        </a>
-      ))}
-    </div>
-  );
+  return <TrackStoreLinks track={track} />;
 }
-
 function TrackTitle({ track }: { track: PlaylistRow }) {
-  const { t: tr } = useI18n();
-  const href = listenUrl(track);
-  const title = track?.title ?? "";
-
-  if (!href) {
-    return (
-      <div className="truncate text-base font-medium text-white">{title}</div>
-    );
-  }
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={tr("Listen to {title}", { title })}
-      className="inline-block max-w-full truncate border-b border-white/25 pb-0.5 text-base font-medium text-white hover:border-white/60 hover:text-white focus-visible:rounded-sm focus-visible:border-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
-    >
-      {title}
-    </a>
-  );
+  return <TrackName track={track} />;
 }
 
 export default function ResultsTable({
+  onSaveBatch,
+  saveBatchCount = 0,
   paginationKey,
   currentResult,
   displayedTracks,
@@ -130,6 +75,9 @@ export default function ResultsTable({
     selection.key === viewKey ? Math.min(selection.page, pageCount) : 1;
   const start = (page - 1) * pageSize;
   const pageRows = rows.slice(start, start + pageSize);
+  const allEligibleSaved =
+    saveBatchCount === 0 &&
+    rows.some((track) => effectiveOwned(track) === false);
   const goToPage = (next: number) => {
     setSelection({
       key: viewKey,
@@ -143,13 +91,47 @@ export default function ResultsTable({
       aria-label={tr(position)}
       className="flex flex-wrap items-center justify-between gap-3 py-2 text-sm text-slate-300"
     >
-      <p role="status">
-        {tr("{start}–{end} of {total} tracks", {
-          start: start + 1,
-          end: Math.min(start + pageSize, rows.length),
-          total: rows.length,
-        })}
-      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        {" "}
+        <p role="status">
+          {tr("{start}–{end} of {total} tracks", {
+            start: start + 1,
+            end: Math.min(start + pageSize, rows.length),
+            total: rows.length,
+          })}
+        </p>
+        {position === "Track pages" && onSaveBatch && (
+          <button
+            type="button"
+            onClick={onSaveBatch}
+            disabled={saveBatchCount === 0}
+            title={tr(
+              "Adds matching unsaved tracks from every page. Tracks needing review are excluded.",
+            )}
+            className="min-h-10 rounded-md border border-white/20 px-3 text-sm font-medium text-slate-100 hover:bg-white/5 disabled:opacity-40"
+          >
+            {saveBatchCount
+              ? tr(
+                  saveBatchCount === 1
+                    ? "Save {count} track"
+                    : "Save {count} tracks",
+                  { count: saveBatchCount },
+                )
+              : tr(allEligibleSaved ? "All saved" : "Save filtered tracks")}
+          </button>
+        )}
+        {position === "Track pages" && onSaveBatch && (
+          <p className="text-xs text-slate-400">
+            {tr(
+              saveBatchCount
+                ? "Across all filtered pages"
+                : allEligibleSaved
+                  ? "All eligible tracks in this filter are already saved."
+                  : "No unsaved eligible tracks. Check XML matching or change filters.",
+            )}
+          </p>
+        )}
+      </div>
       <div className="flex items-center gap-2">
         {position === "Track pages" && (
           <label className="mr-2 flex items-center gap-2 text-xs text-slate-400">
@@ -311,25 +293,7 @@ function DesktopTrackRow({
     <>
       <tr className="group border-b border-white/10 transition-colors hover:bg-white/[0.025]">
         <td className="px-3 py-3 align-middle">
-          <div className="min-w-0">
-            <TrackTitle track={track} />
-          </div>
-          <div
-            className="mt-1 truncate text-sm text-slate-300"
-            title={track.artist}
-          >
-            {track.artist}
-          </div>
-          {track.album &&
-            track.album.trim().toLowerCase() !==
-              track.title.trim().toLowerCase() && (
-              <div
-                className="mt-0.5 truncate text-xs text-slate-500"
-                title={track.album}
-              >
-                {track.album}
-              </div>
-            )}
+          <TrackIdentity track={track} />
         </td>
         <td className="px-3 py-3 align-middle">
           <span
