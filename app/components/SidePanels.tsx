@@ -73,83 +73,91 @@ export function SidePanels({
 
   return (
     <div className="space-y-3">
-      <div className="space-y-2">
-        <div className="flex flex-col gap-3 text-sm text-slate-400 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            {currentResult.rekordboxMeta && (
-              <div className="truncate">
-                XML: {currentResult.rekordboxMeta.filename ?? "—"}
-                <span className="ml-2">
-                  {tr("Updated:")}{" "}
-                  {currentResult.rekordboxMeta.updatedAtISO
-                    ? new Date(
-                        currentResult.rekordboxMeta.updatedAtISO,
-                      ).toLocaleString(language === "ja" ? "ja-JP" : "en-GB", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })
-                    : "—"}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-1.5 lg:justify-end">
-            {currentResult.playlistUrl && (
-              <a
-                href={currentResult.playlistUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white"
-              >
-                {tr("Open playlist")}
-              </a>
-            )}
-            <input
-              ref={uploadRef}
-              type="file"
-              accept=".xml"
-              aria-label={tr("Check all tracks against XML")}
-              className="hidden"
-              onChange={handleXmlChange}
-            />
-            <button
-              type="button"
-              disabled={matching || currentResult.tracks.length === 0}
-              onClick={() => uploadRef.current?.click()}
-              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-            >
-              {matching
-                ? tr("Checking all tracks…")
-                : tr("Check all tracks against XML")}
-            </button>
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white"
-            >
-              {tr("Export CSV")}
-            </button>
-          </div>
-        </div>
-
-        {matchMessage && (
-          <p role="status" className="text-sm text-slate-300">
-            {tr(matchMessage)}
-          </p>
-        )}
-        {xmlError && (
-          <div>
-            <ErrorAlert title={tr("XML Error")} message={xmlError} />
-          </div>
-        )}
-      </div>
       <ResultSummaryBar
         result={currentResult}
         ownedCount={ownedCount}
         toBuyCount={toBuyCount}
         unknownCount={unknownCount}
       />
+      <details className="text-sm text-slate-400">
+        <summary className="cursor-pointer py-2">
+          {tr("Playlist tools and XML")}
+        </summary>
+        <div className="space-y-2 py-3">
+          <div className="flex flex-col gap-3 text-sm text-slate-400 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              {currentResult.rekordboxMeta && (
+                <div className="truncate">
+                  XML: {currentResult.rekordboxMeta.filename ?? "—"}
+                  <span className="ml-2">
+                    {tr("Updated:")}{" "}
+                    {currentResult.rekordboxMeta.updatedAtISO
+                      ? new Date(
+                          currentResult.rekordboxMeta.updatedAtISO,
+                        ).toLocaleString(
+                          language === "ja" ? "ja-JP" : "en-GB",
+                          {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          },
+                        )
+                      : "—"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 lg:justify-end">
+              {currentResult.playlistUrl && (
+                <a
+                  href={currentResult.playlistUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white"
+                >
+                  {tr("Open playlist")}
+                </a>
+              )}
+              <input
+                ref={uploadRef}
+                type="file"
+                accept=".xml"
+                aria-label={tr("Check all tracks against XML")}
+                className="hidden"
+                onChange={handleXmlChange}
+              />
+              <button
+                type="button"
+                disabled={matching || currentResult.tracks.length === 0}
+                onClick={() => uploadRef.current?.click()}
+                className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              >
+                {matching
+                  ? tr("Checking all tracks…")
+                  : tr("Check all tracks against XML")}
+              </button>
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 hover:text-white"
+              >
+                {tr("Export CSV")}
+              </button>
+            </div>
+          </div>
+
+          {matchMessage && (
+            <p role="status" className="text-sm text-slate-300">
+              {tr(matchMessage)}
+            </p>
+          )}
+          {xmlError && (
+            <div>
+              <ErrorAlert title={tr("XML Error")} message={xmlError} />
+            </div>
+          )}
+        </div>
+      </details>
     </div>
   );
 }

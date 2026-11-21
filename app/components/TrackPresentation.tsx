@@ -10,16 +10,23 @@ export function TrackName({ track }: { track: Identity }) {
     track.spotifyUrl ||
     `https://music.youtube.com/search?q=${encodeURIComponent(`${track.artist} ${track.title} topic`)}`;
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      title={track.title}
-      aria-label={t("Listen to {title}", { title: track.title })}
-      className="line-clamp-2 break-words text-base font-medium leading-6 text-white underline decoration-white/20 underline-offset-4 hover:decoration-white/60 focus-visible:outline-2 focus-visible:outline-emerald-300"
-    >
-      {track.title}
-    </a>
+    <div className="flex items-start gap-3">
+      <span
+        title={track.title}
+        className="line-clamp-2 min-w-0 break-words text-base font-medium leading-6 text-white"
+      >
+        {track.title}
+      </span>
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={t("Listen to {title}", { title: track.title })}
+        className="shrink-0 rounded px-1 py-0.5 text-xs leading-5 text-slate-400 hover:text-emerald-200 focus-visible:outline-2 focus-visible:outline-emerald-300"
+      >
+        {t("Listen")} ↗
+      </a>
+    </div>
   );
 }
 export function TrackIdentity({ track }: { track: Identity }) {

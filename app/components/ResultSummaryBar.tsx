@@ -32,19 +32,16 @@ export default function ResultSummaryBar({
 
   return (
     <div className="space-y-1 text-sm text-slate-300">
-      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <dl className="flex flex-wrap gap-x-8 gap-y-3">
         {[
           [tr("Tracks"), total],
           [tr("Not in XML"), toBuyCount],
           [tr("Matched / confirmed"), ownedCount],
           [tr("Needs review"), unknownCount],
         ].map(([label, count]) => (
-          <div
-            key={label}
-            className="rounded-lg border border-white/10 bg-white/[0.025] px-4 py-3"
-          >
+          <div key={label} className="flex items-baseline gap-2">
             <dt className="text-xs text-slate-400">{label}</dt>
-            <dd className="mt-1 text-2xl font-semibold tabular-nums text-white">
+            <dd className="text-xl font-semibold tabular-nums text-white">
               {count}
             </dd>
           </div>
