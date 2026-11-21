@@ -176,7 +176,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           className="hidden"
         />
 
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="mx-auto flex max-w-3xl flex-col gap-4">
           <div className="rounded-2xl border border-emerald-300/25 bg-[#0b1514] p-5 sm:p-6">
             <div className="space-y-2">
               <label
@@ -248,7 +248,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </div>
           <aside
             aria-labelledby="xml-heading"
-            className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 sm:p-6"
+            className="w-full rounded-xl border border-white/10 bg-white/[0.02] p-5"
           >
             <div className="space-y-2">
               <div

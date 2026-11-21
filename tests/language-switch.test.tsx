@@ -77,7 +77,7 @@ describe("language preference and UI", () => {
     expect(div.textContent).toContain("Beatportで検索");
     expect(
       div.querySelector('a[aria-label="Search Beatportを試聴"]')?.textContent,
-    ).toBe("Search Beatport");
+    ).toBe("試聴 ↗");
     expect(div.textContent).toContain("Example Artist 日本語");
     expect(localStorage.getItem("spotify-shopper-results")).toBe(
       "keep-existing-results",

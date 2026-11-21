@@ -83,6 +83,7 @@ it("offers the full filtered count while showing only the current page", async (
     await act(async () =>
       root.render(
         <ResultsTable
+          compactStatus
           currentResult={{}}
           displayedTracks={tracks}
           onSaveBatch={save}
@@ -91,15 +92,24 @@ it("offers the full filtered count while showing only the current page", async (
       ),
     );
     const button = [...host.querySelectorAll("button")].find(
-      (x) => x.textContent === "Save 25 tracks",
+      (x) => x.textContent === "Add 25 tracks to Buy Later",
     )!;
     expect(button).toBeTruthy();
+    expect(host.querySelector("table")?.textContent).not.toContain(
+      "Not in XML",
+    );
+    const details = [...host.querySelectorAll("table button")].find((x) =>
+      x.textContent?.includes("Details"),
+    )!;
+    await act(async () => details.click());
+    expect(details.getAttribute("aria-expanded")).toBe("true");
     expect(host.querySelector("table")?.textContent).not.toContain("Song 25");
     await act(async () => button.click());
     expect(save).toHaveBeenCalledTimes(1);
     await act(async () =>
       root.render(
         <ResultsTable
+          compactStatus
           currentResult={{}}
           displayedTracks={tracks}
           onSaveBatch={save}

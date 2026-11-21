@@ -16,6 +16,7 @@ import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
 type ReviewAction = "owned" | "different_version" | null;
 type ReviewHandler = (track: PlaylistRow, action: ReviewAction) => void;
 type Props = {
+  compactStatus?: boolean;
   onSaveBatch?: () => void;
   saveBatchCount?: number;
   paginationKey?: string;
@@ -46,6 +47,7 @@ function TrackTitle({ track }: { track: PlaylistRow }) {
 }
 
 export default function ResultsTable({
+  compactStatus = false,
   onSaveBatch,
   saveBatchCount = 0,
   paginationKey,
@@ -108,13 +110,13 @@ export default function ResultsTable({
             title={tr(
               "Adds matching unsaved tracks from every page. Tracks needing review are excluded.",
             )}
-            className="min-h-10 rounded-md border border-white/20 px-3 text-sm font-medium text-slate-100 hover:bg-white/5 disabled:opacity-40"
+            className="min-h-11 rounded-lg bg-emerald-300 px-5 text-sm font-semibold text-emerald-950 hover:bg-emerald-200 disabled:bg-white/5 disabled:text-slate-400"
           >
             {saveBatchCount
               ? tr(
                   saveBatchCount === 1
-                    ? "Save {count} track"
-                    : "Save {count} tracks",
+                    ? "Add {count} track to Buy Later"
+                    : "Add {count} tracks to Buy Later",
                   { count: saveBatchCount },
                 )
               : tr(allEligibleSaved ? "All saved" : "Save filtered tracks")}
@@ -261,6 +263,7 @@ export default function ResultsTable({
                 onAddToBuyQueue={onAddToBuyQueue}
                 onReviewDecision={onReviewDecision}
                 reviewReady={reviewReady}
+                compactStatus={compactStatus}
               />
             ))}
           </tbody>
@@ -272,6 +275,7 @@ export default function ResultsTable({
 }
 
 function DesktopTrackRow({
+  compactStatus,
   track,
   queuedTrackIds,
   onAddToBuyQueue,
@@ -279,6 +283,7 @@ function DesktopTrackRow({
   reviewReady,
 }: {
   track: PlaylistRow;
+  compactStatus?: boolean;
 } & Pick<
   Props,
   "queuedTrackIds" | "onAddToBuyQueue" | "onReviewDecision" | "reviewReady"
@@ -296,12 +301,14 @@ function DesktopTrackRow({
           <TrackIdentity track={track} />
         </td>
         <td className="px-3 py-3 align-middle">
-          <span
-            title={tr(libraryMatchExplanation(track))}
-            className={`inline-block rounded-full border px-2 py-1 text-[11px] leading-snug ${owned === true ? "border-emerald-400/20 bg-emerald-400/5 text-emerald-200" : owned === false ? "border-white/10 bg-white/5 text-slate-300" : "border-amber-400/20 bg-amber-400/5 text-amber-200"}`}
-          >
-            {tr(libraryMatchLabel(track))}
-          </span>
+          {!compactStatus && (
+            <span
+              title={tr(libraryMatchExplanation(track))}
+              className={`inline-block rounded-full border px-2 py-1 text-[11px] leading-snug ${owned === true ? "border-emerald-400/20 bg-emerald-400/5 text-emerald-200" : owned === false ? "border-white/10 bg-white/5 text-slate-300" : "border-amber-400/20 bg-amber-400/5 text-amber-200"}`}
+            >
+              {tr(libraryMatchLabel(track))}
+            </span>
+          )}
           <button
             type="button"
             aria-expanded={expanded}
@@ -310,7 +317,7 @@ function DesktopTrackRow({
             className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-xs text-slate-400 hover:text-white focus-visible:outline-2 focus-visible:outline-emerald-300"
           >
             <span aria-hidden="true">{expanded ? "−" : "+"}</span>
-            {tr("Matching details")}
+            {tr(compactStatus ? "Details" : "Matching details")}
           </button>
         </td>
         <td className="px-3 py-3 align-middle">

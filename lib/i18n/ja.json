@@ -340,5 +340,10 @@
   "Save {count} track": "{count}曲をまとめて保存",
   "Added {count} track to Buy Later": "{count}曲をあとで買うに追加しました",
   "All saved": "すべて保存済み",
-  "All eligible tracks in this filter are already saved.": "この絞り込み条件の対象曲は、すべて保存済みです。"
+  "All eligible tracks in this filter are already saved.": "この絞り込み条件の対象曲は、すべて保存済みです。",
+  "Listen": "試聴",
+  "Details": "詳細",
+  "Playlist tools and XML": "XML・再チェック・書き出し",
+  "Add {count} track to Buy Later": "{count}曲を「あとで買う」に追加",
+  "Add {count} tracks to Buy Later": "{count}曲を「あとで買う」に追加"
 }

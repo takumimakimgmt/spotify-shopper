@@ -448,7 +448,7 @@ function PageInner() {
               </div>
             ) : (
               <>
-                <header className="mb-7 max-w-3xl space-y-3">
+                <header className="mx-auto mb-7 max-w-3xl space-y-3">
                   <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                     {tr("Buy new tracks. Skip the duplicates.")}
                   </h1>
@@ -661,6 +661,7 @@ function PageInner() {
                   </label>
                 )}
                 <ResultsTable
+                  compactStatus={filters.categoryFilter === "toBuy"}
                   onSaveBatch={saveFilteredTracks}
                   saveBatchCount={saveBatch.length}
                   paginationKey={JSON.stringify([
