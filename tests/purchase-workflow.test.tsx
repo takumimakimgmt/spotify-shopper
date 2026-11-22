@@ -57,7 +57,7 @@ describe("purchase workflow", () => {
     expect(
       [...div.querySelectorAll("mark")].map((x) => x.textContent).join(" "),
     ).toContain("Bob");
-    expect(div.textContent).toContain("Artist credits · differs");
+    expect(div.textContent).toContain("Artist credits · text differs");
     expect(JSON.stringify(row)).toBe(before);
   });
 });

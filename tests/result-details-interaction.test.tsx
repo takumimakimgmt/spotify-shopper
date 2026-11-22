@@ -33,6 +33,7 @@ it("opens the selected recording's full-width evidence and preserves review acti
           displayedTracks={tracks}
           onReviewDecision={onReviewDecision}
           reviewReady
+          showChanges
         />,
       ),
     );

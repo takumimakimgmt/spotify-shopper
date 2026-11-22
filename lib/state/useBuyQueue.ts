@@ -56,11 +56,15 @@ function saveQueue(items: BuyQueueItem[]): boolean {
 export function useBuyQueue() {
   const [items, setItems] = useState<BuyQueueItem[]>([]);
   const [restored, setRestored] = useState(false);
+  const [removed, setRemoved] = useState<
+    Array<{ item: BuyQueueItem; index: number }>
+  >([]);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const restore = useCallback(() => {
     try {
       setItems(parseQueue(window.localStorage.getItem(STORAGE_KEY)));
       setRestored(true);
+      setRemoved([]);
       setStorageWarning(null);
     } catch {
       setStorageWarning(
@@ -175,10 +179,30 @@ export function useBuyQueue() {
         );
         return;
       }
+      const index = items.findIndex((item) => item.id === id);
+      if (index < 0) return;
+      setRemoved([{ item: items[index], index }]);
       setItems((prev) => prev.filter((item) => item.id !== id));
     },
-    [restored],
+    [restored, items],
   );
+  const clearItems = useCallback(() => {
+    if (!restored) return;
+    setRemoved(items.map((item, index) => ({ item, index })));
+    setItems([]);
+  }, [restored, items]);
+  const undoRemove = useCallback(() => {
+    if (!restored) return;
+    setItems((prev) => {
+      const next = [...prev];
+      for (const { item, index } of removed) {
+        if (!next.some((x) => x.id === item.id))
+          next.splice(Math.min(index, next.length), 0, item);
+      }
+      return next;
+    });
+    setRemoved([]);
+  }, [restored, removed]);
 
   return {
     items,
@@ -186,6 +210,9 @@ export function useBuyQueue() {
     addTrack,
     addTracks,
     removeItem,
+    clearItems,
+    undoRemove,
+    removedCount: removed.length,
     storageWarning,
     retrySave,
   };

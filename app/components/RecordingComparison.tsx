@@ -49,7 +49,7 @@ export default function RecordingComparison({ track }: { track: PlaylistRow }) {
               <div key={tr(name)} className="mb-2">
                 <p className="text-muted">
                   {tr(name)}
-                  {normal(left) !== normal(right) ? tr(" · differs") : ""}
+                  {normal(left) !== normal(right) ? tr(" · text differs") : ""}
                 </p>
                 <p>
                   {(side ? right : left) ? (
@@ -68,7 +68,7 @@ export default function RecordingComparison({ track }: { track: PlaylistRow }) {
       </div>
       <p className="text-muted">
         {tr(
-          "Highlighted words differ. Check the full mix / remix name and artist credits. XML candidate album and ISRC are not available in this comparison.",
+          "Highlights show text differences, not a separate recording verdict. Read the matching reason above. XML candidate album and ISRC are not available in this comparison.",
         )}
       </p>
       {track.isrc && <p>Spotify ISRC: {track.isrc}</p>}

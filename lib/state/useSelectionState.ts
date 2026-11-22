@@ -31,19 +31,33 @@ export function useSelectionState(
   initialActiveTab: string | null,
   initialFormCollapsed: boolean,
 ) {
-  // Persist activeTab in localStorage
-  const [activeTab, setActiveTab] = useState<string | null>(() => {
-    if (typeof window === "undefined") return initialActiveTab;
-    try {
-      const stored = localStorage.getItem("spotify-shopper-active-tab");
-      const parsedTab = parseStoredActiveTab(stored);
-      return parsedTab ?? initialActiveTab;
-    } catch {
-      return initialActiveTab;
-    }
-  });
+  // Render the same initial state on the server and first client render.
+  // Restore before allowing persistence to avoid overwriting saved selection.
+  const [selectionHydrated, setSelectionHydrated] = useState(false);
+  const [activeTab, setActiveTab] = useState<string | null>(initialActiveTab);
+  const [formCollapsed, setFormCollapsed] = useState(initialFormCollapsed);
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const timer = window.setTimeout(() => {
+      try {
+        setActiveTab(
+          parseStoredActiveTab(
+            localStorage.getItem("spotify-shopper-active-tab"),
+          ) ?? initialActiveTab,
+        );
+        setFormCollapsed(
+          parseStoredBool(
+            localStorage.getItem("spotify-shopper-form-collapsed"),
+          ) ?? initialFormCollapsed,
+        );
+      } catch {
+        /* Keep the in-memory initial state when storage is unavailable. */
+      }
+      setSelectionHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [initialActiveTab, initialFormCollapsed]);
+  useEffect(() => {
+    if (typeof window === "undefined" || !selectionHydrated) return;
     try {
       if (activeTab !== null) {
         localStorage.setItem("spotify-shopper-active-tab", activeTab);
@@ -51,29 +65,19 @@ export function useSelectionState(
         localStorage.removeItem("spotify-shopper-active-tab");
       }
     } catch {}
-  }, [activeTab]);
-  // Persist formCollapsed in localStorage
-  const [formCollapsed, setFormCollapsed] = useState(() => {
-    if (typeof window === "undefined") return initialFormCollapsed;
-    try {
-      const stored = localStorage.getItem("spotify-shopper-form-collapsed");
-      const parsedCollapsed = parseStoredBool(stored);
-      return parsedCollapsed ?? initialFormCollapsed;
-    } catch {
-      return initialFormCollapsed;
-    }
-  });
+  }, [activeTab, selectionHydrated]);
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !selectionHydrated) return;
     try {
       localStorage.setItem(
         "spotify-shopper-form-collapsed",
         String(formCollapsed),
       );
     } catch {}
-  }, [formCollapsed]);
+  }, [formCollapsed, selectionHydrated]);
 
   return {
+    selectionHydrated,
     activeTab,
     setActiveTab,
     formCollapsed,
