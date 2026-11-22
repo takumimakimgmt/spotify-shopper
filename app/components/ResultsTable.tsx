@@ -20,6 +20,7 @@ type Props = {
   saveBatchSummary?: { duplicates: number; saved: number; excluded: number };
   compactStatus?: boolean;
   onSaveBatch?: () => void;
+  onOpenBuyQueue?: () => void;
   saveBatchCount?: number;
   paginationKey?: string;
   onReviewDecision?: ReviewHandler;
@@ -49,6 +50,7 @@ export default function ResultsTable({
   compactStatus = false,
   saveBatchSummary,
   onSaveBatch,
+  onOpenBuyQueue,
   saveBatchCount = 0,
   paginationKey,
   currentResult,
@@ -102,37 +104,60 @@ export default function ResultsTable({
             total: rows.length,
           })}
         </p>
-        {position === "Track pages" && onSaveBatch && (
-          <button
-            type="button"
-            onClick={onSaveBatch}
-            disabled={saveBatchCount === 0}
-            title={tr(
-              "Adds matching unsaved tracks from every page. Tracks needing review are excluded.",
-            )}
-            className="ps-action-primary"
-          >
-            {saveBatchCount
-              ? tr(
-                  saveBatchCount === 1
-                    ? "Add {count} track to Buy Later"
-                    : "Add {count} tracks to Buy Later",
-                  { count: saveBatchCount },
-                )
-              : tr(allEligibleSaved ? "All saved" : "Save filtered tracks")}
-          </button>
-        )}
-        {position === "Track pages" && onSaveBatch && (
-          <p className="text-xs text-muted">
-            {tr(
-              saveBatchCount
-                ? "Across all filtered pages"
-                : allEligibleSaved
-                  ? "All eligible tracks in this filter are already saved."
-                  : "No unsaved eligible tracks. Check XML matching or change filters.",
-            )}
-          </p>
-        )}
+        {position === "Track pages" &&
+          onSaveBatch &&
+          (allEligibleSaved ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm text-secondary" role="status">
+                {tr("{count} tracks saved", {
+                  count:
+                    saveBatchSummary?.saved ??
+                    new Set(
+                      rows
+                        .filter((t) => effectiveOwned(t) === false)
+                        .map(getBuyQueueItemId),
+                    ).size,
+                })}
+              </span>
+              {onOpenBuyQueue && (
+                <button
+                  type="button"
+                  onClick={onOpenBuyQueue}
+                  className="min-h-11 text-sm text-secondary underline underline-offset-4 hover:text-foreground"
+                >
+                  {tr("View saved tracks")}
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={onSaveBatch}
+                disabled={saveBatchCount === 0}
+                title={tr(
+                  "Adds matching unsaved tracks from every page. Tracks needing review are excluded.",
+                )}
+                className="ps-action-primary"
+              >
+                {saveBatchCount
+                  ? tr(
+                      saveBatchCount === 1
+                        ? "Add {count} track to Buy Later"
+                        : "Add {count} tracks to Buy Later",
+                      { count: saveBatchCount },
+                    )
+                  : tr("Save filtered tracks")}
+              </button>
+              <p className="text-xs text-muted">
+                {tr(
+                  saveBatchCount
+                    ? "Across all filtered pages"
+                    : "No unsaved eligible tracks. Check XML matching or change filters.",
+                )}
+              </p>
+            </div>
+          ))}
       </div>
       <div className="flex items-center gap-2">
         {position === "Track pages" && (
@@ -208,14 +233,24 @@ export default function ResultsTable({
       className="scroll-mt-44 space-y-3 outline-none"
     >
       {pageControls("Track pages")}
-      {onSaveBatch && saveBatchSummary && (
-        <p className="text-sm text-muted">
-          {tr(
-            "{duplicates} duplicate rows · {saved} already saved · {excluded} not eligible",
-            saveBatchSummary,
-          )}
-        </p>
-      )}
+      {onSaveBatch &&
+        saveBatchSummary &&
+        !allEligibleSaved &&
+        (saveBatchSummary.duplicates > 0 ||
+          saveBatchSummary.saved > 0 ||
+          saveBatchSummary.excluded > 0) && (
+          <details className="text-xs leading-5 text-muted">
+            <summary className="cursor-pointer py-1">
+              {tr("Which tracks will be saved?")}
+            </summary>
+            <p className="py-2">
+              {tr(
+                "{duplicates} duplicate rows · {saved} already saved · {excluded} not eligible",
+                saveBatchSummary,
+              )}
+            </p>
+          </details>
+        )}
       <details className="text-xs leading-5 text-muted">
         <summary className="cursor-pointer hover:text-slate-200">
           {tr("About store links")}
@@ -249,14 +284,13 @@ export default function ResultsTable({
       <div className="hidden md:block">
         <table className="w-full table-fixed text-sm">
           <colgroup>
-            <col className="w-[45%]" />
-            <col className="w-[15%]" />
-            <col className="w-[26%]" />
+            <col className="w-[52%]" />
+            <col className="w-[34%]" />
             <col className="w-[14%]" />
           </colgroup>
           <thead className="border-b border-white/15 text-left text-[11px] font-medium uppercase tracking-wider text-muted">
             <tr>
-              {["Track", "Status", "Store", "Save"].map((label) => (
+              {["Track", "Store", "Save"].map((label) => (
                 <th key={label} scope="col" className="px-3 py-3">
                   {tr(label)}
                 </th>
@@ -308,19 +342,19 @@ function DesktopTrackRow({
       <tr className="group border-b border-white/10 transition-colors hover:bg-white/[0.025]">
         <td className="px-3 py-3 align-middle">
           <TrackIdentity track={track} />
-        </td>
-        <td className="px-3 py-3 align-middle">
-          {!compactStatus && <LibraryStatus track={track} />}
-          <button
-            type="button"
-            aria-expanded={expanded}
-            aria-controls={detailsId}
-            onClick={() => setExpanded(!expanded)}
-            className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-xs text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-emerald-300"
-          >
-            <span aria-hidden="true">{expanded ? "−" : "+"}</span>
-            {tr(compactStatus ? "Details" : "Matching details")}
-          </button>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {!compactStatus && <LibraryStatus track={track} />}
+            <button
+              type="button"
+              aria-expanded={expanded}
+              aria-controls={detailsId}
+              onClick={() => setExpanded(!expanded)}
+              className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-xs text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-emerald-300"
+            >
+              <span aria-hidden="true">{expanded ? "−" : "+"}</span>
+              {tr(compactStatus ? "Details" : "Matching details")}
+            </button>
+          </div>
         </td>
         <td className="px-3 py-3 align-middle">
           {owned === true ? null : primary ? (
@@ -331,14 +365,20 @@ function DesktopTrackRow({
         </td>
         <td className="px-3 py-3 align-middle">
           {owned === true ? null : owned === false && primary ? (
-            <button
-              type="button"
-              disabled={isQueued}
-              onClick={() => onAddToBuyQueue?.(track, primary)}
-              className="ps-action-secondary whitespace-nowrap"
-            >
-              {isQueued ? `✓ ${tr("Saved")}` : tr("Buy Later")}
-            </button>
+            isQueued ? (
+              <span className="inline-flex items-center gap-1 text-sm text-muted">
+                <span aria-hidden="true">✓</span>
+                {tr("Saved")}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onAddToBuyQueue?.(track, primary)}
+                className="ps-action-secondary whitespace-nowrap"
+              >
+                {tr("Buy Later")}
+              </button>
+            )
           ) : (
             <span
               className="text-xs text-muted"
@@ -357,7 +397,7 @@ function DesktopTrackRow({
       </tr>
       <tr hidden={!expanded} id={detailsId}>
         <td
-          colSpan={4}
+          colSpan={3}
           className="border-b border-white/10 bg-white/[0.025] px-5 py-5 text-xs text-secondary"
         >
           {track.changeStatus && track.changeStatus !== "unchanged" && (
@@ -421,16 +461,22 @@ function TrackCard({
       )}
       {!isOwned && canQueue ? (
         <div className="mt-2">
-          <button
-            type="button"
-            disabled={isQueued}
-            onClick={() => {
-              if (primary) onAddToBuyQueue?.(track, primary);
-            }}
-            className="ps-action-secondary"
-          >
-            {isQueued ? tr("Saved") : tr("Buy Later")}
-          </button>
+          {isQueued ? (
+            <span className="inline-flex items-center gap-1 text-sm text-muted">
+              <span aria-hidden="true">✓</span>
+              {tr("Saved")}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (primary) onAddToBuyQueue?.(track, primary);
+              }}
+              className="ps-action-secondary"
+            >
+              {tr("Buy Later")}
+            </button>
+          )}
         </div>
       ) : null}
     </div>

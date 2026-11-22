@@ -452,29 +452,7 @@ function PageInner() {
               </div>
             ) : (
               <>
-                <header className="ps-intro relative isolate mx-auto mb-7 max-w-3xl space-y-3 overflow-hidden border-b border-white/15 pb-6">
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 160 160"
-                    className="pointer-events-none absolute -right-12 -top-12 -z-10 h-48 w-48 text-white/10"
-                  >
-                    {[42, 50, 58, 66, 74].map((r) => (
-                      <circle
-                        key={r}
-                        cx="80"
-                        cy="80"
-                        r={r}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="0.7"
-                      />
-                    ))}
-                    <path
-                      d="M132 44l5 4"
-                      stroke="var(--accent)"
-                      strokeWidth="3"
-                    />
-                  </svg>
+                <header className="ps-intro mx-auto mb-7 max-w-3xl space-y-3 border-b border-white/15 pb-6">
                   <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                     {tr("Buy new tracks. Skip the duplicates.")}
                   </h1>
@@ -678,6 +656,7 @@ function PageInner() {
                 <ResultsTable
                   compactStatus={filters.categoryFilter === "toBuy"}
                   onSaveBatch={saveFilteredTracks}
+                  onOpenBuyQueue={() => setQueueOpen(true)}
                   saveBatchCount={saveBatch.length}
                   saveBatchSummary={buyLaterBatchSummary(
                     vm.displayedTracks,

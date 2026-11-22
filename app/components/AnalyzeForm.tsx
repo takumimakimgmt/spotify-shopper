@@ -245,7 +245,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           </div>
           <aside
             aria-labelledby="xml-heading"
-            className="w-full rounded-xl border border-white/10 bg-white/[0.02] p-5"
+            className={
+              hasXml
+                ? "w-full border-y border-white/15 py-4"
+                : "w-full rounded-xl border border-white/10 bg-white/[0.02] p-5"
+            }
           >
             <div className="space-y-2">
               <div
@@ -253,24 +257,42 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 className="text-sm font-semibold text-slate-200"
               >
                 {tr("rekordbox library")}{" "}
-                <span className="rounded-full bg-white/5 px-2 py-1 text-xs font-normal text-muted">
-                  {tr("Optional")}
-                </span>
+                {!hasXml && (
+                  <span className="rounded-full bg-white/5 px-2 py-1 text-xs font-normal text-muted">
+                    {tr("Optional")}
+                  </span>
+                )}
               </div>
-              <p id="xml-help" className="text-sm leading-6 text-secondary">
+              <p
+                id="xml-help"
+                className={
+                  hasXml ? "sr-only" : "text-sm leading-6 text-secondary"
+                }
+              >
                 {tr(
-                  "Add your rekordbox XML to check tracks you already have (up to 50 MB).",
+                  hasXml
+                    ? "This XML will be used for the next check."
+                    : "Add your rekordbox XML to check tracks you already have (up to 50 MB).",
                 )}
               </p>
 
-              <div className="flex flex-col gap-3 rounded-lg border border-dashed border-white/20 p-4 text-sm text-muted">
+              <div
+                className={
+                  hasXml
+                    ? "flex flex-wrap items-center justify-between gap-3 text-sm text-muted"
+                    : "flex flex-col gap-3 rounded-lg border border-dashed border-white/20 p-4 text-sm text-muted"
+                }
+              >
                 <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
                       hasXml ? "bg-emerald-400" : "bg-slate-700"
                     }`}
                   />
-                  <span className="truncate font-medium text-secondary">
+                  <span
+                    title={xmlName}
+                    className="min-w-0 break-all font-medium text-secondary"
+                  >
                     {xmlName}
                   </span>
                   <span className="truncate text-muted">
@@ -293,16 +315,16 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                     type="button"
                     onClick={replaceXml}
                     disabled={props.savedRekordboxXmlBusy}
-                    className="rounded-md border border-white/15 px-3 py-2 text-slate-200 hover:border-white/30 disabled:opacity-40"
+                    className="ps-action-secondary disabled:opacity-40"
                   >
-                    {tr("Upload")}
+                    {tr(hasXml ? "Change XML" : "Upload")}
                   </button>
                   {hasXml ? (
                     <button
                       type="button"
                       onClick={removeXml}
                       disabled={props.savedRekordboxXmlBusy}
-                      className="px-2 py-2 text-muted hover:text-slate-100 disabled:opacity-40"
+                      className="min-h-11 px-2 py-2 text-muted hover:text-slate-100 disabled:opacity-40"
                     >
                       {tr("Remove")}
                     </button>

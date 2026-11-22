@@ -117,9 +117,11 @@ describe("AnalyzeForm", () => {
     expect(container.textContent).toContain("rekordbox library");
     expect(container.textContent).toContain("collection.xml");
     expect(container.textContent).toContain("2 KB");
+    expect(container.textContent).not.toContain("Optional");
+    expect(container.querySelector("aside .border-dashed")).toBeNull();
     expect(textButton(container, "Match against XML").type).toBe("submit");
 
-    const uploadButton = textButton(container, "Upload");
+    const uploadButton = textButton(container, "Change XML");
     const removeButton = textButton(container, "Remove");
     expect(textButton(container, "Match against XML").type).toBe("submit");
 
@@ -133,7 +135,7 @@ describe("AnalyzeForm", () => {
     expect(container.textContent).not.toContain("Forget");
   });
 
-  test("renders uploaded XML with Upload and Remove actions", async () => {
+  test("returns to optional upload after the selected XML is removed", async () => {
     const props = makeProps({
       rekordboxFile: new File(["<DJ_PLAYLISTS />"], "uploaded.xml", {
         type: "text/xml",
@@ -150,7 +152,13 @@ describe("AnalyzeForm", () => {
       removeButton.click();
     });
 
+    await renderForm({
+      ...props,
+      rekordboxFile: null,
+      rekordboxFilename: null,
+    });
     expect(textButton(container, "Upload")).toBeDefined();
+    expect(container.textContent).toContain("Optional");
     expect(props.setRekordboxFile).toHaveBeenCalledWith(null);
     expect(props.forgetSavedRekordboxXml).not.toHaveBeenCalled();
     expect(container.textContent).not.toContain("Use saved");

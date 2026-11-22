@@ -351,5 +351,9 @@
   "Check with rekordbox XML": "rekordboxのXMLでチェック",
   "Add XML to check your library. Browsing and store search still work without it.": "XMLを追加すると、持っている曲を確認できます。曲の閲覧・購入先の検索は、このまま使えます。",
   "{duplicates} duplicate rows · {saved} already saved · {excluded} not eligible": "重複 {duplicates}曲・保存済み {saved}曲・対象外 {excluded}曲を除外",
-  "Add XML to check which tracks are absent from your library export.": "XMLを追加すると、そのファイルに見つからない曲を確認できます。"
+  "Add XML to check which tracks are absent from your library export.": "XMLを追加すると、そのファイルに見つからない曲を確認できます。",
+  "{count} tracks saved": "{count}曲を保存済み",
+  "Which tracks will be saved?": "保存する曲の範囲",
+  "This XML will be used for the next check.": "次のチェックには、このXMLを使います。",
+  "Change XML": "XMLを変更"
 }

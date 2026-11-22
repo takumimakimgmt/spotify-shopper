@@ -6,7 +6,7 @@ A PC-first DJ purchase research tool: public Spotify playlist → optional local
 
 ## Direction
 
-Carry the existing social cover's bold type, dark ground, off-white text and restrained green groove accent into the input view. Keep long result lists quiet. Do not add decorative imagery, autoplay, new fonts, UI libraries, paid services or tracking to create personality.
+Carry the existing social cover's bold type, dark ground, off-white text and restrained green accent into the input view. Keep the groove illustration on the social cover; a faint cropped circle behind text did not make a useful app composition and has been removed. Keep long result lists quiet. Do not add decorative imagery, autoplay, new fonts, UI libraries, paid services or tracking to create personality.
 
 ## Rules
 
@@ -35,3 +35,7 @@ Native dialog/shadow/backdrop and technical detail text are intentional exceptio
 Use short feedback transitions; no staggered row entrances. Respect prefers-reduced-motion for pulse, transitions and smooth scrolling. Progress exposes an accessible name and determinate values only when known.
 
 Check 320/390/768/1024/1440px; Japanese and English; long remixes and multiple artist credits; no XML, matched, absent, review; empty results; storage error; queue duplicate counts and all-page saving; focus, Escape, pagination/search and CSV. Preserve local XML privacy and original metadata. Match accuracy, purchase conversions and actual large-file performance require separate validation.
+
+## Finishing rules
+
+Keep the listening control in its own column beside the entire track identity, never in the title row: the 44px target must not create a gap between title and artist. Desktop results have three columns (track, store, save); status and evidence toggle belong beneath the identity. Saved rows use quiet text/checks, not repeated disabled action buttons. When the filtered set is fully saved, show one count plus a link opening the shared saved list; hide redundant completion/exclusion explanations. Before saving, exclusion counts remain available in a disclosure. Selected XML uses a compact metadata/change/remove row; optional upload instructions are for the unselected state. Privacy/scope warnings and errors remain available in both states.
