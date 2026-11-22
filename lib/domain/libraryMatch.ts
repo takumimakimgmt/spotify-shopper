@@ -7,7 +7,9 @@ export function libraryMatchLabel(track: PlaylistRow): string {
     return "Different version (you)";
   if (track.owned === true) return "Matches XML";
   if (track.owned === false) return "Not in XML";
-  return track.ownedReason ? "Needs review" : "Not checked — add XML";
+  return libraryCheckState(track) === "review"
+    ? "Needs review"
+    : "Not checked — add XML";
 }
 
 export function libraryMatchExplanation(track: PlaylistRow): string {
@@ -49,4 +51,18 @@ export function effectiveOwned(track: PlaylistRow): boolean | null {
 export function categorizeTrack(track: PlaylistRow): TrackCategory {
   const owned = effectiveOwned(track);
   return owned === true ? "owned" : owned === false ? "checkout" : "unknown";
+}
+
+/** Presentation state only: never changes recording matching or ownership evidence. */
+export function libraryCheckState(
+  track: PlaylistRow,
+): "matched" | "absent" | "review" | "unchecked" {
+  const owned = effectiveOwned(track);
+  if (owned === true) return "matched";
+  if (owned === false) return "absent";
+  return track.reviewDecision?.action === "different_version" ||
+    track.libraryMatch?.status === "review" ||
+    Boolean(track.ownedReason)
+    ? "review"
+    : "unchecked";
 }

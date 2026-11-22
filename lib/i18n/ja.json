@@ -335,7 +335,7 @@
   "Save filtered tracks": "まとめて保存",
   "Added {count} tracks to Buy Later": "{count}曲をあとで買うに追加しました",
   "Adds matching unsaved tracks from every page. Tracks needing review are excluded.": "すべてのページの対象曲をまとめて追加します。保存済み・所持済み・確認が必要な曲は除きます。",
-  "Across all filtered pages": "絞り込んだ全ページが対象",
+  "Across all filtered pages": "絞り込んだ全ページの、重複を除いた未保存曲が対象",
   "No unsaved eligible tracks. Check XML matching or change filters.": "未保存の対象曲はありません。照合結果や絞り込みをご確認ください。",
   "Save {count} track": "{count}曲をまとめて保存",
   "Added {count} track to Buy Later": "{count}曲をあとで買うに追加しました",
@@ -345,5 +345,11 @@
   "Details": "詳細",
   "Playlist tools and XML": "XML・再チェック・書き出し",
   "Add {count} track to Buy Later": "{count}曲を「あとで買う」に追加",
-  "Add {count} tracks to Buy Later": "{count}曲を「あとで買う」に追加"
+  "Add {count} tracks to Buy Later": "{count}曲を「あとで買う」に追加",
+  "Add XML to save": "保存するにはXMLを追加",
+  "Search and sort": "検索・並べ替え",
+  "Check with rekordbox XML": "rekordboxのXMLでチェック",
+  "Add XML to check your library. Browsing and store search still work without it.": "XMLを追加すると、持っている曲を確認できます。曲の閲覧・購入先の検索は、このまま使えます。",
+  "{duplicates} duplicate rows · {saved} already saved · {excluded} not eligible": "重複 {duplicates}曲・保存済み {saved}曲・対象外 {excluded}曲を除外",
+  "Add XML to check which tracks are absent from your library export.": "XMLを追加すると、そのファイルに見つからない曲を確認できます。"
 }

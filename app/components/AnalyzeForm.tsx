@@ -146,7 +146,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           className={`rounded-md border px-3 py-2 text-sm ${
             props.banner.kind === "error"
               ? "border-rose-800/70 bg-rose-950/30 text-rose-100"
-              : "border-slate-800 bg-transparent text-slate-300"
+              : "border-slate-800 bg-transparent text-secondary"
           }`}
         >
           <div className="flex items-start gap-2">
@@ -155,7 +155,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               <button
                 type="button"
                 onClick={props.onDismissBanner}
-                className="text-slate-300 hover:text-white"
+                className="text-secondary hover:text-foreground"
                 aria-label={tr("Dismiss")}
               >
                 ✕
@@ -177,7 +177,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
         />
 
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
-          <div className="rounded-2xl border border-emerald-300/25 bg-[#0b1514] p-5 sm:p-6">
+          <div className="rounded-xl border border-accent/30 bg-surface p-5 sm:p-6">
             <div className="space-y-2">
               <label
                 htmlFor="playlist-url"
@@ -197,10 +197,10 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   aria-describedby={
                     visiblePlaylistError ? "playlist-url-error" : undefined
                   }
-                  className={`min-h-14 w-full resize-none rounded-lg border bg-transparent px-4 py-3 text-sm font-medium text-slate-100 outline-none placeholder:text-slate-500 ${
+                  className={`min-h-14 w-full resize-none rounded-lg border bg-transparent px-4 py-3 text-sm font-medium text-slate-100 outline-none placeholder:text-muted ${
                     visiblePlaylistError
                       ? "border-rose-400"
-                      : "border-white/20 focus:border-emerald-300/70"
+                      : "border-[var(--control-border)] focus:border-accent"
                   }`}
                 />
               </div>
@@ -217,7 +217,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 </div>
               ) : null}
             </div>
-            <p className="mt-3 text-xs text-slate-400">
+            <p className="mt-3 text-xs text-muted">
               {tr("Public playlists · No Spotify login needed")}
             </p>
             <div className="space-y-3 pt-4">
@@ -230,14 +230,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   !props.playlistUrlInput.trim()
                 }
                 aria-describedby="analysis-help"
-                className="min-h-12 w-full rounded-lg bg-emerald-300 px-6 py-3 text-sm font-semibold text-[#062016] hover:bg-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:bg-white/10 disabled:text-slate-400 sm:min-w-52"
+                className="ps-action-primary min-h-12 w-full"
               >
                 {hasXml ? tr("Match against XML") : tr("Browse playlist")}
               </button>
-              <p
-                id="analysis-help"
-                className="text-sm leading-6 text-slate-400"
-              >
+              <p id="analysis-help" className="text-sm leading-6 text-muted">
                 {hasXml
                   ? tr(
                       "Compare this playlist with your selected XML to find tracks missing from your library.",
@@ -256,27 +253,27 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 className="text-sm font-semibold text-slate-200"
               >
                 {tr("rekordbox library")}{" "}
-                <span className="rounded-full bg-white/5 px-2 py-1 text-xs font-normal text-slate-400">
+                <span className="rounded-full bg-white/5 px-2 py-1 text-xs font-normal text-muted">
                   {tr("Optional")}
                 </span>
               </div>
-              <p id="xml-help" className="text-sm leading-6 text-slate-300">
+              <p id="xml-help" className="text-sm leading-6 text-secondary">
                 {tr(
                   "Add your rekordbox XML to check tracks you already have (up to 50 MB).",
                 )}
               </p>
 
-              <div className="flex flex-col gap-3 rounded-lg border border-dashed border-white/20 p-4 text-sm text-slate-400">
+              <div className="flex flex-col gap-3 rounded-lg border border-dashed border-white/20 p-4 text-sm text-muted">
                 <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
                       hasXml ? "bg-emerald-400" : "bg-slate-700"
                     }`}
                   />
-                  <span className="truncate font-medium text-slate-300">
+                  <span className="truncate font-medium text-secondary">
                     {xmlName}
                   </span>
-                  <span className="truncate text-slate-400">
+                  <span className="truncate text-muted">
                     {props.savedRekordboxXmlMeta
                       ? tr("{size} · updated {date}", {
                           size: formatBytes(props.savedRekordboxXmlMeta.size),
@@ -305,7 +302,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                       type="button"
                       onClick={removeXml}
                       disabled={props.savedRekordboxXmlBusy}
-                      className="px-2 py-2 text-slate-400 hover:text-slate-100 disabled:opacity-40"
+                      className="px-2 py-2 text-muted hover:text-slate-100 disabled:opacity-40"
                     >
                       {tr("Remove")}
                     </button>
@@ -322,22 +319,22 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   {tr(props.savedRekordboxXmlError)}
                 </div>
               ) : null}
-              <p className="text-xs leading-5 text-slate-400">
+              <p className="text-xs leading-5 text-muted">
                 {tr(
                   "XML stays on this device. Not in XML does not prove you do not own a track.",
                 )}
               </p>
-              <details className="text-sm text-slate-400">
+              <details className="text-sm text-muted">
                 <summary className="cursor-pointer py-2">
                   {tr("XML help and limitations")}
                 </summary>
                 <div className="space-y-4 pt-2">
                   {" "}
-                  <div className="text-sm text-slate-300">
+                  <div className="text-sm text-secondary">
                     <h3 className="font-medium text-slate-200">
                       {tr("How to export your rekordbox XML")}
                     </h3>
-                    <ol className="mt-2 list-decimal space-y-1 pl-5 leading-6 text-slate-400">
+                    <ol className="mt-2 list-decimal space-y-1 pl-5 leading-6 text-muted">
                       <li>{tr("Open rekordbox on your computer.")}</li>
                       <li>
                         {tr(
@@ -350,12 +347,12 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                       href="https://rekordbox.com/en/support/faq/operation-hints-7/"
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-2 inline-block underline underline-offset-4 hover:text-white"
+                      className="mt-2 inline-block underline underline-offset-4 hover:text-foreground"
                     >
                       {tr("rekordbox export help")}
                     </a>
                   </div>{" "}
-                  <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-slate-300">
+                  <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-secondary">
                     <li>
                       {tr(
                         "The export contains your whole collection, not just one playlist.",
@@ -377,7 +374,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                       "Not in your XML means no match in this export, not proof that you do not own the track. Tracks added after export and streaming-only tracks may be absent.",
                     )}
                   </p>
-                  <p className="text-xs leading-5 text-slate-400">
+                  <p className="text-xs leading-5 text-muted">
                     {tr(
                       "The original XML is saved in this browser for reuse. Library matching runs locally; XML, file paths and recording metadata stay on this device. Use Remove to delete the browser’s saved XML.",
                     )}
@@ -394,12 +391,12 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           queryPlaylist={props.queryPlaylist}
         />
 
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
           {props.cancelAnalyze && props.loading ? (
             <button
               type="button"
               onClick={() => props.cancelAnalyze?.()}
-              className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-slate-300 hover:border-slate-600 hover:bg-slate-800/50 hover:text-white"
+              className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-secondary hover:border-slate-600 hover:bg-slate-800/50 hover:text-foreground"
             >
               {tr("Cancel")}
             </button>
@@ -409,7 +406,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <button
               type="button"
               onClick={() => props.retryFailed?.()}
-              className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-slate-300 hover:border-slate-600 hover:bg-slate-800/50 hover:text-white"
+              className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-secondary hover:border-slate-600 hover:bg-slate-800/50 hover:text-foreground"
             >
               {tr("Retry")}
             </button>
@@ -448,7 +445,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                 className="mt-3 space-y-3 rounded-lg border border-white/20 bg-white/5 p-4 text-sm leading-6 text-slate-200"
                 aria-label={tr("Try a personal copy")}
               >
-                <h3 className="font-semibold text-white">
+                <h3 className="font-semibold text-foreground">
                   {tr("Official playlist unavailable? Try a personal copy.")}
                 </h3>
                 <ol className="list-decimal space-y-2 pl-5">
@@ -473,7 +470,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                     "Public playlists can be checked without Spotify login. Private playlists and some Spotify-generated playlists cannot be read this way.",
                   )}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-secondary">
                   {tr(
                     "The copy will not automatically follow updates to the original playlist. Spotify access restrictions still apply.",
                   )}
@@ -484,7 +481,7 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
               <button
                 type="button"
                 onClick={() => props.setForceRefreshHint(true)}
-                className="text-xs px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:text-white"
+                className="text-xs px-2 py-1 rounded-md border border-slate-700 text-secondary hover:text-foreground"
               >
                 {tr("Show refresh tips")}
               </button>

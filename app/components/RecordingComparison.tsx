@@ -47,7 +47,7 @@ export default function RecordingComparison({ track }: { track: PlaylistRow }) {
             <p className="mb-2 font-semibold">{label}</p>
             {fields.map(([name, left, right]) => (
               <div key={tr(name)} className="mb-2">
-                <p className="text-slate-400">
+                <p className="text-muted">
                   {tr(name)}
                   {normal(left) !== normal(right) ? tr(" · differs") : ""}
                 </p>
@@ -66,7 +66,7 @@ export default function RecordingComparison({ track }: { track: PlaylistRow }) {
           </div>
         ))}
       </div>
-      <p className="text-slate-400">
+      <p className="text-muted">
         {tr(
           "Highlighted words differ. Check the full mix / remix name and artist credits. XML candidate album and ISRC are not available in this comparison.",
         )}

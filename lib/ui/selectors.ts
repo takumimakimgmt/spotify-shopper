@@ -1,11 +1,15 @@
 import type { PlaylistRow, TrackCategory } from "../types";
-import { categorizeTrack, effectiveOwned } from "../domain/libraryMatch";
+import {
+  categorizeTrack,
+  effectiveOwned,
+  libraryCheckState,
+} from "../domain/libraryMatch";
 import { buildSearchHaystack } from "@/lib/utils/normalize";
 import { normalizeTitle, normalizeArtist } from "../utils/normalize";
 
 export interface FilterOptions {
   changesOnly?: boolean;
-  categoryFilter: "all" | "toBuy" | "owned" | "unknown";
+  categoryFilter: "all" | "toBuy" | "owned" | "unknown" | "unchecked";
   searchQuery: string;
   sortKey: "none" | "artist" | "album" | "title";
 }
@@ -52,9 +56,11 @@ export function selectDisplayedTracks(
   } else if (options.categoryFilter === "toBuy") {
     filtered = filtered.filter((t) => categorizeTrack(t) === "checkout");
   } else if (options.categoryFilter === "unknown") {
-    filtered = filtered.filter((t) => categorizeTrack(t) === "unknown");
+    filtered = filtered.filter((t) => libraryCheckState(t) === "review");
   }
 
+  if (options.categoryFilter === "unchecked")
+    filtered = filtered.filter((t) => libraryCheckState(t) === "unchecked");
   return filtered;
 }
 

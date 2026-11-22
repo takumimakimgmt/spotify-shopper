@@ -13,7 +13,7 @@ export function TrackName({ track }: { track: Identity }) {
     <div className="flex items-start gap-3">
       <span
         title={track.title}
-        className="line-clamp-2 min-w-0 break-words text-base font-medium leading-6 text-white"
+        className="min-w-0 break-words [overflow-wrap:anywhere] text-base font-medium leading-6 text-foreground"
       >
         {track.title}
       </span>
@@ -22,7 +22,7 @@ export function TrackName({ track }: { track: Identity }) {
         target="_blank"
         rel="noreferrer"
         aria-label={t("Listen to {title}", { title: track.title })}
-        className="shrink-0 rounded px-1 py-0.5 text-xs leading-5 text-slate-400 hover:text-emerald-200 focus-visible:outline-2 focus-visible:outline-emerald-300"
+        className="inline-flex min-h-11 shrink-0 items-center rounded px-1 text-sm leading-5 text-muted hover:text-emerald-200 focus-visible:outline-2 focus-visible:outline-emerald-300"
       >
         {t("Listen")} ↗
       </a>
@@ -33,14 +33,17 @@ export function TrackIdentity({ track }: { track: Identity }) {
   return (
     <div className="min-w-0">
       <TrackName track={track} />
-      <p className="mt-1 truncate text-sm text-slate-300" title={track.artist}>
+      <p
+        className="mt-1 break-words text-sm text-secondary"
+        title={track.artist}
+      >
         {track.artist}
       </p>
       {track.album &&
         track.album.trim().toLowerCase() !==
           track.title.trim().toLowerCase() && (
           <p
-            className="mt-0.5 truncate text-xs text-slate-500"
+            className="mt-0.5 break-words text-[13px] text-muted"
             title={track.album}
           >
             {track.album}
@@ -70,8 +73,8 @@ export function TrackStoreLinks({
           )}
           className={
             link.name === "Beatport"
-              ? "inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-md border border-emerald-400/35 bg-emerald-400/10 px-3 py-2 text-sm font-medium text-emerald-100 hover:border-emerald-400/60 hover:bg-emerald-400/20 focus-visible:outline-2 focus-visible:outline-emerald-300"
-              : "inline-flex min-h-9 items-center text-xs text-slate-400 underline decoration-white/20 underline-offset-4 hover:text-white"
+              ? "inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-md border border-accent/40 bg-accent/5 px-3 py-2 text-sm font-medium text-foreground hover:border-accent hover:bg-accent/15 focus-visible:outline-2 focus-visible:outline-emerald-300"
+              : "inline-flex min-h-11 items-center text-sm text-muted underline decoration-white/20 underline-offset-4 hover:text-foreground"
           }
         >
           {t(link.label)}

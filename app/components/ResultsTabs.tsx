@@ -35,19 +35,20 @@ export function ResultsTabs({
               className={`flex min-w-0 max-w-full items-center overflow-hidden rounded-md border text-sm font-medium transition sm:max-w-[18rem] ${
                 isActive
                   ? "border-white/15 bg-white/[0.04] text-slate-100"
-                  : "border-white/10 bg-transparent text-slate-500 hover:border-white/15 hover:text-slate-300"
+                  : "border-white/10 bg-transparent text-muted hover:border-white/15 hover:text-secondary"
               }`}
             >
               <button
                 type="button"
                 onClick={() => onSelectTab(url)}
+                aria-pressed={isActive}
                 className="flex min-h-10 min-w-0 items-center gap-2 px-3 py-2 text-left"
                 title={result.title}
               >
                 <span className="min-w-0 truncate">{result.title}</span>
                 <span
                   className={`shrink-0 tabular-nums ${
-                    isActive ? "text-slate-300" : "text-slate-600"
+                    isActive ? "text-secondary" : "text-muted"
                   }`}
                 >
                   {result.total}
@@ -69,7 +70,7 @@ export function ResultsTabs({
                   e.stopPropagation();
                   onRemoveTab(url);
                 }}
-                className="min-w-10 self-stretch border-l border-white/10 px-3 text-lg leading-none text-slate-400 transition hover:bg-rose-950/30 hover:text-rose-200"
+                className="min-w-10 self-stretch border-l border-white/10 px-3 text-lg leading-none text-muted transition hover:bg-rose-950/30 hover:text-rose-200"
                 title={tr("Remove this playlist")}
                 aria-label={tr("Remove {title}", { title: result.title })}
               >
