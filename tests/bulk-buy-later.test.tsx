@@ -67,6 +67,23 @@ it("adds the batch atomically and persists it without duplicating a second save"
     });
     expect(added).toBe(0);
     expect(queue!.items).toHaveLength(25);
+    const original = queue!.items.map((x) => x.id);
+    await act(async () => queue.removeItem(original[8]));
+    expect(queue!.items).toHaveLength(24);
+    expect(queue!.removedCount).toBe(1);
+    await act(async () => queue.undoRemove());
+    expect(queue!.items.map((x) => x.id)).toEqual(original);
+    await act(async () => queue.clearItems());
+    expect(queue!.items).toHaveLength(0);
+    expect(queue!.removedCount).toBe(25);
+    await act(async () =>
+      queue.addTracks(buyLaterBatch(tracks.slice(0, 1), new Set())),
+    );
+    await act(async () => queue.undoRemove());
+    expect(new Set(queue!.items.map((x) => x.id)).size).toBe(25);
+    expect(
+      JSON.parse(localStorage.getItem(STORAGE_KEYS.buyQueue)!),
+    ).toHaveLength(25);
   } finally {
     act(() => root.unmount());
     host.remove();
@@ -97,11 +114,11 @@ it("offers the full filtered count while showing only the current page", async (
       (x) => x.textContent === "Add 25 tracks to Buy Later",
     )!;
     expect(button).toBeTruthy();
-    expect(host.querySelector("table")?.textContent).not.toContain(
+    expect(host.querySelector("table tbody tr td")?.textContent).not.toContain(
       "Not in XML",
     );
     const details = [...host.querySelectorAll("table button")].find((x) =>
-      x.textContent?.includes("Details"),
+      x.textContent?.includes("Matching details"),
     )!;
     await act(async () => details.click());
     expect(details.getAttribute("aria-expanded")).toBe("true");

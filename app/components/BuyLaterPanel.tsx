@@ -17,18 +17,24 @@ type QuietBuyLaterItem = {
 export default function BuyLaterPanel({
   items,
   onRemove,
+  onClear,
+  onUndoRemove,
+  removedCount = 0,
   storageWarning,
   onRetrySave,
   showHeading = true,
 }: {
   items: QuietBuyLaterItem[];
   onRemove: (id: string) => void;
+  onClear?: () => void;
+  onUndoRemove?: () => void;
+  removedCount?: number;
   storageWarning?: string | null;
   onRetrySave?: () => void;
   showHeading?: boolean;
 }) {
   const { t: tr } = useI18n();
-  if (items.length === 0 && !storageWarning) return null;
+  if (items.length === 0 && !storageWarning && !removedCount) return null;
   return (
     <section className="text-sm text-secondary">
       {showHeading && (
@@ -51,10 +57,32 @@ export default function BuyLaterPanel({
           </button>
         </div>
       )}
+      {removedCount > 0 && (
+        <div
+          role="status"
+          className="mb-4 flex flex-wrap items-center gap-3 rounded border border-white/15 p-3"
+        >
+          <span>{tr("Removed {count} tracks", { count: removedCount })}</span>
+          <button
+            type="button"
+            onClick={onUndoRemove}
+            className="ps-action-secondary"
+          >
+            {tr("Undo")}
+          </button>
+        </div>
+      )}
       {items.length > 0 && (
         <>
+          <p className="mb-2 text-xs leading-5 text-muted">
+            {tr(
+              "Most recent additions first. Tracks added together keep their playlist order.",
+            )}
+          </p>
           <p className="mb-4 text-xs leading-5 text-muted">
-            {tr("Availability / same version unverified.")}
+            {tr(
+              "Beatport links are affiliate links. Availability and the exact version are not verified.",
+            )}
           </p>
           <ul className="divide-y divide-white/10">
             {items.map((item) => (
@@ -76,7 +104,7 @@ export default function BuyLaterPanel({
                     aria-label={tr("Remove {title} from Buy Later", {
                       title: item.title,
                     })}
-                    className="ml-auto min-h-10 px-1 text-xs text-muted hover:text-foreground"
+                    className="ps-action-secondary ml-auto"
                   >
                     {tr("Remove")}
                   </button>
@@ -90,7 +118,9 @@ export default function BuyLaterPanel({
             </summary>
             <button
               type="button"
-              onClick={() => items.forEach((item) => onRemove(item.id))}
+              onClick={() =>
+                onClear ? onClear() : items.forEach((item) => onRemove(item.id))
+              }
               className="mt-2 min-h-10 text-secondary hover:text-foreground"
             >
               {tr("Clear")}

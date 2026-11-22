@@ -58,7 +58,10 @@ const makeRekordboxMeta = (file: File | null): RekordboxMeta | null =>
   file
     ? {
         filename: file.name,
-        updatedAtISO: new Date(file.lastModified).toISOString(),
+        updatedAtISO:
+          file.lastModified > 0 && Number.isFinite(file.lastModified)
+            ? new Date(file.lastModified).toISOString()
+            : "",
       }
     : null;
 
@@ -308,7 +311,7 @@ export function usePlaylistAnalyzer() {
   // rekordboxファイルと日付をセットで管理する共通関数
   const applyRekordboxFile = (file: File | null) => {
     setRekordboxFile(file);
-    if (file && typeof file.lastModified === "number") {
+    if (file && file.lastModified > 0 && Number.isFinite(file.lastModified)) {
       const date = new Date(file.lastModified);
       setRekordboxDate(date.toLocaleString());
     } else {
@@ -621,6 +624,11 @@ export function usePlaylistAnalyzer() {
     }
   };
 
+  const [lastCompleted, setLastCompleted] = useState<{
+    key: string;
+    at: number;
+  } | null>(null);
+
   const handleAnalyze = async (e: FormEvent) => {
     e.preventDefault();
     setErrorText(null);
@@ -842,6 +850,7 @@ export function usePlaylistAnalyzer() {
           ...checkpointResults.filter(([key]) => key !== url),
         ];
         setMultiResults(checkpointResults);
+        setLastCompleted({ key: url, at: Date.now() });
         try {
           // Save the completed result before removing it from pending work.
           if (!historyWritableRef.current)
@@ -1065,6 +1074,8 @@ export function usePlaylistAnalyzer() {
   };
 
   return {
+    lastCompleted,
+    storageHydrated,
     resumableDraft,
     resumeAnalysis,
     discardAnalysisDraft,

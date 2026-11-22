@@ -20,8 +20,10 @@ export default function PurchasePlan({
   const entries = useMemo(() => buildPurchasePlan(results), [results]);
   if (results.length < 2 || !entries.length) return null;
   return (
-    <section className="space-y-3 rounded-lg border border-white/15 p-4 text-sm">
-      <h2 className="font-semibold">{tr("Purchase plan across playlists")}</h2>
+    <details className="space-y-3 border-b border-white/15 py-2 text-sm">
+      <summary className="cursor-pointer py-2 font-semibold">
+        {tr("Purchase plan across playlists")} · {entries.length}
+      </summary>
       <p className="text-slate-300">
         {tr(
           entries.length === 1
@@ -73,6 +75,6 @@ export default function PurchasePlan({
           })}
         </ul>
       </details>
-    </section>
+    </details>
   );
 }

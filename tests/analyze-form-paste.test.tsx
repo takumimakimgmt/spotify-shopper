@@ -300,23 +300,49 @@ describe("AnalyzeForm", () => {
         }),
       );
       expect(
-        container.querySelector('aside[aria-label="Try a personal copy"]')
+        container.querySelector('details[aria-label="Try a personal copy"]')
           ?.textContent,
       ).toContain("new public playlist you create");
       expect(
-        container.querySelector('aside[aria-label="Try a personal copy"]')
+        container.querySelector('details[aria-label="Try a personal copy"]')
           ?.textContent,
       ).toContain("No Spotify login is needed");
       expect(
-        container.querySelector('aside[aria-label="Try a personal copy"]')
+        container.querySelector('details[aria-label="Try a personal copy"]')
           ?.textContent,
       ).toContain("Private playlists");
       expect(
-        container.querySelector('aside[aria-label="Try a personal copy"]')
+        container.querySelector('details[aria-label="Try a personal copy"]')
           ?.textContent,
       ).toContain("not automatically follow updates");
       expect(container.textContent).not.toContain("If this looks stale");
     }
+  });
+  test("keeps a nonretryable error beside the input and hides retry", async () => {
+    await renderForm(
+      makeProps({
+        errorText: "Cannot read playlist",
+        errorMeta: { retryable: false },
+        retryFailed: vi.fn(),
+      }),
+    );
+    expect(container.textContent).toContain("Cannot read playlist");
+    expect(
+      [...container.querySelectorAll("button")].some(
+        (b) => b.textContent === "Retry",
+      ),
+    ).toBe(false);
+  });
+  test("does not present an epoch timestamp as a valid XML update", async () => {
+    await renderForm(
+      makeProps({
+        rekordboxFile: new File(["xml"], "collection.xml", { lastModified: 0 }),
+        rekordboxFilename: "collection.xml",
+        rekordboxDate: "1970-01-01T00:00:00.000Z",
+      }),
+    );
+    expect(container.textContent).not.toContain("1970");
+    expect(container.textContent).toContain("Date unknown");
   });
   test("does not suggest copying for unrelated failures or successful input", async () => {
     for (const error_code of [
@@ -328,12 +354,12 @@ describe("AnalyzeForm", () => {
         makeProps({ errorText: "Other failure", errorMeta: { error_code } }),
       );
       expect(
-        container.querySelector('aside[aria-label="Try a personal copy"]'),
+        container.querySelector('details[aria-label="Try a personal copy"]'),
       ).toBeNull();
     }
     await renderForm(makeProps());
     expect(
-      container.querySelector('aside[aria-label="Try a personal copy"]'),
+      container.querySelector('details[aria-label="Try a personal copy"]'),
     ).toBeNull();
   });
 });

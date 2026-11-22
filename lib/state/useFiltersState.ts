@@ -20,7 +20,7 @@ export interface FiltersState {
  * Consumed by FiltersBar and ResultsTable filtering logic.
  */
 export function useFiltersState() {
-  const [changesOnly, setChangesOnly] = useState(true);
+  const [changesOnly, setChangesOnly] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<
     "all" | "toBuy" | "owned" | "unknown" | "unchecked"
   >("all");

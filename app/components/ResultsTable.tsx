@@ -18,6 +18,7 @@ type ReviewAction = "owned" | "different_version" | null;
 type ReviewHandler = (track: PlaylistRow, action: ReviewAction) => void;
 type Props = {
   saveBatchSummary?: { duplicates: number; saved: number; excluded: number };
+  showChanges?: boolean;
   compactStatus?: boolean;
   onSaveBatch?: () => void;
   onOpenBuyQueue?: () => void;
@@ -47,6 +48,7 @@ function StoreLinksInline({ track }: { track: PlaylistRow }) {
 }
 
 export default function ResultsTable({
+  showChanges = false,
   compactStatus = false,
   saveBatchSummary,
   onSaveBatch,
@@ -253,7 +255,9 @@ export default function ResultsTable({
         )}
       <details className="text-xs leading-5 text-muted">
         <summary className="cursor-pointer hover:text-slate-200">
-          {tr("About store links")}
+          {tr(
+            "Beatport links are affiliate links. Availability and the exact version are not verified.",
+          )}
         </summary>
         <p className="mt-2 text-sm leading-6 text-secondary">
           {tr(
@@ -270,7 +274,7 @@ export default function ResultsTable({
           pageRows.map((t, i) => (
             <TrackCard
               key={`${getBuyQueueItemId(t)}-${i}`}
-              track={t}
+              track={showChanges ? t : { ...t, changeStatus: undefined }}
               queuedTrackIds={queuedTrackIds}
               onAddToBuyQueue={onAddToBuyQueue}
               onReviewDecision={onReviewDecision}
@@ -301,7 +305,9 @@ export default function ResultsTable({
             {pageRows.map((track, i) => (
               <DesktopTrackRow
                 key={`${getBuyQueueItemId(track)}-${i}`}
-                track={track}
+                track={
+                  showChanges ? track : { ...track, changeStatus: undefined }
+                }
                 queuedTrackIds={queuedTrackIds}
                 onAddToBuyQueue={onAddToBuyQueue}
                 onReviewDecision={onReviewDecision}
@@ -352,7 +358,7 @@ function DesktopTrackRow({
               className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-xs text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-emerald-300"
             >
               <span aria-hidden="true">{expanded ? "−" : "+"}</span>
-              {tr(compactStatus ? "Details" : "Matching details")}
+              {tr("Matching details")}
             </button>
           </div>
         </td>
@@ -524,7 +530,10 @@ function MatchEvidence({
   const candidate = track.libraryMatch;
   return (
     <div className="space-y-3">
-      <p className="mt-1">{tr(libraryMatchExplanation(track))}</p>
+      <p className="font-medium text-sm">{tr(libraryMatchLabel(track))}</p>
+      <p className="mt-1 text-sm leading-6">
+        {tr(libraryMatchExplanation(track))}
+      </p>
       {track.reviewDecision && (
         <p>
           {tr("Automatic XML result:")}{" "}
@@ -532,33 +541,53 @@ function MatchEvidence({
         </p>
       )}
       {onReviewDecision && (
-        <div className="mt-2 flex flex-wrap gap-3">
-          <button
-            disabled={!reviewReady}
-            type="button"
-            onClick={() => onReviewDecision(track, "owned")}
-          >
-            {tr("I own this recording")}
-          </button>
-          {candidate?.matched_title && (
+        <details className="mt-3">
+          <summary className="cursor-pointer min-h-9 py-2 text-sm">
+            {tr("Correct this result")}
+          </summary>
+          <p className="mb-3 text-sm">
+            {tr(
+              "Your confirmation overrides the displayed result for this library. It does not change the XML or the automatic evidence.",
+            )}
+          </p>
+          <div className="flex flex-wrap gap-3">
             <button
               disabled={!reviewReady}
+              className="ps-action-secondary"
               type="button"
-              onClick={() => onReviewDecision(track, "different_version")}
+              onClick={() => onReviewDecision(track, "owned")}
             >
-              {tr("This candidate is a different version")}
+              {tr("I own this recording")}
             </button>
+            {candidate?.matched_title && (
+              <button
+                disabled={!reviewReady}
+                className="ps-action-secondary"
+                type="button"
+                onClick={() => onReviewDecision(track, "different_version")}
+              >
+                {tr("This candidate is a different version")}
+              </button>
+            )}
+            {track.reviewDecision && (
+              <button
+                disabled={!reviewReady}
+                className="ps-action-secondary"
+                type="button"
+                onClick={() => onReviewDecision(track, null)}
+              >
+                {tr("Forget my confirmation")}
+              </button>
+            )}
+          </div>
+        </details>
+      )}
+      {libraryCheckState(track) === "review" && (
+        <p className="text-sm text-muted">
+          {tr(
+            "Buy Later is disabled while this recording needs review. If you own it, confirm ownership. Otherwise recheck the library or search the store after comparing versions.",
           )}
-          {track.reviewDecision && (
-            <button
-              disabled={!reviewReady}
-              type="button"
-              onClick={() => onReviewDecision(track, null)}
-            >
-              {tr("Forget my confirmation")}
-            </button>
-          )}
-        </div>
+        </p>
       )}
       <RecordingComparison track={track} />
     </div>

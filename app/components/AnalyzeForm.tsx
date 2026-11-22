@@ -62,7 +62,7 @@ function formatBytes(bytes: number) {
 
 function formatDateTime(value: string | number, language: string) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
+  if (Number.isNaN(date.getTime()) || date.getTime() <= 0) return null;
   return date.toLocaleString(language === "ja" ? "ja-JP" : "en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -116,11 +116,11 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
   ]);
   const visiblePlaylistError = props.playlistUrlError || playlistUrlError;
   const visibleXmlError = localXmlError || props.savedRekordboxXmlError;
-  const hasRetryableError = Boolean(
+  const hasVisibleError = Boolean(
     props.errorText && !visiblePlaylistError && !visibleXmlError,
   );
   const showPlaylistCopyHelp =
-    hasRetryableError &&
+    hasVisibleError &&
     [
       "SPOTIFY_ACCESS_RESTRICTED",
       "SPOTIFY_PLAYLIST_UNAVAILABLE",
@@ -220,6 +220,18 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
             <p className="mt-3 text-xs text-muted">
               {tr("Public playlists · No Spotify login needed")}
             </p>
+            <details className="mt-2 text-xs text-muted">
+              <summary className="cursor-pointer py-2">
+                {tr(
+                  "Some official and Spotify-generated playlists cannot be read",
+                )}
+              </summary>
+              <p className="text-sm leading-6">
+                {tr(
+                  "If a playlist cannot be read, try copying its tracks into a public playlist in your own account. The copy does not follow updates to the original, and access restrictions may still apply.",
+                )}
+              </p>
+            </details>
             <div className="space-y-3 pt-4">
               <button
                 type="submit"
@@ -242,6 +254,104 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                   : tr("No XML? You can add it after opening the playlist.")}
               </p>
             </div>
+            {props.loading ? (
+              <div className="mx-auto max-w-3xl space-y-3 pt-2">
+                {props.cancelAnalyze && (
+                  <button
+                    type="button"
+                    className="ps-action-secondary"
+                    onClick={() => props.cancelAnalyze?.()}
+                  >
+                    {tr("Cancel")}
+                  </button>
+                )}
+                <ProcessingBar
+                  analyzing={props.loading}
+                  reanalyzing={props.isReanalyzing}
+                  progress={props.progress}
+                  phaseLabel={props.phaseLabel}
+                />
+              </div>
+            ) : null}
+            {hasVisibleError ? (
+              <div className="pt-2">
+                <ErrorAlert
+                  title={tr("Error")}
+                  message={props.errorText}
+                  details={
+                    props.errorMeta
+                      ? JSON.stringify(props.errorMeta, null, 2)
+                      : undefined
+                  }
+                  hint={
+                    showPlaylistCopyHelp || props.errorMeta?.retryable === false
+                      ? undefined
+                      : tr("If this looks stale, try a hard refresh.")
+                  }
+                />
+                {props.retryFailed &&
+                  !props.loading &&
+                  props.errorMeta?.retryable !== false && (
+                    <button
+                      type="button"
+                      className="ps-action-secondary mt-3"
+                      onClick={() => props.retryFailed?.()}
+                    >
+                      {tr("Retry")}
+                    </button>
+                  )}
+                {showPlaylistCopyHelp && (
+                  <details
+                    className="mt-3 space-y-3 rounded-lg border border-white/20 bg-white/5 p-4 text-sm leading-6 text-slate-200"
+                    aria-label={tr("Try a personal copy")}
+                  >
+                    <summary className="min-h-11 cursor-pointer py-2 font-semibold text-foreground">
+                      {tr(
+                        "Official playlist unavailable? Try a personal copy.",
+                      )}
+                    </summary>
+                    <ol className="list-decimal space-y-2 pl-5">
+                      <li>
+                        {tr(
+                          "Open the original playlist in Spotify on your computer.",
+                        )}
+                      </li>
+                      <li>
+                        {tr(
+                          "Add its tracks to a new public playlist you create in your own account.",
+                        )}
+                      </li>
+                      <li>
+                        {tr(
+                          "Paste the new public playlist URL here and try again. No Spotify login is needed.",
+                        )}
+                      </li>
+                    </ol>
+                    <p>
+                      {tr(
+                        "Public playlists can be checked without Spotify login. Private playlists and some Spotify-generated playlists cannot be read this way.",
+                      )}
+                    </p>
+                    <p className="text-secondary">
+                      {tr(
+                        "The copy will not automatically follow updates to the original playlist. Spotify access restrictions still apply.",
+                      )}
+                    </p>
+                  </details>
+                )}
+                {props.errorMeta?.retryable !== false && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => props.setForceRefreshHint(true)}
+                      className="text-xs px-2 py-1 rounded-md border border-slate-700 text-secondary hover:text-foreground"
+                    >
+                      {tr("Show refresh tips")}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
           <aside
             aria-labelledby="xml-heading"
@@ -299,14 +409,17 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
                     {props.savedRekordboxXmlMeta
                       ? tr("{size} · updated {date}", {
                           size: formatBytes(props.savedRekordboxXmlMeta.size),
-                          date: formatDateTime(
-                            props.savedRekordboxXmlMeta.lastModified,
-                            language,
-                          ),
+                          date:
+                            formatDateTime(
+                              props.savedRekordboxXmlMeta.lastModified,
+                              language,
+                            ) || tr("Date unknown"),
                         })
-                      : props.rekordboxDate
+                      : props.rekordboxDate &&
+                          (!props.rekordboxFile ||
+                            props.rekordboxFile.lastModified > 0)
                         ? tr("updated {date}", { date: props.rekordboxDate })
-                        : tr("Upload rekordbox XML")}
+                        : tr(hasXml ? "Date unknown" : "Upload rekordbox XML")}
                   </span>
                 </div>
 
@@ -412,104 +525,6 @@ export default function AnalyzeForm(props: AnalyzeFormProps) {
           activePlaylistId={props.activePlaylistId}
           queryPlaylist={props.queryPlaylist}
         />
-
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-          {props.cancelAnalyze && props.loading ? (
-            <button
-              type="button"
-              onClick={() => props.cancelAnalyze?.()}
-              className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-secondary hover:border-slate-600 hover:bg-slate-800/50 hover:text-foreground"
-            >
-              {tr("Cancel")}
-            </button>
-          ) : null}
-
-          {props.retryFailed && !props.loading && hasRetryableError ? (
-            <button
-              type="button"
-              onClick={() => props.retryFailed?.()}
-              className="rounded-md border border-slate-700/70 bg-transparent px-3 py-2 text-sm text-secondary hover:border-slate-600 hover:bg-slate-800/50 hover:text-foreground"
-            >
-              {tr("Retry")}
-            </button>
-          ) : null}
-        </div>
-
-        {props.loading ? (
-          <div className="pt-2">
-            <ProcessingBar
-              analyzing={props.loading}
-              reanalyzing={props.isReanalyzing}
-              progress={props.progress}
-              phaseLabel={props.phaseLabel}
-            />
-          </div>
-        ) : null}
-
-        {hasRetryableError ? (
-          <div className="pt-2">
-            <ErrorAlert
-              title={tr("Error")}
-              message={props.errorText}
-              details={
-                props.errorMeta
-                  ? JSON.stringify(props.errorMeta, null, 2)
-                  : undefined
-              }
-              hint={
-                showPlaylistCopyHelp
-                  ? undefined
-                  : tr("If this looks stale, try a hard refresh.")
-              }
-            />
-            {showPlaylistCopyHelp && (
-              <aside
-                className="mt-3 space-y-3 rounded-lg border border-white/20 bg-white/5 p-4 text-sm leading-6 text-slate-200"
-                aria-label={tr("Try a personal copy")}
-              >
-                <h3 className="font-semibold text-foreground">
-                  {tr("Official playlist unavailable? Try a personal copy.")}
-                </h3>
-                <ol className="list-decimal space-y-2 pl-5">
-                  <li>
-                    {tr(
-                      "Open the original playlist in Spotify on your computer.",
-                    )}
-                  </li>
-                  <li>
-                    {tr(
-                      "Add its tracks to a new public playlist you create in your own account.",
-                    )}
-                  </li>
-                  <li>
-                    {tr(
-                      "Paste the new public playlist URL here and try again. No Spotify login is needed.",
-                    )}
-                  </li>
-                </ol>
-                <p>
-                  {tr(
-                    "Public playlists can be checked without Spotify login. Private playlists and some Spotify-generated playlists cannot be read this way.",
-                  )}
-                </p>
-                <p className="text-secondary">
-                  {tr(
-                    "The copy will not automatically follow updates to the original playlist. Spotify access restrictions still apply.",
-                  )}
-                </p>
-              </aside>
-            )}
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => props.setForceRefreshHint(true)}
-                className="text-xs px-2 py-1 rounded-md border border-slate-700 text-secondary hover:text-foreground"
-              >
-                {tr("Show refresh tips")}
-              </button>
-            </div>
-          </div>
-        ) : null}
       </form>
     </section>
   );

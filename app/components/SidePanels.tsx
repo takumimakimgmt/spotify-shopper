@@ -2,7 +2,7 @@
 import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useState, useRef } from "react";
 import type { PlaylistRow, ResultState } from "../../lib/types";
-import ResultSummaryBar from "./ResultSummaryBar";
+
 import ErrorAlert from "./ErrorAlert";
 import { MAX_XML_BYTES } from "@/lib/constants";
 
@@ -24,9 +24,9 @@ interface SidePanelsProps {
 
 export function SidePanels({
   currentResult,
-  ownedCount,
-  toBuyCount,
-  unknownCount,
+  ownedCount: _ownedCount,
+  toBuyCount: _toBuyCount,
+  unknownCount: _unknownCount,
   displayedTracks: _displayedTracks,
   // rekordboxFile,
   // rekordboxDate,
@@ -73,12 +73,6 @@ export function SidePanels({
 
   return (
     <div className="space-y-3">
-      <ResultSummaryBar
-        result={currentResult}
-        ownedCount={ownedCount}
-        toBuyCount={toBuyCount}
-        unknownCount={unknownCount}
-      />
       <input
         ref={uploadRef}
         type="file"
@@ -126,7 +120,11 @@ export function SidePanels({
                   XML: {currentResult.rekordboxMeta.filename ?? "—"}
                   <span className="ml-2">
                     {tr("Updated:")}{" "}
-                    {currentResult.rekordboxMeta.updatedAtISO
+                    {currentResult.rekordboxMeta.updatedAtISO &&
+                    Number.isFinite(
+                      Date.parse(currentResult.rekordboxMeta.updatedAtISO),
+                    ) &&
+                    Date.parse(currentResult.rekordboxMeta.updatedAtISO) > 0
                       ? new Date(
                           currentResult.rekordboxMeta.updatedAtISO,
                         ).toLocaleString(
@@ -136,7 +134,7 @@ export function SidePanels({
                             timeStyle: "short",
                           },
                         )
-                      : "—"}
+                      : tr("Date unknown")}
                   </span>
                 </div>
               )}

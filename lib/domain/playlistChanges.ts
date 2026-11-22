@@ -22,7 +22,7 @@ export function withPlaylistChanges(
         removed: 0,
         unchanged: 0,
       },
-      tracks: result.tracks.map((t) => ({ ...t, changeStatus: "added" })),
+      tracks: result.tracks.map(({ changeStatus: _previousChange, ...t }) => t),
     };
   const buckets = new Map<string, PlaylistRow[]>();
   previous.tracks.forEach((t) => {

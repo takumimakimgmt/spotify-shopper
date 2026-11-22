@@ -26,7 +26,7 @@ Use the already-loaded Geist family with Hiragino/Yu Gothic/Meiryo Japanese syst
 
 ## Shared components
 
-TrackPresentation: identity/listening/store links. ResultsTable: desktop/mobile arrangement, status, evidence and pagination. ResultsSearchTools: shared controlled search/sort for desktop and mobile. BuyLaterDrawer/Panel: native modal and queue presentation. ResultSummaryBar: state counts. ProcessingBar: indeterminate network activity vs real bounded match progress.
+TrackPresentation: identity/listening/store links. ResultsTable: desktop/mobile arrangement, status, evidence and pagination. ResultsSearchTools: shared controlled search/sort for desktop and mobile. BuyLaterDrawer/Panel: native modal and queue presentation. ResultsFilterBar: counts, category definitions and search/sort in one shared control. ResultSummaryBar remains a legacy component and is not used by the live page. ProcessingBar: indeterminate network activity vs real bounded match progress.
 
 Native dialog/shadow/backdrop and technical detail text are intentional exceptions to ordinary flat rows. Existing .ps-\* utilities remain compatibility aliases; do not create a second design vocabulary. Use ps-action-primary/secondary for shared actions. New components should adopt semantic tokens rather than hardcoded surface/text colors.
 
@@ -39,3 +39,14 @@ Check 320/390/768/1024/1440px; Japanese and English; long remixes and multiple a
 ## Finishing rules
 
 Keep the listening control in its own column beside the entire track identity, never in the title row: the 44px target must not create a gap between title and artist. Desktop results have three columns (track, store, save); status and evidence toggle belong beneath the identity. Saved rows use quiet text/checks, not repeated disabled action buttons. When the filtered set is fully saved, show one count plus a link opening the shared saved list; hide redundant completion/exclusion explanations. Before saving, exclusion counts remain available in a disclosure. Selected XML uses a compact metadata/change/remove row; optional upload instructions are for the unselected state. Privacy/scope warnings and errors remain available in both states.
+
+## Matching trust and workspace flow
+
+- Input and results are separate views. Checking another playlist preserves history, XML and Buy Later. A successful completion selects its result; a failed request keeps the input error and a Back to saved results action. Do not infer a new completion from unrelated result-object changes. Restore browser selection after hydration, before writing it back.
+- Counts are interactive category controls, including zero unchecked tracks. One adjacent hint follows the selected category; the checked XML entry count remains visible. Desktop controls stick; below 1024px they scroll normally. Combined purchase planning is a closed secondary section after the track list.
+- Verdict, eligibility, labels and counts share `libraryMatch.ts`. Explicit contradictions in saved evidence require review; preserve raw evidence. Manual confirmation is identified separately and never rewrites the XML. Normalized exact/ISRC matches can have textual differences: comparisons must say **text differs**, not imply another automatic verdict.
+- Missing candidates are not fabricated. Absence is scoped to the selected export; metadata differences remain possible. Correction controls explain their effect. Review rows explain why saving is unavailable and how to inspect evidence.
+- Initial checks have no previous-change annotations. Unknown/zero XML modification dates show Date unknown, not 1970. Nonretryable errors offer guidance without Retry; progress and cancellation stay by the submit action.
+- Show affiliate and unverified-version disclosure in the visible store-help summary. Queue additions remain newest first, batches retain playlist order. Removing/clearing has visible Undo; undo deduplicates and restores original positions. Storage-conflict guards still apply.
+
+Verification for this change: real 1121.xml was checked locally against Air/98 (18 absent, 69 matched, 11 review). XML contents were never sent to a server or committed. Controlled metadata fixtures verify success/failure of additional playlists without provider dependency. Regression tests cover contradictory evidence, first-check changes, filter hints/counts, zero timestamps, no-Retry errors, queue undo and hydration-safe selection restoration.

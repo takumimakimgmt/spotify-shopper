@@ -5,8 +5,8 @@ export function libraryMatchLabel(track: PlaylistRow): string {
   if (track.reviewDecision?.action === "owned") return "Confirmed by you";
   if (track.reviewDecision?.action === "different_version")
     return "Different version (you)";
-  if (track.owned === true) return "Matches XML";
-  if (track.owned === false) return "Not in XML";
+  if (effectiveOwned(track) === true) return "Matches XML";
+  if (effectiveOwned(track) === false) return "Not in XML";
   return libraryCheckState(track) === "review"
     ? "Needs review"
     : "Not checked — add XML";
@@ -17,6 +17,18 @@ export function libraryMatchExplanation(track: PlaylistRow): string {
     return "You confirmed ownership of this recording. Automatic XML evidence remains unchanged below.";
   if (track.reviewDecision?.action === "different_version")
     return "You marked this XML candidate as a different recording. Recheck before buying; this does not establish absence from your whole library.";
+  if (hasConflictingEvidence(track))
+    return "Saved matching evidence is inconsistent. Check again with the current XML before making a purchase decision.";
+  if (effectiveOwned(track) === false)
+    return "No matching recording was found in this XML. This does not rule out tracks outside the export or metadata differences.";
+  if (effectiveOwned(track) === true) {
+    const reason = track.libraryMatch?.reason ?? track.ownedReason;
+    return reason === "isrc"
+      ? "The recording identifier matched in this XML. Title or artist spelling may still differ."
+      : reason === "exact"
+        ? "Title, artist and version matched after normalization. Displayed text may still differ."
+        : "A match was recorded in this XML. Check the comparison or check again for fresh evidence.";
+  }
   switch (track.libraryMatch?.reason ?? track.ownedReason) {
     case "isrc":
       return "Recording identifier matches a track in this XML.";
@@ -46,7 +58,7 @@ export function libraryMatchExplanation(track: PlaylistRow): string {
 export function effectiveOwned(track: PlaylistRow): boolean | null {
   if (track.reviewDecision?.action === "owned") return true;
   if (track.reviewDecision?.action === "different_version") return null;
-  return track.owned ?? null;
+  return hasConflictingEvidence(track) ? null : (track.owned ?? null);
 }
 export function categorizeTrack(track: PlaylistRow): TrackCategory {
   const owned = effectiveOwned(track);
@@ -60,9 +72,54 @@ export function libraryCheckState(
   const owned = effectiveOwned(track);
   if (owned === true) return "matched";
   if (owned === false) return "absent";
-  return track.reviewDecision?.action === "different_version" ||
+  return hasConflictingEvidence(track) ||
+    track.reviewDecision?.action === "different_version" ||
     track.libraryMatch?.status === "review" ||
     Boolean(track.ownedReason)
     ? "review"
     : "unchecked";
+}
+
+/** Fail closed for contradictory saved/transport evidence; preserve raw data for rechecking. */
+export function hasConflictingEvidence(track: PlaylistRow): boolean {
+  const status = track.libraryMatch?.status;
+  const reasons = [track.ownedReason, track.libraryMatch?.reason].filter(
+    Boolean,
+  );
+  const reviewReasons = [
+    "version_mismatch",
+    "artist_mismatch",
+    "title_annotation_mismatch",
+    "isrc_conflict",
+    "album",
+    "fuzzy",
+  ];
+  if (track.owned === true)
+    return (
+      (status != null && status !== "matched") ||
+      reasons.some((r) => reviewReasons.includes(r!) || r === "no_match")
+    );
+  if (track.owned === false)
+    return (
+      status === "matched" ||
+      status === "review" ||
+      reasons.some(
+        (r) => r === "isrc" || r === "exact" || reviewReasons.includes(r!),
+      )
+    );
+  return status === "matched" || status === "not_found";
+}
+export function libraryStateHint(
+  state: "matched" | "absent" | "review" | "unchecked",
+) {
+  return {
+    matched:
+      "Found in this XML or confirmed by you. Text differences can remain; open the evidence to see why.",
+    absent:
+      "No match in this XML. Check your library before buying; this is not proof that you do not own it.",
+    review:
+      "A similar track or conflicting evidence needs checking. Compare the version and artist before deciding.",
+    unchecked:
+      "These tracks have not been checked against XML. Add your rekordbox XML to check them.",
+  }[state];
 }
