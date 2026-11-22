@@ -47,7 +47,7 @@ export default function BuyLaterDrawer({ open, onClose, ...queue }: Props) {
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="fixed inset-y-0 left-auto right-0 m-0 h-dvh max-h-none w-full max-w-[480px] border-l border-white/15 bg-[#0c1116] p-0 text-slate-100 shadow-2xl backdrop:bg-black/65"
+      className="fixed inset-y-0 left-auto right-0 m-0 h-dvh max-h-none w-full max-w-[480px] border-l border-white/15 bg-surface p-0 text-slate-100 shadow-2xl backdrop:bg-black/65"
     >
       <div className="flex h-full flex-col">
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-white/10 px-6 py-5">
@@ -58,7 +58,7 @@ export default function BuyLaterDrawer({ open, onClose, ...queue }: Props) {
                 {queue.items.length}
               </span>
             </h2>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-muted">
               {t("Saved across your playlists on this browser.")}
             </p>
           </div>
@@ -78,7 +78,7 @@ export default function BuyLaterDrawer({ open, onClose, ...queue }: Props) {
               <p className="text-lg font-medium">
                 {t("Your shopping list starts here.")}
               </p>
-              <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-slate-400">
+              <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-muted">
                 {t(
                   "Use Buy Later beside a track to keep it here while you browse.",
                 )}

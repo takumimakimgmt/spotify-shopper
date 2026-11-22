@@ -1,13 +1,13 @@
 # Playlist Shopper
 
-Find the tracks in your Spotify playlists that are missing from your Rekordbox library.
+Check a Spotify playlist against your rekordbox XML before looking for tracks to buy.
 
-Playlist Shopper is a focused DJ purchase-decision workflow. Upload a Rekordbox XML export, paste a Spotify playlist URL, and review which tracks you already own and which tracks you still need to buy.
+Playlist Shopper is a focused DJ purchase-decision workflow. Paste a public Spotify playlist URL to browse and search stores. Optionally add a rekordbox XML export to check matches before making purchase decisions.
 
 ## What It Does
 
 - Compares a Spotify playlist against a Rekordbox XML library export.
-- Splits results into `Not in XML`, `Matches XML`, and `Not confirmed`.
+- Separates `Not in XML`, `Matches XML`, `Needs review`, and `Not checked`. XML absence is not proof of non-ownership.
 - Opens available Beatport or Bandcamp links for purchase research.
 - Saves purchase candidates to `Buy Later` in the browser.
 - Keeps the workflow local-first in the frontend, with saved analysis snapshots capped in local storage.
@@ -20,19 +20,20 @@ Playlist Shopper is a focused DJ purchase-decision workflow. Upload a Rekordbox 
 
 ## Basic Workflow
 
-1. Export Rekordbox XML.
-2. Upload the XML file.
-3. Paste a Spotify playlist URL.
-4. Analyze.
-5. Review `Not in XML` and `Matches XML`.
-6. Open Beatport or Bandcamp, or save tracks to `Buy Later`.
+1. Paste a public Spotify playlist URL and browse it without Spotify login.
+2. Optionally select a rekordbox collection XML to compare locally (it can also be added from results).
+3. Review matches, absent tracks and candidates that need confirmation. Without XML, tracks remain not checked.
+4. Search Beatport or Bandcamp. Search results are not verified product/version matches.
+5. Add eligible XML-absent tracks individually or in bulk to Buy Later. Duplicates and saved tracks are excluded.
+
+See [the design system](docs/DESIGN.md) for shared visual rules, component roles and responsive verification. No additional design Skill or UI library is required.
 
 ## Current MVP Scope
 
 - Spotify playlist input.
 - Rekordbox XML upload.
 - Track ownership matching using the existing frontend/backend ownership logic.
-- Results table with `All`, `Not in XML`, and `Matches XML` filters.
+- Results table with All, Not in XML, Matched / confirmed, Needs review, and Not checked filters.
 - Search and basic sorting by title, artist, or album.
 - CSV export for displayed results.
 - Browser-local saved results and `Buy Later` queue.

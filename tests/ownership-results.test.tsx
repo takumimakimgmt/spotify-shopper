@@ -26,14 +26,17 @@ describe("three-state ownership results", () => {
       toBuyCount: 1,
       unknownCount: 2,
     });
-    const select = (categoryFilter: "all" | "toBuy" | "owned" | "unknown") =>
+    const select = (
+      categoryFilter: "all" | "toBuy" | "owned" | "unknown" | "unchecked",
+    ) =>
       selectDisplayedTracks(tracks, {
         categoryFilter,
         searchQuery: "",
         sortKey: "none",
       });
     expect(select("toBuy").map((t) => t.title)).toEqual(["Missing"]);
-    expect(select("unknown")).toHaveLength(2);
+    expect(select("unknown")).toHaveLength(0);
+    expect(select("unchecked")).toHaveLength(2);
     expect(select("owned")).toHaveLength(1);
     expect(select("all")).toHaveLength(4);
     expect(selectTrackCounts([{ ...tracks[0], owned: undefined }])).toEqual({

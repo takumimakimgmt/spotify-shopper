@@ -22,26 +22,39 @@ export default function ProcessingBar({
   const isFetchingSpotify = phaseLabel === "Fetching Spotify...";
   const label =
     phaseLabel ?? (analyzing ? "Analyzing playlist..." : "Matching rekordbox");
-  const pct = Math.max(progress, 5);
+  const pct = Math.min(
+    100,
+    Math.max(0, Number.isFinite(progress) ? progress : 0),
+  );
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs text-slate-300">
-        <span>{tr(label)}</span>
+      <div className="flex items-center justify-between text-xs text-secondary">
+        <span role="status" aria-live="polite">
+          {tr(label)}
+        </span>
         <span>
           {isFetchingSpotify ? tr("Working...") : `${Math.round(pct)}%`}
         </span>
       </div>
       {isFetchingSpotify ? (
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-muted">
           {tr("First run can take a few seconds while the server wakes up.")}
         </div>
       ) : null}
-      <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-700">
+      <div
+        role="progressbar"
+        aria-label={tr(label)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={isFetchingSpotify ? undefined : Math.round(pct)}
+        aria-valuetext={isFetchingSpotify ? tr("Working...") : undefined}
+        className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-700"
+      >
         {isFetchingSpotify ? (
-          <div className="h-full w-full animate-pulse rounded-full bg-gradient-to-r from-emerald-500/30 via-emerald-300 to-emerald-500/30" />
+          <div className="h-full w-full animate-pulse rounded-full bg-accent/60 motion-reduce:animate-none" />
         ) : (
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-300"
+            className="h-full bg-accent rounded-full transition-all duration-300"
             style={{ width: `${pct}%` }}
           />
         )}

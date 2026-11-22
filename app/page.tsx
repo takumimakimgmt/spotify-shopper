@@ -1,4 +1,5 @@
 "use client";
+import ResultsSearchTools from "./components/ResultsSearchTools";
 // --- Gate-1 / FE-1: zod boundary validation for query params ---
 const ActiveTabQuerySchema = z.string().trim().min(1);
 
@@ -40,7 +41,10 @@ import { useSelectionState } from "../lib/state/useSelectionState";
 import { useReviewDecisions } from "../lib/state/useReviewDecisions";
 import { useViewModel } from "../lib/state/useViewModel";
 import { useActions } from "../lib/state/useActions";
-import { buyLaterBatch } from "@/lib/domain/buyLaterBatch";
+import {
+  buyLaterBatch,
+  buyLaterBatchSummary,
+} from "@/lib/domain/buyLaterBatch";
 import { getBuyQueueItemId, useBuyQueue } from "../lib/state/useBuyQueue";
 import { getOtherStores as _getOtherStores } from "../lib/playlist/stores";
 import AnalyzeForm from "./components/AnalyzeForm";
@@ -296,7 +300,7 @@ function PageInner() {
   }, [activeTab, analyzer]);
 
   return (
-    <main className="min-h-screen bg-[#04060a] text-slate-50">
+    <main className="min-h-screen bg-canvas text-foreground">
       <PlaylistQueryPrefill
         setPlaylistUrlInput={analyzer.setPlaylistUrlInput}
       />
@@ -304,7 +308,7 @@ function PageInner() {
         className={`mx-auto max-w-[1200px] px-4 sm:px-6 ${vm.multiResults.length ? "py-5 lg:py-6" : "py-6 lg:py-8"}`}
       >
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-          <p className="text-sm font-semibold tracking-wide text-slate-300">
+          <p className="text-sm font-semibold tracking-wide text-secondary">
             Playlist Shopper
           </p>
           <div className="flex items-center gap-3">
@@ -403,7 +407,7 @@ function PageInner() {
                 {analyzer.resumableDraft.pendingUrls.length}
                 {tr(" playlists remain in the saved batch.")}
               </p>
-              <p className="mt-1 text-slate-300">
+              <p className="mt-1 text-secondary">
                 {tr(
                   "Completed results are kept. Processing pauses when this page closes. Resume checks remaining playlists using",
                 )}{" "}
@@ -429,9 +433,9 @@ function PageInner() {
             {selection.formCollapsed && vm.multiResults.length > 0 ? (
               <div className="flex items-center justify-between gap-4 border-b border-white/15 pb-5">
                 <div className="min-w-0">
-                  <p className="truncate text-2xl font-semibold tracking-tight text-white">
+                  <h1 className="break-words text-2xl font-semibold tracking-tight text-foreground">
                     {vm.currentResult?.title ?? tr("Playlist results")}
-                  </p>
+                  </h1>
                 </div>
                 <button
                   type="button"
@@ -448,11 +452,33 @@ function PageInner() {
               </div>
             ) : (
               <>
-                <header className="mx-auto mb-7 max-w-3xl space-y-3">
-                  <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                <header className="ps-intro relative isolate mx-auto mb-7 max-w-3xl space-y-3 overflow-hidden border-b border-white/15 pb-6">
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 160 160"
+                    className="pointer-events-none absolute -right-12 -top-12 -z-10 h-48 w-48 text-white/10"
+                  >
+                    {[42, 50, 58, 66, 74].map((r) => (
+                      <circle
+                        key={r}
+                        cx="80"
+                        cy="80"
+                        r={r}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="0.7"
+                      />
+                    ))}
+                    <path
+                      d="M132 44l5 4"
+                      stroke="var(--accent)"
+                      strokeWidth="3"
+                    />
+                  </svg>
+                  <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                     {tr("Buy new tracks. Skip the duplicates.")}
                   </h1>
-                  <p className="max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+                  <p className="max-w-2xl text-sm leading-6 text-secondary sm:text-base">
                     {tr(
                       "Compare a Spotify playlist with your rekordbox XML, then find tracks to buy on Beatport.",
                     )}
@@ -556,9 +582,9 @@ function PageInner() {
                     actions.downloadCsv(vm.displayedTracks, vm.currentResult)
                   }
                 />
-                <div className="sticky top-0 z-20 flex flex-col gap-3 rounded-xl border border-white/15 bg-[#080c10]/95 p-4 shadow-lg backdrop-blur-md lg:flex-row lg:flex-wrap lg:items-end lg:justify-between xl:flex-nowrap">
+                <div className="flex flex-col gap-3 border-y border-white/15 bg-surface p-3 lg:sticky lg:top-0 lg:z-20 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between xl:flex-nowrap">
                   <div>
-                    <div className="mb-2 text-sm font-medium text-slate-300">
+                    <div className="mb-2 text-sm font-medium text-secondary">
                       {tr("Show tracks")}
                     </div>
                     <div
@@ -570,10 +596,10 @@ function PageInner() {
                         type="button"
                         aria-pressed={filters.categoryFilter === "all"}
                         onClick={() => filters.setCategoryFilter("all")}
-                        className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${
+                        className={`min-h-11 rounded-lg px-3 py-2 text-sm ${
                           filters.categoryFilter === "all"
                             ? "bg-white/10 text-slate-100"
-                            : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                            : "text-muted hover:bg-white/5 hover:text-slate-100"
                         }`}
                       >
                         {tr("All")}
@@ -582,10 +608,10 @@ function PageInner() {
                         type="button"
                         aria-pressed={filters.categoryFilter === "toBuy"}
                         onClick={() => filters.setCategoryFilter("toBuy")}
-                        className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${
+                        className={`min-h-11 rounded-lg px-3 py-2 text-sm ${
                           filters.categoryFilter === "toBuy"
                             ? "bg-amber-400/10 text-amber-100"
-                            : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                            : "text-muted hover:bg-white/5 hover:text-slate-100"
                         }`}
                       >
                         {tr("Not in XML")}
@@ -594,10 +620,10 @@ function PageInner() {
                         type="button"
                         aria-pressed={filters.categoryFilter === "owned"}
                         onClick={() => filters.setCategoryFilter("owned")}
-                        className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${
+                        className={`min-h-11 rounded-lg px-3 py-2 text-sm ${
                           filters.categoryFilter === "owned"
                             ? "bg-emerald-400/10 text-emerald-100"
-                            : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                            : "text-muted hover:bg-white/5 hover:text-slate-100"
                         }`}
                       >
                         {tr("Matched / confirmed")}
@@ -606,41 +632,30 @@ function PageInner() {
                         type="button"
                         aria-pressed={filters.categoryFilter === "unknown"}
                         onClick={() => filters.setCategoryFilter("unknown")}
-                        className={`min-h-9 rounded-md px-3 py-1.5 text-sm ${filters.categoryFilter === "unknown" ? "bg-amber-400/10 text-amber-100" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"}`}
+                        className={`min-h-11 rounded-lg px-3 py-2 text-sm ${filters.categoryFilter === "unknown" ? "bg-amber-400/10 text-amber-100" : "text-muted hover:bg-white/5 hover:text-slate-100"}`}
                       >
                         {tr("Needs review")}
                       </button>
+                      <button
+                        type="button"
+                        aria-pressed={filters.categoryFilter === "unchecked"}
+                        onClick={() => filters.setCategoryFilter("unchecked")}
+                        className={`min-h-11 rounded-lg px-3 py-2 text-sm ${filters.categoryFilter === "unchecked" ? "bg-white/10 text-foreground" : "text-muted hover:text-foreground"}`}
+                      >
+                        {tr("Not checked")}
+                      </button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(12rem,1fr)_auto]">
-                    <label className="text-sm font-medium text-slate-300">
-                      <span className="mb-2 block">{tr("Search")}</span>
-                      <input
-                        type="search"
-                        placeholder={tr("Title, artist, or album")}
-                        value={filters.searchQuery}
-                        onChange={(e) => filters.setSearchQuery(e.target.value)}
-                        className="min-h-9 w-full rounded-md border border-white/15 bg-transparent px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-white/40"
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-300">
-                      <span className="mb-2 block">{tr("Sort")}</span>
-                      <select
-                        value={filters.sortKey}
-                        onChange={(e) =>
-                          filters.setSortKey(
-                            e.target.value as typeof filters.sortKey,
-                          )
-                        }
-                        className="min-h-9 w-full rounded-md border border-white/15 bg-[#04060a] px-3 py-2 text-sm text-slate-200 outline-none focus:border-white/40"
-                      >
-                        <option value="none">{tr("Sort: None")}</option>
-                        <option value="title">{tr("Sort: Title")}</option>
-                        <option value="artist">{tr("Sort: Artist")}</option>
-                        <option value="album">{tr("Sort: Album")}</option>
-                      </select>
-                    </label>
+                  <div className="hidden lg:block lg:ml-auto">
+                    <ResultsSearchTools filters={filters} />
                   </div>
+                  <details className="lg:hidden">
+                    <summary className="min-h-11 cursor-pointer py-3 text-sm text-secondary">
+                      {tr("Search and sort")}
+                      {filters.searchQuery ? ` · ${filters.searchQuery}` : ""}
+                    </summary>
+                    <ResultsSearchTools filters={filters} />
+                  </details>
                   {queueButton()}
                 </div>
                 {analyzer.savedRekordboxXmlError && (
@@ -649,7 +664,7 @@ function PageInner() {
                   </p>
                 )}
                 {vm.currentResult.changeSummary?.hasPrevious && (
-                  <label className="flex items-center gap-2 text-sm text-slate-300">
+                  <label className="flex items-center gap-2 text-sm text-secondary">
                     <input
                       type="checkbox"
                       checked={filters.changesOnly}
@@ -664,6 +679,10 @@ function PageInner() {
                   compactStatus={filters.categoryFilter === "toBuy"}
                   onSaveBatch={saveFilteredTracks}
                   saveBatchCount={saveBatch.length}
+                  saveBatchSummary={buyLaterBatchSummary(
+                    vm.displayedTracks,
+                    buyQueue.queuedIds,
+                  )}
                   paginationKey={JSON.stringify([
                     selection.activeTab,
                     filters.categoryFilter,
@@ -683,18 +702,25 @@ function PageInner() {
                       : filters.searchQuery.trim()
                         ? tr("No tracks match your search.")
                         : filters.categoryFilter === "toBuy" &&
-                            vm.unknownCount > 0
+                            !vm.currentResult.hasRekordboxData
                           ? tr(
-                              "No tracks are confirmed absent from this XML. Review the not-confirmed tracks before buying.",
+                              "Add XML to check which tracks are absent from your library export.",
                             )
                           : filters.categoryFilter === "toBuy" &&
-                              vm.ownedCount > 0
-                            ? tr("All checked tracks have a match in this XML.")
-                            : vm.currentResult.tracks.length === 0
+                              vm.unknownCount > 0
+                            ? tr(
+                                "No tracks are confirmed absent from this XML. Review the not-confirmed tracks before buying.",
+                              )
+                            : filters.categoryFilter === "toBuy" &&
+                                vm.ownedCount > 0
                               ? tr(
-                                  "No analyzable tracks were returned. Check skipped entries or retry loading the playlist.",
+                                  "All checked tracks have a match in this XML.",
                                 )
-                              : tr("No tracks in this filter.")
+                              : vm.currentResult.tracks.length === 0
+                                ? tr(
+                                    "No analyzable tracks were returned. Check skipped entries or retry loading the playlist.",
+                                  )
+                                : tr("No tracks in this filter.")
                   }
                   onResetFilters={
                     filters.changesOnly ||
@@ -722,8 +748,8 @@ function PageInner() {
                   onAddToBuyQueue={saveForLater}
                 />
 
-                <details className="text-xs text-slate-500">
-                  <summary className="cursor-pointer list-none font-medium text-slate-400">
+                <details className="text-xs text-muted">
+                  <summary className="cursor-pointer list-none font-medium text-muted">
                     {tr("Saved data and tools")}
                   </summary>
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -735,7 +761,7 @@ function PageInner() {
                     <button
                       type="button"
                       onClick={() => actions.clearLocalData()}
-                      className="self-start rounded border border-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-slate-700 hover:text-slate-100"
+                      className="self-start rounded border border-slate-800 px-3 py-1.5 text-xs font-medium text-secondary hover:border-slate-700 hover:text-slate-100"
                     >
                       {tr("Clear analysis history")}
                     </button>

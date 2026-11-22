@@ -30,9 +30,11 @@ export default function BuyLaterPanel({
   const { t: tr } = useI18n();
   if (items.length === 0 && !storageWarning) return null;
   return (
-    <section className="text-sm text-slate-300">
+    <section className="text-sm text-secondary">
       {showHeading && (
-        <h2 className="text-lg font-semibold text-white">{tr("Buy Later")}</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          {tr("Buy Later")}
+        </h2>
       )}
       {storageWarning && (
         <div
@@ -51,7 +53,7 @@ export default function BuyLaterPanel({
       )}
       {items.length > 0 && (
         <>
-          <p className="mb-4 text-xs leading-5 text-slate-400">
+          <p className="mb-4 text-xs leading-5 text-muted">
             {tr("Availability / same version unverified.")}
           </p>
           <ul className="divide-y divide-white/10">
@@ -74,7 +76,7 @@ export default function BuyLaterPanel({
                     aria-label={tr("Remove {title} from Buy Later", {
                       title: item.title,
                     })}
-                    className="ml-auto min-h-10 px-1 text-xs text-slate-400 hover:text-white"
+                    className="ml-auto min-h-10 px-1 text-xs text-muted hover:text-foreground"
                   >
                     {tr("Remove")}
                   </button>
@@ -82,14 +84,14 @@ export default function BuyLaterPanel({
               </li>
             ))}
           </ul>
-          <details className="mt-5 border-t border-white/10 pt-4 text-xs text-slate-500">
+          <details className="mt-5 border-t border-white/10 pt-4 text-xs text-muted">
             <summary className="cursor-pointer">
               {tr("Manage saved tracks")}
             </summary>
             <button
               type="button"
               onClick={() => items.forEach((item) => onRemove(item.id))}
-              className="mt-2 min-h-10 text-slate-300 hover:text-white"
+              className="mt-2 min-h-10 text-secondary hover:text-foreground"
             >
               {tr("Clear")}
             </button>

@@ -79,12 +79,47 @@ export function SidePanels({
         toBuyCount={toBuyCount}
         unknownCount={unknownCount}
       />
-      <details className="text-sm text-slate-400">
+      <input
+        ref={uploadRef}
+        type="file"
+        accept=".xml"
+        aria-label={tr("Check all tracks against XML")}
+        className="hidden"
+        onChange={handleXmlChange}
+      />
+      {!currentResult.hasRekordboxData && (
+        <div className="flex flex-wrap items-center gap-3 border-l-2 border-accent pl-4">
+          <button
+            type="button"
+            disabled={matching || currentResult.tracks.length === 0}
+            onClick={() => uploadRef.current?.click()}
+            className="ps-action-secondary"
+          >
+            {tr(matching ? "Checking all tracks…" : "Check with rekordbox XML")}
+          </button>
+          <p className="text-sm text-secondary">
+            {tr(
+              "Add XML to check your library. Browsing and store search still work without it.",
+            )}
+          </p>
+        </div>
+      )}
+      {matchMessage && (
+        <p role="status" className="text-sm text-secondary">
+          {tr(matchMessage)}
+        </p>
+      )}
+      {xmlError && (
+        <div>
+          <ErrorAlert title={tr("XML Error")} message={xmlError} />
+        </div>
+      )}
+      <details className="text-sm text-muted">
         <summary className="cursor-pointer py-2">
           {tr("Playlist tools and XML")}
         </summary>
         <div className="space-y-2 py-3">
-          <div className="flex flex-col gap-3 text-sm text-slate-400 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 text-sm text-muted lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               {currentResult.rekordboxMeta && (
                 <div className="truncate">
@@ -118,14 +153,6 @@ export function SidePanels({
                   {tr("Open playlist")}
                 </a>
               )}
-              <input
-                ref={uploadRef}
-                type="file"
-                accept=".xml"
-                aria-label={tr("Check all tracks against XML")}
-                className="hidden"
-                onChange={handleXmlChange}
-              />
               <button
                 type="button"
                 disabled={matching || currentResult.tracks.length === 0}
@@ -145,17 +172,6 @@ export function SidePanels({
               </button>
             </div>
           </div>
-
-          {matchMessage && (
-            <p role="status" className="text-sm text-slate-300">
-              {tr(matchMessage)}
-            </p>
-          )}
-          {xmlError && (
-            <div>
-              <ErrorAlert title={tr("XML Error")} message={xmlError} />
-            </div>
-          )}
         </div>
       </details>
     </div>

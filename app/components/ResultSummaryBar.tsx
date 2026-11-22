@@ -2,6 +2,7 @@
 
 import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React from "react";
+import { libraryCheckState } from "@/lib/domain/libraryMatch";
 import { ResultState } from "@/lib/types";
 
 export interface ResultSummaryBarProps {
@@ -22,6 +23,10 @@ export default function ResultSummaryBar({
   if (!result) return null;
 
   const total = result.total;
+  const unchecked =
+    result.tracks?.filter((t) => libraryCheckState(t) === "unchecked").length ??
+    (!result.hasRekordboxData ? unknownCount : 0);
+  const review = Math.max(0, unknownCount - unchecked);
   const cacheHit = result.meta?.cache_hit ?? false;
   const refreshUsed = result.meta?.refresh ?? false;
   const showPerf = process.env.NEXT_PUBLIC_SHOW_PERF === "1";
@@ -31,30 +36,33 @@ export default function ResultSummaryBar({
   const hasDebugInfo = debugInfo.length > 0;
 
   return (
-    <div className="space-y-1 text-sm text-slate-300">
+    <div className="space-y-1 text-sm text-secondary">
       <dl className="flex flex-wrap gap-x-8 gap-y-3">
         {[
           [tr("Tracks"), total],
           [tr("Not in XML"), toBuyCount],
           [tr("Matched / confirmed"), ownedCount],
-          [tr("Needs review"), unknownCount],
+          [tr("Needs review"), review],
+          ...(unchecked ? [[tr("Not checked"), unchecked]] : []),
         ].map(([label, count]) => (
           <div key={label} className="flex items-baseline gap-2">
-            <dt className="text-xs text-slate-400">{label}</dt>
-            <dd className="text-xl font-semibold tabular-nums text-white">
+            <dt className="text-xs text-muted">{label}</dt>
+            <dd
+              className={`text-xl font-semibold tabular-nums ${label === tr("Not in XML") && toBuyCount ? "text-accent" : "text-foreground"}`}
+            >
               {count}
             </dd>
           </div>
         ))}
       </dl>
-      <p className="py-2 text-sm text-slate-300">
+      <p className="py-2 text-sm text-secondary">
         {tr(
           result.hasRekordboxData
             ? "Not in XML means absent from this export. Check your library before buying."
             : "Add your rekordbox XML to check which tracks you already have.",
         )}
       </p>
-      <details className="text-sm text-slate-400">
+      <details className="text-sm text-muted">
         <summary className="cursor-pointer py-1 hover:text-slate-200">
           {tr("About these results")}
         </summary>
@@ -152,10 +160,10 @@ export default function ResultSummaryBar({
 
       {showPerf && hasDebugInfo && (
         <details className="rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2">
-          <summary className="cursor-pointer text-[11px] text-slate-400">
+          <summary className="cursor-pointer text-[11px] text-muted">
             {tr("Debug details")}
           </summary>
-          <pre className="mt-2 overflow-auto max-h-48 whitespace-pre-wrap break-words rounded border border-slate-700 bg-slate-950 p-2 text-[9px] text-slate-300">
+          <pre className="mt-2 overflow-auto max-h-48 whitespace-pre-wrap break-words rounded border border-slate-700 bg-slate-950 p-2 text-[9px] text-secondary">
             {debugInfo}
           </pre>
         </details>

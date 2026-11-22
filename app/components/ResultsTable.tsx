@@ -4,11 +4,12 @@ import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useId, useState, useRef } from "react";
 import type { PlaylistRow } from "../../lib/types";
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
-import { TrackName, TrackIdentity, TrackStoreLinks } from "./TrackPresentation";
+import { TrackIdentity, TrackStoreLinks } from "./TrackPresentation";
 import RecordingComparison from "./RecordingComparison";
 import {
   effectiveOwned,
   libraryMatchLabel,
+  libraryCheckState,
   libraryMatchExplanation,
 } from "@/lib/domain/libraryMatch";
 import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
@@ -16,6 +17,7 @@ import { getBuyQueueItemId } from "@/lib/state/useBuyQueue";
 type ReviewAction = "owned" | "different_version" | null;
 type ReviewHandler = (track: PlaylistRow, action: ReviewAction) => void;
 type Props = {
+  saveBatchSummary?: { duplicates: number; saved: number; excluded: number };
   compactStatus?: boolean;
   onSaveBatch?: () => void;
   saveBatchCount?: number;
@@ -42,12 +44,10 @@ function getPrimaryBuyLink(
 function StoreLinksInline({ track }: { track: PlaylistRow }) {
   return <TrackStoreLinks track={track} />;
 }
-function TrackTitle({ track }: { track: PlaylistRow }) {
-  return <TrackName track={track} />;
-}
 
 export default function ResultsTable({
   compactStatus = false,
+  saveBatchSummary,
   onSaveBatch,
   saveBatchCount = 0,
   paginationKey,
@@ -91,7 +91,7 @@ export default function ResultsTable({
   const pageControls = (position: string) => (
     <nav
       aria-label={tr(position)}
-      className="flex flex-wrap items-center justify-between gap-3 py-2 text-sm text-slate-300"
+      className="flex flex-wrap items-center justify-between gap-3 py-2 text-sm text-secondary"
     >
       <div className="flex flex-wrap items-center gap-3">
         {" "}
@@ -110,7 +110,7 @@ export default function ResultsTable({
             title={tr(
               "Adds matching unsaved tracks from every page. Tracks needing review are excluded.",
             )}
-            className="min-h-11 rounded-lg bg-emerald-300 px-5 text-sm font-semibold text-emerald-950 hover:bg-emerald-200 disabled:bg-white/5 disabled:text-slate-400"
+            className="ps-action-primary"
           >
             {saveBatchCount
               ? tr(
@@ -123,7 +123,7 @@ export default function ResultsTable({
           </button>
         )}
         {position === "Track pages" && onSaveBatch && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted">
             {tr(
               saveBatchCount
                 ? "Across all filtered pages"
@@ -136,7 +136,7 @@ export default function ResultsTable({
       </div>
       <div className="flex items-center gap-2">
         {position === "Track pages" && (
-          <label className="mr-2 flex items-center gap-2 text-xs text-slate-400">
+          <label className="mr-2 flex items-center gap-2 text-xs text-muted">
             {tr("Per page")}
             <select
               aria-label={tr("Tracks per page")}
@@ -145,7 +145,7 @@ export default function ResultsTable({
                 setPageSize(Number(event.target.value));
                 setSelection({ key: viewKey, page: 1 });
               }}
-              className="min-h-10 rounded-md border border-white/15 bg-[#080c10] px-2 text-sm text-slate-200"
+              className="min-h-10 rounded-md border border-white/15 bg-surface px-2 text-sm text-slate-200"
             >
               {[20, 50, 100].map((size) => (
                 <option key={size} value={size}>
@@ -186,7 +186,7 @@ export default function ResultsTable({
     return (
       <div
         role="status"
-        className="rounded-lg border border-white/15 bg-white/5 p-5 text-sm text-slate-300"
+        className="rounded-lg border border-white/15 bg-white/5 p-5 text-sm text-secondary"
       >
         <p>{tr(emptyMessage ?? "No tracks to display.")}</p>
         {onResetFilters && (
@@ -208,11 +208,19 @@ export default function ResultsTable({
       className="scroll-mt-44 space-y-3 outline-none"
     >
       {pageControls("Track pages")}
-      <details className="text-xs leading-5 text-slate-400">
+      {onSaveBatch && saveBatchSummary && (
+        <p className="text-sm text-muted">
+          {tr(
+            "{duplicates} duplicate rows · {saved} already saved · {excluded} not eligible",
+            saveBatchSummary,
+          )}
+        </p>
+      )}
+      <details className="text-xs leading-5 text-muted">
         <summary className="cursor-pointer hover:text-slate-200">
           {tr("About store links")}
         </summary>
-        <p className="mt-2 text-sm leading-6 text-slate-300">
+        <p className="mt-2 text-sm leading-6 text-secondary">
           {tr(
             "“Search Beatport” opens search results in a new tab. “Beatport track page” opens a product page. Check the version and availability before buying.",
           )}
@@ -220,7 +228,7 @@ export default function ResultsTable({
       </details>
       <div className="md:hidden space-y-2">
         {rows.length === 0 ? (
-          <div className="rounded-lg border border-white/15 bg-white/5 p-4 text-sm text-slate-300 text-center">
+          <div className="rounded-lg border border-white/15 bg-white/5 p-4 text-sm text-secondary text-center">
             {tr("No tracks")}
           </div>
         ) : (
@@ -232,6 +240,7 @@ export default function ResultsTable({
               onAddToBuyQueue={onAddToBuyQueue}
               onReviewDecision={onReviewDecision}
               reviewReady={reviewReady}
+              compactStatus={compactStatus}
             />
           ))
         )}
@@ -245,7 +254,7 @@ export default function ResultsTable({
             <col className="w-[26%]" />
             <col className="w-[14%]" />
           </colgroup>
-          <thead className="border-b border-white/15 text-left text-[11px] font-medium uppercase tracking-wider text-slate-500">
+          <thead className="border-b border-white/15 text-left text-[11px] font-medium uppercase tracking-wider text-muted">
             <tr>
               {["Track", "Status", "Store", "Save"].map((label) => (
                 <th key={label} scope="col" className="px-3 py-3">
@@ -301,20 +310,13 @@ function DesktopTrackRow({
           <TrackIdentity track={track} />
         </td>
         <td className="px-3 py-3 align-middle">
-          {!compactStatus && (
-            <span
-              title={tr(libraryMatchExplanation(track))}
-              className={`inline-block rounded-full border px-2 py-1 text-[11px] leading-snug ${owned === true ? "border-emerald-400/20 bg-emerald-400/5 text-emerald-200" : owned === false ? "border-white/10 bg-white/5 text-slate-300" : "border-amber-400/20 bg-amber-400/5 text-amber-200"}`}
-            >
-              {tr(libraryMatchLabel(track))}
-            </span>
-          )}
+          {!compactStatus && <LibraryStatus track={track} />}
           <button
             type="button"
             aria-expanded={expanded}
             aria-controls={detailsId}
             onClick={() => setExpanded(!expanded)}
-            className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-xs text-slate-400 hover:text-white focus-visible:outline-2 focus-visible:outline-emerald-300"
+            className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-xs text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-emerald-300"
           >
             <span aria-hidden="true">{expanded ? "−" : "+"}</span>
             {tr(compactStatus ? "Details" : "Matching details")}
@@ -324,7 +326,7 @@ function DesktopTrackRow({
           {owned === true ? null : primary ? (
             <StoreLinksInline track={track} />
           ) : (
-            <span className="text-xs text-slate-400">{tr("Not found")}</span>
+            <span className="text-xs text-muted">{tr("Not found")}</span>
           )}
         </td>
         <td className="px-3 py-3 align-middle">
@@ -333,16 +335,22 @@ function DesktopTrackRow({
               type="button"
               disabled={isQueued}
               onClick={() => onAddToBuyQueue?.(track, primary)}
-              className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-md border border-white/15 px-3 py-2 text-xs text-slate-200 transition-colors hover:bg-white/5 disabled:border-emerald-300/20 disabled:bg-emerald-300/5 disabled:text-emerald-200"
+              className="ps-action-secondary whitespace-nowrap"
             >
               {isQueued ? `✓ ${tr("Saved")}` : tr("Buy Later")}
             </button>
           ) : (
             <span
-              className="text-xs text-slate-500"
+              className="text-xs text-muted"
               title={tr(libraryMatchExplanation(track))}
             >
-              {tr(owned == null ? "Review needed" : "Unavailable")}
+              {tr(
+                owned == null
+                  ? libraryCheckState(track) === "unchecked"
+                    ? "Add XML to save"
+                    : "Review needed"
+                  : "Unavailable",
+              )}
             </span>
           )}
         </td>
@@ -350,10 +358,10 @@ function DesktopTrackRow({
       <tr hidden={!expanded} id={detailsId}>
         <td
           colSpan={4}
-          className="border-b border-white/10 bg-white/[0.025] px-5 py-5 text-xs text-slate-300"
+          className="border-b border-white/10 bg-white/[0.025] px-5 py-5 text-xs text-secondary"
         >
           {track.changeStatus && track.changeStatus !== "unchanged" && (
-            <p className="mb-3 text-slate-400">
+            <p className="mb-3 text-muted">
               {tr("Change status")}: {tr(track.changeStatus)}
             </p>
           )}
@@ -369,12 +377,14 @@ function DesktopTrackRow({
 }
 
 function TrackCard({
+  compactStatus,
   track,
   queuedTrackIds,
   onAddToBuyQueue,
   onReviewDecision,
   reviewReady,
 }: {
+  compactStatus?: boolean;
   onReviewDecision?: ReviewHandler;
   reviewReady?: boolean;
   track: PlaylistRow;
@@ -392,28 +402,10 @@ function TrackCard({
   const canQueue = effectiveOwned(track) === false && Boolean(primary);
 
   return (
-    <div className="rounded-lg border border-white/15 bg-white/5 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-sm font-medium">
-            <TrackTitle track={track} />
-          </div>
-          <div className="text-xs text-white/70 truncate">
-            {track?.artist ?? ""}
-          </div>
-          <div className="text-xs text-white/50 truncate">
-            {track?.album ?? ""}
-          </div>
-        </div>
-        {isOwned ? (
-          <div className="shrink-0 rounded bg-emerald-400/10 px-2 py-1 text-xs text-emerald-200">
-            {tr(libraryMatchLabel(track))}
-          </div>
-        ) : (
-          <div className="shrink-0 text-xs text-slate-300">
-            {tr(libraryMatchLabel(track))}
-          </div>
-        )}
+    <div className="border-b border-white/15 py-4">
+      <div className="flex flex-col gap-2">
+        <TrackIdentity track={track} />
+        {!compactStatus && <LibraryStatus track={track} />}
       </div>
       <MatchDetails
         track={track}
@@ -425,9 +417,7 @@ function TrackCard({
           <StoreLinksInline track={track} />
         </div>
       ) : (
-        <div className="mt-3 text-sm text-slate-400">
-          {tr("No store found")}
-        </div>
+        <div className="mt-3 text-sm text-muted">{tr("No store found")}</div>
       )}
       {!isOwned && canQueue ? (
         <div className="mt-2">
@@ -437,7 +427,7 @@ function TrackCard({
             onClick={() => {
               if (primary) onAddToBuyQueue?.(track, primary);
             }}
-            className="min-h-9 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-slate-100 hover:bg-white/10 disabled:text-slate-400"
+            className="ps-action-secondary"
           >
             {isQueued ? tr("Saved") : tr("Buy Later")}
           </button>
@@ -459,7 +449,7 @@ function MatchDetails({
   const { t: tr } = useI18n();
 
   return (
-    <details className="mt-2 text-xs text-slate-300">
+    <details className="mt-2 text-xs text-secondary">
       <summary className="cursor-pointer">
         {tr("Matching details")}
         {track.changeStatus && track.changeStatus !== "unchanged"
@@ -526,5 +516,18 @@ function MatchEvidence({
       )}
       <RecordingComparison track={track} />
     </div>
+  );
+}
+
+function LibraryStatus({ track }: { track: PlaylistRow }) {
+  const { t } = useI18n();
+  const state = libraryCheckState(track);
+  return (
+    <span
+      title={t(libraryMatchExplanation(track))}
+      className={`inline-flex w-fit rounded border px-2 py-1 text-xs leading-5 ${state === "review" ? "border-review/35 bg-review/5 text-review" : state === "matched" ? "border-accent/30 text-accent" : "border-white/20 text-secondary"}`}
+    >
+      {t(libraryMatchLabel(track))}
+    </span>
   );
 }

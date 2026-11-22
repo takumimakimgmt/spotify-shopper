@@ -5,8 +5,10 @@ import type { SortKey } from "../types";
 export interface FiltersState {
   changesOnly: boolean;
   setChangesOnly: (value: boolean) => void;
-  categoryFilter: "all" | "toBuy" | "owned" | "unknown";
-  setCategoryFilter: (value: "all" | "toBuy" | "owned" | "unknown") => void;
+  categoryFilter: "all" | "toBuy" | "owned" | "unknown" | "unchecked";
+  setCategoryFilter: (
+    value: "all" | "toBuy" | "owned" | "unknown" | "unchecked",
+  ) => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   sortKey: SortKey;
@@ -20,7 +22,7 @@ export interface FiltersState {
 export function useFiltersState() {
   const [changesOnly, setChangesOnly] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<
-    "all" | "toBuy" | "owned" | "unknown"
+    "all" | "toBuy" | "owned" | "unknown" | "unchecked"
   >("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("none");

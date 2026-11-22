@@ -1,53 +1,94 @@
-@layer components {
-  .ps-card {
-    @apply bg-white/5 border border-white/10 rounded-2xl shadow;
-  }
-  .ps-row {
-    @apply flex items-center justify-between py-4 px-0 md:px-2;
-  }
-  .ps-label {
-    @apply text-sm font-medium text-white/90;
-  }
-  .ps-help {
-    @apply text-xs text-white/50 mt-1;
-  }
-  .ps-error {
-    @apply text-xs text-red-500 mt-1;
-  }
-  .ps-input {
-    @apply h-11 rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white/90 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-white/20 transition;
-  }
-  .ps-link {
-    @apply text-blue-400 hover:text-blue-300 cursor-pointer underline underline-offset-2 text-sm;
-  }
-}
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --background: #080a0b;
+  --foreground: #f2f0e8;
+  --surface: #101517;
+  --secondary: #c4cbc9;
+  --muted: #98a5a1;
+  --accent: #69ddb0;
+  --review: #e6c16c;
+  --danger: #f19b9b;
+  --control-border: #66746e;
+  --radius-control: 0.5rem;
+  --radius-panel: 0.75rem;
+  --motion-duration: 160ms;
 }
-
-html {
-  scroll-behavior: smooth;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--background);
+  --color-surface: var(--surface);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-review: var(--review);
+  --color-danger: var(--danger);
+  --font-sans:
+    var(--font-geist-sans), "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo,
+    sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    var(--font-geist-sans), "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo,
+    sans-serif;
+  line-height: 1.5;
+}
+html {
+  scroll-behavior: smooth;
+}
+:where(button, a) {
+  transition:
+    color var(--motion-duration),
+    background-color var(--motion-duration),
+    border-color var(--motion-duration);
+}
+:root :is(button, a, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+@layer components {
+  .ps-action-primary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#062016] hover:brightness-110 disabled:bg-white/5 disabled:text-muted;
+  }
+  .ps-action-secondary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-lg border border-white/25 px-3 py-2 text-sm text-secondary hover:bg-white/5 disabled:border-accent/25 disabled:bg-accent/5 disabled:text-accent;
+  }
+  .ps-card {
+    @apply rounded-xl border border-white/15 bg-surface;
+  }
+  .ps-row {
+    @apply flex items-center justify-between px-0 py-4 md:px-2;
+  }
+  .ps-label {
+    @apply text-sm font-medium text-secondary;
+  }
+  .ps-help {
+    @apply mt-1 text-sm text-muted;
+  }
+  .ps-error {
+    @apply mt-1 text-sm text-danger;
+  }
+  .ps-input {
+    @apply min-h-11 rounded-lg border border-[var(--control-border)] bg-transparent px-3 text-base text-foreground;
+  }
+  .ps-link {
+    @apply text-sm text-secondary underline underline-offset-4 hover:text-accent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

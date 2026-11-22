@@ -13,3 +13,28 @@ export function buyLaterBatch(tracks: PlaylistRow[], queued: Set<string>) {
     return [{ track, buyLink }];
   });
 }
+
+/** Explain the row count versus unique, unsaved purchase candidates. */
+export function buyLaterBatchSummary(
+  tracks: PlaylistRow[],
+  queued: Set<string>,
+) {
+  const seen = new Set<string>();
+  let duplicates = 0,
+    saved = 0,
+    excluded = 0;
+  for (const track of tracks) {
+    if (effectiveOwned(track) !== false) {
+      excluded++;
+      continue;
+    }
+    const id = recordingKey(track);
+    if (seen.has(id)) {
+      duplicates++;
+      continue;
+    }
+    seen.add(id);
+    if (queued.has(id)) saved++;
+  }
+  return { duplicates, saved, excluded };
+}
