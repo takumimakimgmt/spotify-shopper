@@ -76,6 +76,7 @@ it("adds the batch atomically and persists it without duplicating a second save"
 it("offers the full filtered count while showing only the current page", async () => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   const save = vi.fn();
+  const open = vi.fn();
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
@@ -87,6 +88,7 @@ it("offers the full filtered count while showing only the current page", async (
           currentResult={{}}
           displayedTracks={tracks}
           onSaveBatch={save}
+          onOpenBuyQueue={open}
           saveBatchCount={25}
         />,
       ),
@@ -113,17 +115,24 @@ it("offers the full filtered count while showing only the current page", async (
           currentResult={{}}
           displayedTracks={tracks}
           onSaveBatch={save}
+          onOpenBuyQueue={open}
           saveBatchCount={0}
         />,
       ),
     );
-    const complete = [...host.querySelectorAll("button")].find(
-      (x) => x.textContent === "All saved",
+    expect(host.textContent).toContain("25 tracks saved");
+    expect(host.textContent).not.toContain("All eligible tracks");
+    const view = [...host.querySelectorAll("button")].find(
+      (x) => x.textContent === "View saved tracks",
     )!;
-    expect(complete.disabled).toBe(true);
-    expect(host.textContent).toContain(
-      "All eligible tracks in this filter are already saved.",
-    );
+    await act(async () => view.click());
+    expect(open).toHaveBeenCalledTimes(1);
+    expect([...host.querySelectorAll("th")].map((e) => e.textContent)).toEqual([
+      "Track",
+      "Store",
+      "Save",
+    ]);
+    expect(details.closest("td")?.textContent).toContain("Song 1");
   } finally {
     act(() => root.unmount());
     host.remove();
