@@ -8,6 +8,7 @@ const item = z
     type: z.string(),
     name: z.string(),
     is_local: z.boolean().optional(),
+    duration_ms: z.number().finite().positive().optional(),
     artists: z.array(z.object({ name: z.string() })).optional(),
     album: z.object({ name: z.string() }).optional(),
     external_ids: z.object({ isrc: z.string().optional() }).optional(),
@@ -141,6 +142,7 @@ export async function authenticatedPlaylist(
         }
         tracks.push({
           title: track.name,
+          duration_ms: track.duration_ms,
           artist: (track.artists || []).map((a) => a.name).join(", "),
           album: track.album?.name || "",
           isrc: track.external_ids?.isrc,

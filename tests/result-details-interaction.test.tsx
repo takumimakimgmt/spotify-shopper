@@ -38,15 +38,23 @@ it("opens the selected recording's full-width evidence and preserves review acti
       ),
     );
     const toggles = [
-      ...host.querySelectorAll<HTMLButtonElement>("button[aria-controls]"),
-    ];
+      ...host.querySelectorAll<HTMLButtonElement>(
+        "table button[aria-controls]",
+      ),
+    ].filter((button) => button.textContent?.includes("Matching details"));
     const panels = toggles.map(
       (button) =>
         document.getElementById(button.getAttribute("aria-controls")!)!,
     );
     expect(panels.every((panel) => panel.hidden)).toBe(true);
     expect(toggles[0].textContent).not.toContain("unchanged");
-    await act(async () => toggles[1].click());
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          'table button[aria-label="Review Second"]',
+        )!
+        .click(),
+    );
     expect(toggles[1].getAttribute("aria-expanded")).toBe("true");
     expect(panels[0].hidden).toBe(true);
     expect(panels[1].hidden).toBe(false);

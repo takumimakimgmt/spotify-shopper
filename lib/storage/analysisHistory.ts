@@ -36,7 +36,8 @@ export function normalizeStoredResults(
       const trustedOwnership =
         validSnapshot &&
         (s.meta?.ownership_rules_version === 3 ||
-          s.meta?.ownership_rules_version === 4);
+          s.meta?.ownership_rules_version === 4 ||
+          s.meta?.ownership_rules_version === 5);
       out.push([
         url,
         {
@@ -60,12 +61,28 @@ export function normalizeStoredResults(
           tracks: validSnapshot
             ? (r.tracks as PlaylistRow[]).map((t: PlaylistRow) => ({
                 ...t,
-                owned:
-                  trustedOwnership && typeof t.owned === "boolean"
-                    ? t.owned
-                    : null,
-                ownedReason: trustedOwnership ? t.ownedReason : null,
-                libraryMatch: trustedOwnership ? t.libraryMatch : null,
+                ...(trustedOwnership &&
+                s.meta?.ownership_rules_version !== 5 &&
+                (t.owned === false ||
+                  (t.owned === true &&
+                    t.ownedReason !== "isrc" &&
+                    !t.libraryMatch?.matched_artist?.trim()))
+                  ? {
+                      owned: null,
+                      ownedReason: "outdated_rules",
+                      libraryMatch: {
+                        status: "review" as const,
+                        reason: "outdated_rules",
+                      },
+                    }
+                  : {
+                      owned:
+                        trustedOwnership && typeof t.owned === "boolean"
+                          ? t.owned
+                          : null,
+                      ownedReason: trustedOwnership ? t.ownedReason : null,
+                      libraryMatch: trustedOwnership ? t.libraryMatch : null,
+                    }),
               }))
             : [],
         },

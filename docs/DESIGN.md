@@ -38,7 +38,7 @@ Check 320/390/768/1024/1440px; Japanese and English; long remixes and multiple a
 
 ## Finishing rules
 
-Keep the listening control in its own column beside the entire track identity, never in the title row: the 44px target must not create a gap between title and artist. Desktop results have three columns (track, store, save); status and evidence toggle belong beneath the identity. Saved rows use quiet text/checks, not repeated disabled action buttons. When the filtered set is fully saved, show one count plus a link opening the shared saved list; hide redundant completion/exclusion explanations. Before saving, exclusion counts remain available in a disclosure. Selected XML uses a compact metadata/change/remove row; optional upload instructions are for the unselected state. Privacy/scope warnings and errors remain available in both states.
+The full track identity opens recording evidence: use a subtle underline on the title and a minimum 44px identity target. Do not reserve a separate column for repeated Listen/Spotify controls or arrows. Title and artist stay together. Put the explicitly named source-service link inside the comparison. Desktop results have three columns (track, store, save); status and evidence toggle belong beneath the identity. Saved rows use quiet text/checks, not repeated disabled action buttons. When the filtered set is fully saved, show one count plus a link opening the shared saved list; hide redundant completion/exclusion explanations. Before saving, exclusion counts remain available in a disclosure. Selected XML uses a compact metadata/change/remove row; optional upload instructions are for the unselected state. Privacy/scope warnings and errors remain available in both states.
 
 ## Matching trust and workspace flow
 
@@ -50,3 +50,19 @@ Keep the listening control in its own column beside the entire track identity, n
 - Show affiliate and unverified-version disclosure in the visible store-help summary. Queue additions remain newest first, batches retain playlist order. Removing/clearing has visible Undo; undo deduplicates and restores original positions. Storage-conflict guards still apply.
 
 Verification for this change: real 1121.xml was checked locally against Air/98 (18 absent, 69 matched, 11 review). XML contents were never sent to a server or committed. Controlled metadata fixtures verify success/failure of additional playlists without provider dependency. Regression tests cover contradictory evidence, first-check changes, filter hints/counts, zero timestamps, no-Retry errors, queue undo and hydration-safe selection restoration.
+
+Source navigation is carried by the shared track identity in results and Buy Later. Its tooltip and accessible name identify Spotify (or YouTube Music search when no Spotify URL exists) and the new tab. No in-app playback is implied. Batch saving is a secondary outlined action; store search retains restrained accent emphasis. Filter counts occupy a full row; search/sort and Buy Later align beneath them instead of unpredictable wrapping.
+
+## Audit acceptance criteria
+
+Apply the original audit as principles, not an arbitrary ban on cards or icons. An external-link arrow was not prohibited by the original document; repeating it in every row without helping the purchase task is unnecessary here. For each change record its purpose, screen, evidence and impact. Keep aesthetic preferences separate from measurable faults. Labels alone do not fix an inappropriate layout.
+
+Review the entry, result list, recording comparison, Buy Later and error states in both languages and at 320/390/768/1024/1440px. Check title/version visibility, category meaning, source/store/save hierarchy, shared identity layout, focus/keyboard/touch, empty/loading/error/reload and preserved local data. Do not infer availability or recording identity from appearance. Report untested interactions as untested. Screenshot and runtime evidence must refer to the same revision.
+
+## Conservative matching and saved evidence (rules 5)
+
+Exact/ISRC matching stays separate from conservative candidate recovery. A missing artist, known soundtrack subtitle difference, explicit version difference or duration conflict must lead to review, never title-only ownership confirmation. XML duration is retained locally; Spotify duration is used only when supplied. Equal duration is not identity proof. Duration is not guessed when a provider omits it. The legacy Python corpus is still checked against the core against its original metadata corpus; separate regression cases verify version-5 recovery and its safety boundaries.
+
+Older absent snapshots require a recheck under the new rules. Saved queues keep an independent evidence snapshot with matching time, XML name, fingerprint and rule version. No-evidence legacy items are retained with a warning. Newer results are distinguished from saved decisions; a change in the current library does not silently rewrite the saved snapshot or delete queued tracks. Queue totals and eligible purchase-plan totals are separate concepts and must be labelled accordingly.
+
+Terminal failures leave resumable work; transient failures stay pending. Re-adding removed tracks invalidates only the corresponding Undo entries. The batch action keeps its name in enabled, disabled and saved states, with counts outside the label. Essential affiliate/scope notices stay readable; saved progress is expandable rather than a full-time banner.

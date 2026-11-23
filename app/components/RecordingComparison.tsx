@@ -1,5 +1,6 @@
 "use client";
 import { useI18n } from "@/lib/i18n/LanguageProvider";
+import { effectiveOwned } from "@/lib/domain/libraryMatch";
 import type { PlaylistRow } from "@/lib/types";
 
 function normal(value: string) {
@@ -35,8 +36,18 @@ export default function RecordingComparison({ track }: { track: PlaylistRow }) {
     ["Title / version", track.title, candidate.matched_title],
     ["Artist credits", track.artist, candidate.matched_artist || ""],
   ];
+  if (candidate.requested_duration_ms || candidate.matched_duration_ms)
+    fields.push([
+      "Duration",
+      candidate.requested_duration_ms
+        ? `${(candidate.requested_duration_ms / 1000).toFixed(1)} s`
+        : "",
+      candidate.matched_duration_ms
+        ? `${(candidate.matched_duration_ms / 1000).toFixed(1)} s`
+        : "",
+    ]);
   return (
-    <div className="mt-3 space-y-2 break-words">
+    <div className="mt-3 space-y-2 break-words text-sm leading-6">
       <p className="font-medium text-slate-100">{tr("Compare recordings")}</p>
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
         {[tr("Spotify recording"), tr("XML candidate")].map((label, side) => (
@@ -49,7 +60,13 @@ export default function RecordingComparison({ track }: { track: PlaylistRow }) {
               <div key={tr(name)} className="mb-2">
                 <p className="text-muted">
                   {tr(name)}
-                  {normal(left) !== normal(right) ? tr(" · text differs") : ""}
+                  {normal(left) !== normal(right)
+                    ? tr(
+                        effectiveOwned(track) === true
+                          ? " · text differs; recording matched"
+                          : " · text differs",
+                      )
+                    : ""}
                 </p>
                 <p>
                   {(side ? right : left) ? (

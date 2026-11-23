@@ -14,42 +14,72 @@ export function TrackName({ track }: { track: Identity }) {
     </span>
   );
 }
-export function TrackIdentity({ track }: { track: Identity }) {
+export function TrackIdentity({
+  track,
+  onInspect,
+  expanded,
+  controls,
+}: {
+  track: Identity;
+  onInspect?: () => void;
+  expanded?: boolean;
+  controls?: string;
+}) {
+  const { t } = useI18n();
+  const Tag = onInspect ? "button" : "div";
+  return (
+    <Tag
+      {...(onInspect
+        ? {
+            type: "button" as const,
+            onClick: onInspect,
+            "aria-label": t("Review {title}", { title: track.title }),
+            "aria-expanded": expanded,
+            "aria-controls": controls,
+          }
+        : {})}
+      className="group/source block min-h-11 min-w-0 w-full rounded text-left"
+    >
+      <span className="block underline decoration-white/20 underline-offset-4 group-hover/source:decoration-current">
+        <TrackName track={track} />
+      </span>
+      <p
+        className="mt-1 break-words text-sm leading-5 text-secondary"
+        title={track.artist}
+      >
+        {track.artist}
+      </p>
+      {track.album &&
+        track.album.trim().toLowerCase() !==
+          track.title.trim().toLowerCase() && (
+          <p
+            className="mt-0.5 break-words text-[13px] leading-5 text-muted"
+            title={track.album}
+          >
+            {track.album}
+          </p>
+        )}
+    </Tag>
+  );
+}
+export function TrackSourceLink({ track }: { track: Identity }) {
   const { t } = useI18n();
   const href =
     track.spotifyUrl ||
-    `https://music.youtube.com/search?q=${encodeURIComponent(`${track.artist} ${track.title} topic`)}`;
+    `https://music.youtube.com/search?q=${encodeURIComponent(`${track.artist} ${track.title}`)}`;
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3">
-      <div className="min-w-0">
-        <TrackName track={track} />
-        <p
-          className="mt-1 break-words text-sm leading-5 text-secondary"
-          title={track.artist}
-        >
-          {track.artist}
-        </p>
-        {track.album &&
-          track.album.trim().toLowerCase() !==
-            track.title.trim().toLowerCase() && (
-            <p
-              className="mt-0.5 break-words text-[13px] leading-5 text-muted"
-              title={track.album}
-            >
-              {track.album}
-            </p>
-          )}
-      </div>
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        aria-label={t("Listen to {title}", { title: track.title })}
-        className="inline-flex min-h-11 shrink-0 items-center self-center rounded px-1 text-sm leading-5 text-muted hover:text-accent"
-      >
-        {t("Listen")} ↗
-      </a>
-    </div>
+    <a
+      className="inline-flex min-h-11 items-center text-sm text-secondary underline underline-offset-4"
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+    >
+      {t(
+        track.spotifyUrl
+          ? "Open in Spotify (new tab)"
+          : "Search YouTube Music (new tab)",
+      )}
+    </a>
   );
 }
 export function TrackStoreLinks({

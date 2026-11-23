@@ -29,6 +29,7 @@ type TrackLike = {
   album?: unknown;
   isrc?: unknown;
   spotify_url?: unknown;
+  duration_ms?: unknown;
   apple_url?: unknown;
   links?: unknown;
   owned?: unknown;
@@ -81,6 +82,12 @@ function normalizeTrack(t: TrackLike, index: number): PlaylistRow {
     album: asString(t.album) ?? "",
     isrc: asString(t.isrc),
     spotifyUrl: asString(t.spotify_url) ?? "",
+    durationMs:
+      typeof t.duration_ms === "number" &&
+      Number.isFinite(t.duration_ms) &&
+      t.duration_ms > 0
+        ? t.duration_ms
+        : undefined,
     appleUrl: asString(t.apple_url),
     stores: links,
     owned: asBool(t.owned) ?? null,

@@ -9,18 +9,20 @@ import {
 } from "./normalizer";
 import { similarity } from "./similarity";
 import type { LibraryMatch } from "../types";
-export const LOCAL_RULES_VERSION = 4;
+export const LOCAL_RULES_VERSION = 5;
 export type LibraryEntry = {
   title: string;
   artist: string;
   album: string;
   isrc?: string | null;
+  duration_ms?: number | null;
 };
 export type MatchInput = {
   title: string;
   artist: string;
   album?: string | null;
   isrc?: string | null;
+  duration_ms?: number | null;
 };
 export type LocalMatch = {
   owned: boolean | null;
@@ -30,7 +32,7 @@ export type LocalMatch = {
 const equal = (a: string[], b: string[]) =>
   JSON.stringify(a) === JSON.stringify(b);
 
-export function matchLibrary(
+export function matchLibraryCore(
   tracks: MatchInput[],
   library: LibraryEntry[],
   deadline = Date.now() + 20_000,
@@ -83,13 +85,17 @@ export function matchLibrary(
                   annotationSignature(candidate.title),
                 )
               ? "title_annotation_mismatch"
-              : candidate.artist.trim() &&
-                  !equal(
-                    artistIdentity(track.artist),
-                    artistIdentity(candidate.artist),
-                  )
-                ? "artist_mismatch"
-                : null;
+              : track.duration_ms &&
+                  candidate.duration_ms &&
+                  Math.abs(track.duration_ms - candidate.duration_ms) > 2000
+                ? "duration_mismatch"
+                : candidate.artist.trim() &&
+                    !equal(
+                      artistIdentity(track.artist),
+                      artistIdentity(candidate.artist),
+                    )
+                  ? "artist_mismatch"
+                  : null;
       if (reason) {
         review = { reason, candidate };
         return false;
@@ -144,6 +150,101 @@ export function matchLibrary(
         reason: evidence?.reason || "no_match",
         matched_title: evidence?.candidate.title ?? null,
         matched_artist: evidence?.candidate.artist ?? null,
+        ...(track.duration_ms
+          ? { requested_duration_ms: track.duration_ms }
+          : {}),
+        ...(evidence?.candidate.duration_ms
+          ? { matched_duration_ms: evidence.candidate.duration_ms }
+          : {}),
+      },
+    };
+  });
+}
+
+/** Conservative recovery: title-only and soundtrack subtitle candidates require human review. */
+export function matchLibrary(
+  tracks: MatchInput[],
+  library: LibraryEntry[],
+  deadline = Date.now() + 20_000,
+): LocalMatch[] {
+  const matches = matchLibraryCore(tracks, library, deadline);
+  const byTitle = new Map<string, LibraryEntry[]>();
+  const candidateTitle = (value: string) =>
+    normalizeTitle(value)
+      .replace(/\s+-\s+(?:from\b.*|soundtrack\b.*)$/u, "")
+      .trim();
+  for (const entry of library) {
+    if (Date.now() > deadline)
+      throw new Error("Local matching exceeded its time budget.");
+    const key = candidateTitle(entry.title);
+    if (key) {
+      const entries = byTitle.get(key) || [];
+      entries.push(entry);
+      byTitle.set(key, entries);
+    }
+  }
+  return matches.map((match, index) => {
+    if (
+      match.owned === true &&
+      match.owned_reason === "exact" &&
+      !match.library_match.matched_artist?.trim()
+    ) {
+      return {
+        ...match,
+        owned: null,
+        owned_reason: "missing_artist",
+        library_match: {
+          ...match.library_match,
+          status: "review",
+          reason: "missing_artist",
+        },
+      };
+    }
+    if (match.owned !== false) return match;
+    const track = tracks[index];
+    const candidates = (byTitle.get(candidateTitle(track.title)) || []).filter(
+      (entry) => {
+        if (Date.now() > deadline)
+          throw new Error("Local matching exceeded its time budget.");
+        return (
+          !track.artist.trim() ||
+          !entry.artist.trim() ||
+          equal(artistIdentity(track.artist), artistIdentity(entry.artist))
+        );
+      },
+    );
+    if (!candidates.length) return match;
+    const delta = (entry: LibraryEntry) =>
+      track.duration_ms && entry.duration_ms
+        ? Math.abs(track.duration_ms - entry.duration_ms)
+        : Infinity;
+    const candidate = candidates.reduce((best, entry) =>
+      delta(entry) < delta(best) ? entry : best,
+    );
+    const reason = !equal(
+      versionSignature(track.title),
+      versionSignature(candidate.title),
+    )
+      ? "version_mismatch"
+      : Number.isFinite(delta(candidate)) && delta(candidate) > 2000
+        ? "duration_mismatch"
+        : !track.artist.trim() || !candidate.artist.trim()
+          ? "missing_artist"
+          : "subtitle_mismatch";
+    return {
+      owned: null,
+      owned_reason: reason,
+      library_match: {
+        status: "review",
+        reason,
+        matched_title: candidate.title,
+        matched_artist: candidate.artist,
+        ...(track.duration_ms
+          ? { requested_duration_ms: track.duration_ms }
+          : {}),
+        ...(candidate.duration_ms
+          ? { matched_duration_ms: candidate.duration_ms }
+          : {}),
       },
     };
   });

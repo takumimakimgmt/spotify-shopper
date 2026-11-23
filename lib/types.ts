@@ -78,6 +78,8 @@ export type ApiMeta = {
 };
 
 export type LibraryMatch = {
+  requested_duration_ms?: number;
+  matched_duration_ms?: number;
   status: "matched" | "not_found" | "review";
   reason: string;
   matched_title?: string | null;
@@ -85,6 +87,7 @@ export type LibraryMatch = {
 };
 
 export type PlaylistRow = {
+  durationMs?: number;
   index: number;
   title: string;
   artist: string;
@@ -149,6 +152,7 @@ export type PlaylistSnapshotV1 = {
     track_count: number;
   };
   tracks: Array<{
+    duration_ms?: number;
     title: string;
     artist: string;
     album?: string;

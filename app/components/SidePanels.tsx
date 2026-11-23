@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import type { PlaylistRow, ResultState } from "../../lib/types";
 
 import ErrorAlert from "./ErrorAlert";
+import { LOCAL_RULES_VERSION } from "@/lib/rekordbox/localMatcher";
 import { MAX_XML_BYTES } from "@/lib/constants";
 
 interface SidePanelsProps {
@@ -81,7 +82,9 @@ export function SidePanels({
         className="hidden"
         onChange={handleXmlChange}
       />
-      {!currentResult.hasRekordboxData && (
+      {(!currentResult.hasRekordboxData ||
+        currentResult.meta?.ownership_rules_version !==
+          LOCAL_RULES_VERSION) && (
         <div className="flex flex-wrap items-center gap-3 border-l-2 border-accent pl-4">
           <button
             type="button"

@@ -1,6 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  captureQueueEvidence,
+  parseQueueEvidence,
+  type QueueContext,
+  type QueueEvidence,
+} from "../domain/buyQueueEvidence";
 import { recordingKey } from "../domain/recordingIdentity";
 import type { PlaylistRow } from "../types";
 
@@ -17,6 +23,7 @@ export type BuyQueueItem = {
   buyUrl: string;
   buyStore: string;
   addedAt: number;
+  evidence?: QueueEvidence;
 };
 
 function itemId(track: PlaylistRow) {
@@ -40,7 +47,11 @@ function parseQueue(raw: string | null): BuyQueueItem[] {
       Number.isFinite(item.addedAt),
   );
   if (!valid) throw new Error("Saved purchase queue contains invalid items.");
-  return parsed.map((item) => ({ ...item, id: recordingKey(item) }));
+  return parsed.map((item) => ({
+    ...item,
+    id: recordingKey(item),
+    evidence: parseQueueEvidence(item.evidence),
+  }));
 }
 
 function saveQueue(items: BuyQueueItem[]): boolean {
@@ -131,6 +142,7 @@ export function useBuyQueue() {
         track: PlaylistRow;
         buyLink: { name: string; url: string };
       }>,
+      context?: QueueContext,
     ) => {
       if (!restored) {
         setStorageWarning(
@@ -154,9 +166,12 @@ export function useBuyQueue() {
           buyUrl: buyLink.url,
           buyStore: buyLink.name,
           addedAt: Date.now(),
+          evidence: captureQueueEvidence(track, context),
         });
       }
       if (!additions.length) return 0;
+      const addedIds = new Set(additions.map((item) => item.id));
+      setRemoved((prev) => prev.filter(({ item }) => !addedIds.has(item.id)));
       setItems((prev) => {
         const previous = new Set(prev.map((item) => item.id));
         return [...additions.filter((item) => !previous.has(item.id)), ...prev];
@@ -166,8 +181,11 @@ export function useBuyQueue() {
     [restored, items],
   );
   const addTrack = useCallback(
-    (track: PlaylistRow, buyLink: { name: string; url: string }) =>
-      addTracks([{ track, buyLink }]) > 0,
+    (
+      track: PlaylistRow,
+      buyLink: { name: string; url: string },
+      context?: QueueContext,
+    ) => addTracks([{ track, buyLink }], context) > 0,
     [addTracks],
   );
 

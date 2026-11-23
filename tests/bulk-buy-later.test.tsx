@@ -71,8 +71,13 @@ it("adds the batch atomically and persists it without duplicating a second save"
     await act(async () => queue.removeItem(original[8]));
     expect(queue!.items).toHaveLength(24);
     expect(queue!.removedCount).toBe(1);
+    await act(async () =>
+      queue.addTracks(buyLaterBatch([tracks[8]], new Set())),
+    );
+    expect(queue!.removedCount).toBe(0);
+    await act(async () => queue.removeItem(original[8]));
     await act(async () => queue.undoRemove());
-    expect(queue!.items.map((x) => x.id)).toEqual(original);
+    expect(new Set(queue!.items.map((x) => x.id))).toEqual(new Set(original));
     await act(async () => queue.clearItems());
     expect(queue!.items).toHaveLength(0);
     expect(queue!.removedCount).toBe(25);
@@ -111,7 +116,7 @@ it("offers the full filtered count while showing only the current page", async (
       ),
     );
     const button = [...host.querySelectorAll("button")].find(
-      (x) => x.textContent === "Add 25 tracks to Buy Later",
+      (x) => x.textContent === "Add to Buy Later",
     )!;
     expect(button).toBeTruthy();
     expect(host.querySelector("table tbody tr td")?.textContent).not.toContain(

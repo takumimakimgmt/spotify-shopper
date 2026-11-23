@@ -9,6 +9,8 @@ const StoreLinksModelSchema = z
   .passthrough();
 
 export const LibraryMatchSchema = z.object({
+  requested_duration_ms: z.number().finite().positive().optional(),
+  matched_duration_ms: z.number().finite().positive().optional(),
   status: z.enum(["matched", "not_found", "review"]),
   reason: z.string(),
   matched_title: z.string().nullable().optional(),
