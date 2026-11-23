@@ -22,7 +22,8 @@ export default function PurchasePlan({
   return (
     <details className="space-y-3 border-b border-white/15 py-2 text-sm">
       <summary className="cursor-pointer py-2 font-semibold">
-        {tr("Purchase plan across playlists")} · {entries.length}
+        {tr("Eligible tracks across playlists (separate from Buy Later)")} ·{" "}
+        {entries.length}
       </summary>
       <p className="text-slate-300">
         {tr(

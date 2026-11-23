@@ -34,6 +34,14 @@ export function libraryMatchExplanation(track: PlaylistRow): string {
       return "Recording identifier matches a track in this XML.";
     case "exact":
       return "Title, artist credits and recording details match a track in this XML.";
+    case "missing_artist":
+      return "A title candidate was found, but artist information is missing. Compare the recording before buying; ownership is not confirmed.";
+    case "subtitle_mismatch":
+      return "A candidate has a different soundtrack subtitle. Compare the recording before buying.";
+    case "duration_mismatch":
+      return "A title candidate has a different duration. Check the version before buying.";
+    case "outdated_rules":
+      return "This result used older matching rules. Check again with your XML before buying.";
     case "artist_mismatch":
       return "Artist credits differ. Check the candidate recording.";
     case "title_annotation_mismatch":
@@ -93,6 +101,10 @@ export function hasConflictingEvidence(track: PlaylistRow): boolean {
     "isrc_conflict",
     "album",
     "fuzzy",
+    "missing_artist",
+    "subtitle_mismatch",
+    "duration_mismatch",
+    "outdated_rules",
   ];
   if (track.owned === true)
     return (

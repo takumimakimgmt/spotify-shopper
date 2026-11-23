@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import corpus from "./fixtures/local-matching.json";
-import { matchLibrary } from "@/lib/rekordbox/localMatcher";
+import { matchLibraryCore as matchLibrary } from "@/lib/rekordbox/localMatcher";
 import {
   normalizeArtist,
   normalizeTitle,
@@ -10,7 +10,7 @@ import {
   annotationSignature,
 } from "@/lib/rekordbox/normalizer";
 import { similarity } from "@/lib/rekordbox/similarity";
-describe("browser matching agrees with Python reference", () => {
+describe("core matching agrees with Python reference corpus (without duration metadata)", () => {
   it.each(corpus.cases.map((c, i) => ({ ...c, index: i })))(
     "matching case $index",
     (c) => {

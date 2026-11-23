@@ -1023,4 +1023,43 @@ describe("usePlaylistAnalyzer Spotify flow", () => {
 
     expect(window.localStorage.getItem("spotify-shopper-results")).toBeNull();
   });
+  test("does not leave terminal Spotify failures in resumable work", async () => {
+    getPlaylistMock.mockRejectedValue({
+      message: "Restricted playlist",
+      code: "SPOTIFY_ACCESS_RESTRICTED",
+      retryable: false,
+    });
+    await act(async () =>
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />),
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+    act(() => currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl));
+    await act(async () => {
+      await currentApi!.handleAnalyze({ preventDefault() {} } as FormEvent);
+    });
+    expect(currentApi!.errorText).toBe("Restricted playlist");
+    expect(currentApi!.resumableDraft).toBeNull();
+  });
+  test("keeps retryable Spotify failures in resumable work", async () => {
+    getPlaylistMock.mockRejectedValue({
+      message: "Temporary failure",
+      code: "SPOTIFY_UNAVAILABLE",
+      retryable: true,
+    });
+    await act(async () =>
+      root.render(<Harness onRender={(api) => void (currentApi = api)} />),
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+    act(() => currentApi!.setPlaylistUrlInput(spotifyPlaylistUrl));
+    await act(async () => {
+      await currentApi!.handleAnalyze({ preventDefault() {} } as FormEvent);
+    });
+    expect(currentApi!.resumableDraft?.pendingUrls).toContain(
+      spotifyPlaylistUrl,
+    );
+  });
 });

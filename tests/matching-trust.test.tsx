@@ -103,6 +103,10 @@ it("shows all category counts including zero and changes the explanatory hint wi
     );
     expect(buttons[3].getAttribute("aria-pressed")).toBe("true");
     expect(host.textContent).toContain("2286 XML entries checked");
+    await act(async () => (buttons[4] as HTMLButtonElement).click());
+    expect(host.querySelector('[role="status"]')?.textContent).toBe(
+      "No unchecked tracks in this result.",
+    );
   } finally {
     act(() => root.unmount());
     host.remove();

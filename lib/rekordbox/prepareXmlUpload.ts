@@ -52,6 +52,9 @@ export function parseLibraryXml(text: string): LibraryEntry[] {
       if (field === "Album") track.album = value || "";
       if (field === "ISRC") track.isrc = value;
     }
+    const seconds = Number(child.getAttribute("TotalTime"));
+    if (Number.isFinite(seconds) && seconds > 0 && seconds < 86400)
+      track.duration_ms = seconds * 1000;
     entries.push(track);
   }
   return entries;

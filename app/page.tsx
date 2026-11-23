@@ -1,4 +1,5 @@
 "use client";
+import { latestQueueEvidence } from "@/lib/domain/buyQueueEvidence";
 import ResultsFilterBar from "./components/ResultsFilterBar";
 // --- Gate-1 / FE-1: zod boundary validation for query params ---
 const ActiveTabQuerySchema = z.string().trim().min(1);
@@ -103,7 +104,7 @@ function PageInner() {
   }, [queueNotice]);
   const saveForLater: typeof buyQueue.addTrack = (track, link) => {
     if (buyQueue.queuedIds.has(getBuyQueueItemId(track))) return false;
-    const added = buyQueue.addTrack(track, link);
+    const added = buyQueue.addTrack(track, link, evidenceContext(track));
     if (added) setQueueNotice({ title: track.title });
     return added;
   };
@@ -192,9 +193,32 @@ function PageInner() {
     lastDefaultFilter.current = defaultFilterKey;
     setCategoryFilter(hasMatchedXml ? "toBuy" : "all");
   }, [defaultFilterKey, hasMatchedXml, setCategoryFilter]);
+  function evidenceContext(track?: import("@/lib/types").PlaylistRow) {
+    const result = track
+      ? vm.multiResults.find(([, r]) =>
+          r.tracks.some(
+            (t) => getBuyQueueItemId(t) === getBuyQueueItemId(track),
+          ),
+        )?.[1]
+      : vm.currentResult;
+    return {
+      checkedAt: result?.meta?.rekordbox?.matched_at,
+      xmlFilename: result?.rekordboxMeta?.filename,
+      rulesVersion: result?.meta?.ownership_rules_version,
+      libraryFingerprint: result?.meta?.rekordbox?.library_sha256,
+    };
+  }
+  const currentQueueEvidence = React.useMemo(
+    () => latestQueueEvidence(vm.multiResults, buyQueue.queuedIds),
+    [vm.multiResults, buyQueue.queuedIds],
+  );
+  const queueItems = buyQueue.items.map((item) => ({
+    ...item,
+    currentEvidence: currentQueueEvidence.get(item.id),
+  }));
   const saveBatch = buyLaterBatch(vm.displayedTracks, buyQueue.queuedIds);
   const saveFilteredTracks = () => {
-    const count = buyQueue.addTracks(saveBatch);
+    const count = buyQueue.addTracks(saveBatch, evidenceContext());
     if (count > 0) setQueueNotice({ count });
   };
   const TAB_QS_KEY = "t";
@@ -348,7 +372,7 @@ function PageInner() {
         <BuyLaterDrawer
           open={queueOpen}
           onClose={() => setQueueOpen(false)}
-          items={buyQueue.items}
+          items={queueItems}
           onRemove={buyQueue.removeItem}
           onClear={buyQueue.clearItems}
           onUndoRemove={buyQueue.undoRemove}
@@ -431,13 +455,19 @@ function PageInner() {
             </div>
           )}
           {analyzer.resumableDraft && !analyzer.isProcessing && (
-            <div
-              role="status"
-              className="rounded-lg border border-amber-400/30 p-4 text-sm"
-            >
+            <details className="border-b border-white/15 py-2 text-sm">
+              <summary className="cursor-pointer py-2">
+                {tr("Saved progress: {count} remaining", {
+                  count: analyzer.resumableDraft.pendingUrls.length,
+                })}
+              </summary>
               <p>
-                {analyzer.resumableDraft.pendingUrls.length}
-                {tr(" playlists remain in the saved batch.")}
+                {tr(
+                  analyzer.resumableDraft.pendingUrls.length === 1
+                    ? "{count} playlist remains in the saved batch."
+                    : "{count} playlists remain in the saved batch.",
+                  { count: analyzer.resumableDraft.pendingUrls.length },
+                )}
               </p>
               <p className="mt-1 text-secondary">
                 {tr(
@@ -459,7 +489,7 @@ function PageInner() {
                   {tr("Discard saved progress (keep results)")}
                 </button>
               </div>
-            </div>
+            </details>
           )}
           <section>
             {selection.formCollapsed && vm.multiResults.length > 0 ? (

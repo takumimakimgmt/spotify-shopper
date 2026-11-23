@@ -26,27 +26,31 @@ export default function ResultsFilterBar({
   ] as const;
   const selected = filters.categoryFilter;
   const hint =
-    selected === "all"
-      ? result.hasRekordboxData
-        ? "Choose a category to review matches, missing recordings or versions that need checking."
-        : libraryStateHint("unchecked")
-      : libraryStateHint(
-          (
-            {
-              toBuy: "absent",
-              owned: "matched",
-              unknown: "review",
-              unchecked: "unchecked",
-            } as const
-          )[selected],
-        );
+    selected === "unchecked" && counts.unchecked === 0
+      ? "No unchecked tracks in this result."
+      : selected === "unchecked" && result.hasRekordboxData
+        ? "These tracks do not have a usable XML result. Check this playlist again."
+        : selected === "all"
+          ? result.hasRekordboxData
+            ? "Choose a category to review matches, missing recordings or versions that need checking."
+            : libraryStateHint("unchecked")
+          : libraryStateHint(
+              (
+                {
+                  toBuy: "absent",
+                  owned: "matched",
+                  unknown: "review",
+                  unchecked: "unchecked",
+                } as const
+              )[selected],
+            );
   return (
     <div className="space-y-2 bg-background lg:sticky lg:top-0 lg:z-20">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-y border-white/15 bg-surface p-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-y border-white/15 bg-surface p-3 lg:items-end">
         <div
           role="group"
           aria-label={t("Track status filter")}
-          className="flex flex-wrap gap-1"
+          className="col-span-2 flex flex-wrap gap-1"
         >
           {tabs.map(([key, label, count]) => (
             <button
@@ -64,14 +68,14 @@ export default function ResultsFilterBar({
         <div className="hidden lg:block">
           <ResultsSearchTools filters={filters} />
         </div>
-        <details className="lg:hidden">
+        <details className="col-start-1 row-start-2 lg:hidden">
           <summary className="min-h-11 cursor-pointer py-3 text-sm text-secondary">
             {t("Search and sort")}
             {filters.searchQuery ? ` · ${filters.searchQuery}` : ""}
           </summary>
           <ResultsSearchTools filters={filters} />
         </details>
-        <div className="ml-auto">{queue}</div>
+        <div className="col-start-2 row-start-2 justify-self-end">{queue}</div>
       </div>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <p role="status" className="text-sm leading-6 text-secondary">

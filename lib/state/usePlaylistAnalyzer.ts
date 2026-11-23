@@ -920,6 +920,21 @@ export function usePlaylistAnalyzer() {
           refresh: isForceRefresh ? 1 : 0,
         });
         setErrorText(normalized.message);
+        if (normalized.retryable === false) {
+          draft = {
+            ...draft,
+            pendingUrls: draft.pendingUrls.filter((pending) => pending !== url),
+            updatedAt: Date.now(),
+          };
+          try {
+            saveAnalysisDraft(draft);
+            setResumableDraft(draft.pendingUrls.length ? draft : null);
+          } catch {
+            setStorageWarning(
+              "Progress could not be saved. Discard saved progress before resuming.",
+            );
+          }
+        }
       }
     }
 
@@ -973,6 +988,7 @@ export function usePlaylistAnalyzer() {
         const fallbackKey =
           t.trackKeyFallback || t.trackKeyPrimary || `${t.title}::${t.artist}`;
         return {
+          duration_ms: t.durationMs,
           title: t.title,
           artist: t.artist,
           album: t.album ?? "",

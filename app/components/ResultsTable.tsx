@@ -4,7 +4,11 @@ import { useI18n } from "@/lib/i18n/LanguageProvider";
 import React, { useId, useState, useRef } from "react";
 import type { PlaylistRow } from "../../lib/types";
 import { purchaseLinks } from "@/lib/domain/purchaseLinks";
-import { TrackIdentity, TrackStoreLinks } from "./TrackPresentation";
+import {
+  TrackIdentity,
+  TrackSourceLink,
+  TrackStoreLinks,
+} from "./TrackPresentation";
 import RecordingComparison from "./RecordingComparison";
 import {
   effectiveOwned,
@@ -106,60 +110,45 @@ export default function ResultsTable({
             total: rows.length,
           })}
         </p>
-        {position === "Track pages" &&
-          onSaveBatch &&
-          (allEligibleSaved ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm text-secondary" role="status">
-                {tr("{count} tracks saved", {
-                  count:
-                    saveBatchSummary?.saved ??
-                    new Set(
-                      rows
-                        .filter((t) => effectiveOwned(t) === false)
-                        .map(getBuyQueueItemId),
-                    ).size,
-                })}
-              </span>
-              {onOpenBuyQueue && (
-                <button
-                  type="button"
-                  onClick={onOpenBuyQueue}
-                  className="min-h-11 text-sm text-secondary underline underline-offset-4 hover:text-foreground"
-                >
-                  {tr("View saved tracks")}
-                </button>
+        {position === "Track pages" && onSaveBatch && (
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={onSaveBatch}
+              disabled={saveBatchCount === 0}
+              title={tr(
+                "Adds matching unsaved tracks from every page. Tracks needing review are excluded.",
               )}
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-3">
+              className="ps-action-secondary"
+            >
+              {tr("Add to Buy Later")}
+            </button>
+            <span role="status" className="text-sm text-secondary">
+              {allEligibleSaved
+                ? tr("{count} tracks saved", {
+                    count:
+                      saveBatchSummary?.saved ??
+                      new Set(
+                        rows
+                          .filter((t) => effectiveOwned(t) === false)
+                          .map(getBuyQueueItemId),
+                      ).size,
+                  })
+                : tr("{count} tracks to add across all filtered pages", {
+                    count: saveBatchCount,
+                  })}
+            </span>
+            {allEligibleSaved && onOpenBuyQueue && (
               <button
                 type="button"
-                onClick={onSaveBatch}
-                disabled={saveBatchCount === 0}
-                title={tr(
-                  "Adds matching unsaved tracks from every page. Tracks needing review are excluded.",
-                )}
-                className="ps-action-primary"
+                onClick={onOpenBuyQueue}
+                className="min-h-11 text-sm text-secondary underline underline-offset-4"
               >
-                {saveBatchCount
-                  ? tr(
-                      saveBatchCount === 1
-                        ? "Add {count} track to Buy Later"
-                        : "Add {count} tracks to Buy Later",
-                      { count: saveBatchCount },
-                    )
-                  : tr("Save filtered tracks")}
+                {tr("View saved tracks")}
               </button>
-              <p className="text-xs text-muted">
-                {tr(
-                  saveBatchCount
-                    ? "Across all filtered pages"
-                    : "No unsaved eligible tracks. Check XML matching or change filters.",
-                )}
-              </p>
-            </div>
-          ))}
+            )}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2">
         {position === "Track pages" && (
@@ -253,11 +242,9 @@ export default function ResultsTable({
             </p>
           </details>
         )}
-      <details className="text-xs leading-5 text-muted">
-        <summary className="cursor-pointer hover:text-slate-200">
-          {tr(
-            "Beatport links are affiliate links. Availability and the exact version are not verified.",
-          )}
+      <details className="text-sm leading-6 text-secondary">
+        <summary className="cursor-pointer hover:text-foreground">
+          {tr("Beatport affiliate links (availability and version unverified)")}
         </summary>
         <p className="mt-2 text-sm leading-6 text-secondary">
           {tr(
@@ -292,7 +279,7 @@ export default function ResultsTable({
             <col className="w-[34%]" />
             <col className="w-[14%]" />
           </colgroup>
-          <thead className="border-b border-white/15 text-left text-[11px] font-medium uppercase tracking-wider text-muted">
+          <thead className="border-b border-white/15 text-left text-xs font-medium text-muted">
             <tr>
               {["Track", "Store", "Save"].map((label) => (
                 <th key={label} scope="col" className="px-3 py-3">
@@ -347,7 +334,12 @@ function DesktopTrackRow({
     <>
       <tr className="group border-b border-white/10 transition-colors hover:bg-white/[0.025]">
         <td className="px-3 py-3 align-middle">
-          <TrackIdentity track={track} />
+          <TrackIdentity
+            track={track}
+            onInspect={() => setExpanded(!expanded)}
+            expanded={expanded}
+            controls={detailsId}
+          />
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
             {!compactStatus && <LibraryStatus track={track} />}
             <button
@@ -355,7 +347,7 @@ function DesktopTrackRow({
               aria-expanded={expanded}
               aria-controls={detailsId}
               onClick={() => setExpanded(!expanded)}
-              className="mt-1 inline-flex min-h-7 items-center gap-1.5 text-xs text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-emerald-300"
+              className="mt-1 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-emerald-300"
             >
               <span aria-hidden="true">{expanded ? "−" : "+"}</span>
               {tr("Matching details")}
@@ -366,7 +358,7 @@ function DesktopTrackRow({
           {owned === true ? null : primary ? (
             <StoreLinksInline track={track} />
           ) : (
-            <span className="text-xs text-muted">{tr("Not found")}</span>
+            <span className="text-sm text-muted">{tr("Not found")}</span>
           )}
         </td>
         <td className="px-3 py-3 align-middle">
@@ -387,7 +379,7 @@ function DesktopTrackRow({
             )
           ) : (
             <span
-              className="text-xs text-muted"
+              className="text-sm text-muted"
               title={tr(libraryMatchExplanation(track))}
             >
               {tr(
@@ -441,7 +433,8 @@ function TrackCard({
   ) => void;
 }) {
   const { t: tr } = useI18n();
-
+  const [expanded, setExpanded] = useState(false);
+  const detailsId = useId();
   const primary = getPrimaryBuyLink(track);
   const isOwned = effectiveOwned(track) === true;
   const isQueued = queuedTrackIds?.has(getBuyQueueItemId(track)) ?? false;
@@ -450,10 +443,18 @@ function TrackCard({
   return (
     <div className="border-b border-white/15 py-4">
       <div className="flex flex-col gap-2">
-        <TrackIdentity track={track} />
+        <TrackIdentity
+          track={track}
+          onInspect={() => setExpanded(!expanded)}
+          expanded={expanded}
+          controls={detailsId}
+        />
         {!compactStatus && <LibraryStatus track={track} />}
       </div>
       <MatchDetails
+        expanded={expanded}
+        onExpanded={setExpanded}
+        detailsId={detailsId}
         track={track}
         onReviewDecision={onReviewDecision}
         reviewReady={reviewReady}
@@ -490,10 +491,16 @@ function TrackCard({
 }
 
 function MatchDetails({
+  expanded,
+  onExpanded,
+  detailsId,
   track,
   onReviewDecision,
   reviewReady,
 }: {
+  expanded: boolean;
+  onExpanded: (value: boolean) => void;
+  detailsId: string;
   track: PlaylistRow;
   onReviewDecision?: ReviewHandler;
   reviewReady?: boolean;
@@ -501,7 +508,12 @@ function MatchDetails({
   const { t: tr } = useI18n();
 
   return (
-    <details className="mt-2 text-xs text-secondary">
+    <details
+      open={expanded}
+      onToggle={(e) => onExpanded(e.currentTarget.open)}
+      id={detailsId}
+      className="mt-2 text-sm text-secondary"
+    >
       <summary className="cursor-pointer">
         {tr("Matching details")}
         {track.changeStatus && track.changeStatus !== "unchanged"
@@ -590,6 +602,7 @@ function MatchEvidence({
         </p>
       )}
       <RecordingComparison track={track} />
+      <TrackSourceLink track={track} />
     </div>
   );
 }

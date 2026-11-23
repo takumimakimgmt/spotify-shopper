@@ -132,7 +132,7 @@ describe("ownership snapshot restoration", () => {
             total: 1,
             hasRekordboxData: true,
             rekordboxMeta: { filename: "library.xml" },
-            meta: { ownership_rules_version: 3 },
+            meta: { ownership_rules_version: 5 },
           },
         },
       ],

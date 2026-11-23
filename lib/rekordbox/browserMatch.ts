@@ -24,6 +24,7 @@ export async function readLocalLibrary(file: File, signal?: AbortSignal) {
         artist: entry.artist.trim(),
         album: entry.album.trim(),
         isrc: entry.isrc,
+        duration_ms: entry.duration_ms,
       }));
       const digest = await crypto.subtle.digest(
         "SHA-256",
